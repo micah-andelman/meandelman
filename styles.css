@@ -475,5 +475,5 @@ html.scope-pending .hero h1 { color: transparent; }
 @media (max-width: 420px) { .top nav a[href="#work"] { display: none; } }
 
 /* Scroll signal flow: a copper fill over each trace, driven by scroll position. */
-.sig { fill: none; stroke: var(--copper); stroke-width: 2; stroke-linejoin: round; opacity: .55; pointer-events: none; }
+.sig { fill: none; stroke: var(--copper); stroke-width: 2; stroke-linejoin: round; opacity: .6; pointer-events: none; }
 @media print { .sig { display: none; } }
