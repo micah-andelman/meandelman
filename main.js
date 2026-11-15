@@ -33,10 +33,21 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   wrap.appendChild(svg);
 
   // Solder pads where each trace lands on a block; they light up with the trace.
+  // Endpoints come from the path data (M/H/V/L only), so this works even while the drawing is hidden.
+  const ends = (d) => {
+    const tok = d.match(/[MHVL]|-?[\d.]+/g);
+    let x = 0, y = 0, cmd = "", first = null;
+    for (let i = 0; i < tok.length; ) {
+      if (/[MHVL]/.test(tok[i])) cmd = tok[i++];
+      if (cmd === "H") x = +tok[i++];
+      else if (cmd === "V") y = +tok[i++];
+      else { x = +tok[i++]; y = +tok[i++]; }
+      if (!first) first = { x, y };
+    }
+    return [first, { x, y }];
+  };
   svg.querySelectorAll(".tr").forEach((tr) => {
-    const len = tr.getTotalLength();
-    [0, len].forEach((at) => {
-      const pt = tr.getPointAtLength(at);
+    ends(tr.getAttribute("d")).forEach((pt) => {
       const pad = document.createElementNS(SVGNS, "circle");
       pad.setAttribute("cx", pt.x);
       pad.setAttribute("cy", pt.y);
@@ -248,6 +259,21 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
     raf = requestAnimationFrame(tick);
   };
 
+  // Printing shows the whole route with the robot at the goal.
+  addEventListener("beforeprint", () => {
+    cancelAnimationFrame(raf);
+    const route = routes[which];
+    const len = route.getTotalLength();
+    pools.forEach((c, i) => c.classList.toggle("on", i === which));
+    routes.forEach((r, i) => r.classList.toggle("off", i !== which));
+    [trail, glow].forEach((p) => {
+      p.setAttribute("d", route.getAttribute("d"));
+      p.style.strokeDasharray = `${len} ${len}`;
+      p.style.strokeDashoffset = 0;
+    });
+    place(route, len, 0);
+  });
+
   place(routes[0], 0, angleAt(routes[0], 2));
   routes[1].classList.add("off");
   trail.style.strokeDasharray = glow.style.strokeDasharray = "0 99999";
@@ -263,3 +289,157 @@ const header = document.querySelector(".top");
 const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 8);
 window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
+
+
+// Power switch: flips light/dark, remembers the choice, and flashes the traces once.
+(() => {
+  const btn = document.querySelector(".power");
+  if (!btn) return;
+  const root = document.documentElement;
+  const sys = matchMedia("(prefers-color-scheme: dark)");
+  const isDark = () => (root.dataset.theme ? root.dataset.theme === "dark" : sys.matches);
+  const sync = () => btn.setAttribute("aria-checked", String(isDark()));
+  sync();
+  sys.addEventListener("change", sync);
+  btn.addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch (e) {}
+    sync();
+    root.classList.remove("powerup");
+    void root.offsetWidth;
+    root.classList.add("powerup");
+    setTimeout(() => root.classList.remove("powerup"), 1000);
+  });
+})();
+
+// Margin trace: one copper trace down the left gutter, drawn as you scroll,
+// with a via and a stub into each section it passes.
+(() => {
+  const hero = document.querySelector(".hero");
+  const line = document.querySelector(".hero-trace .line");
+  const stops = [...document.querySelectorAll(".project h2, .experience h2, .contact h2")];
+  if (!hero || !line || !stops.length) return;
+  let svg, base, drawn, len = 0, vias = [], pts = [];
+
+  const build = () => {
+    svg?.remove();
+    const gutter = parseFloat(getComputedStyle(hero).paddingLeft);
+    if (gutter < 32 || innerWidth <= 760) { svg = null; return; }
+    const X = Math.round(gutter * 0.45);
+    const l = line.getBoundingClientRect();
+    const y0 = l.top + scrollY + l.height / 2;
+    const ys = stops.map((h) => { const r = h.getBoundingClientRect(); return r.top + scrollY + Math.min(r.height / 2, 40); });
+    const end = ys[ys.length - 1];
+    svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("class", "mtrace");
+    svg.setAttribute("width", gutter);
+    svg.setAttribute("height", end + 20);
+    svg.setAttribute("aria-hidden", "true");
+    const d = `M${gutter},${y0} H${X + 10} Q${X},${y0} ${X},${y0 + 10} V${end}`;
+    svg.innerHTML =
+      `<path class="base" d="${d}"/><path class="drawn" d="${d}"/>` +
+      ys.map((y) => `<g><path class="stub" d="M${X},${y} H${gutter - 6}"/><circle class="via" cx="${X}" cy="${y}" r="5"/></g>`).join("");
+    document.body.appendChild(svg);
+    base = svg.querySelector(".base");
+    drawn = svg.querySelector(".drawn");
+    len = base.getTotalLength();
+    drawn.style.strokeDasharray = `${len} ${len}`;
+    vias = [...svg.querySelectorAll("g")];
+    pts = ys;
+    update();
+  };
+
+  const lengthAtY = (y) => {
+    let lo = 0, hi = len;
+    for (let i = 0; i < 22; i++) {
+      const mid = (lo + hi) / 2;
+      if (base.getPointAtLength(mid).y < y) lo = mid; else hi = mid;
+    }
+    return lo;
+  };
+
+  let queued = false;
+  const update = () => {
+    queued = false;
+    if (!svg) return;
+    const target = scrollY + innerHeight * 0.6;
+    drawn.style.strokeDashoffset = len - lengthAtY(target);
+    vias.forEach((g, i) => g.classList.toggle("lit", pts[i] <= target));
+  };
+  addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
+  let t;
+  addEventListener("resize", () => { clearTimeout(t); t = setTimeout(build, 150); });
+  document.fonts.ready.then(build);
+  addEventListener("load", build);
+})();
+
+// Oscilloscope intro: on the first visit a phosphor beam traces the name, then it fills in.
+// Double-click the name to see it again.
+(() => {
+  const root = document.documentElement;
+  const hero = document.querySelector(".hero");
+  const h1 = hero && hero.querySelector("h1");
+  if (!h1) return;
+
+  const trace = async () => {
+    await document.fonts.ready;
+    const cs = getComputedStyle(h1);
+    const font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = font;
+    const h = h1.getBoundingClientRect();
+    const svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("class", "scope");
+    svg.setAttribute("width", h.width);
+    svg.setAttribute("height", h.height);
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = `<defs><filter id="phosphor" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    const g = document.createElementNS(SVGNS, "g");
+    g.setAttribute("filter", "url(#phosphor)");
+    svg.appendChild(g);
+    // Each line is revealed behind a sweeping beam, like a scope trace, outline first.
+    const lines = [];
+    [...h1.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).forEach((n, i) => {
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      const m = ctx.measureText(n.textContent);
+      const x = r.left - h.left, y = r.top - h.top;
+      const id = `scope-clip-${i}`;
+      const pad = 12;
+      g.insertAdjacentHTML("beforeend",
+        `<clipPath id="${id}"><rect x="${x - pad}" y="${y - pad}" width="${r.width + 2 * pad}" height="${r.height + 2 * pad}"/></clipPath>` +
+        `<text clip-path="url(#${id})" x="${x}" y="${y + m.fontBoundingBoxAscent}">${n.textContent}</text>` +
+        `<rect class="beam" x="${x - pad}" y="${y + r.height * 0.08}" width="3" height="${r.height * 0.84}"/>`);
+      const t = g.lastElementChild.previousElementSibling;
+      Object.assign(t.style, { font, letterSpacing: cs.letterSpacing });
+      lines.push({ clip: g.querySelector(`#${id} rect`), beam: g.lastElementChild, w: r.width + 2 * pad });
+    });
+    hero.classList.add("scoping");
+    root.classList.add("scope-pending");
+    h1.appendChild(svg);
+    const D = 1050;
+    await Promise.all(lines.map(({ clip, beam, w }, i) => {
+      const opts = { duration: D, delay: 120 + i * (D * 0.75), easing: "cubic-bezier(.45,.05,.35,1)", fill: "both" };
+      clip.style.transformBox = "fill-box";
+      clip.style.transformOrigin = "left center";
+      beam.animate([{ transform: "translateX(0)", opacity: 1 }, { transform: `translateX(${w}px)`, opacity: 1 }, { transform: `translateX(${w}px)`, opacity: 0 }],
+        { ...opts, duration: D + 250 });
+      return clip.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], opts).finished;
+    }));
+    await new Promise((r) => setTimeout(r, 250));
+    root.classList.remove("scope-pending");
+    hero.classList.remove("scoping");
+    await svg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, easing: "ease-out", fill: "forwards" }).finished;
+    svg.remove();
+  };
+
+  if (root.classList.contains("scope-pending") && scrollY < 80) {
+    try { localStorage.setItem("scopeSeen", "1"); } catch (e) {}
+    trace().catch(() => root.classList.remove("scope-pending"));
+  } else {
+    root.classList.remove("scope-pending");
+  }
+  h1.addEventListener("dblclick", () => { if (!REDUCED && !h1.querySelector(".scope")) trace(); });
+})();

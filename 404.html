@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open circuit | Micah Andelman</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script>try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .oc { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 48px var(--gutter); }
+  .oc .code { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(120px, 30vw, 360px); line-height: .8; letter-spacing: -.02em; color: var(--ink); }
+  .oc .brk { display: flex; align-items: center; margin: clamp(20px, 4vh, 40px) 0; }
+  .oc .brk i { flex: 1; height: 3px; background: var(--copper); }
+  .oc .brk svg { flex: none; overflow: visible; }
+  .oc .t { stroke: var(--copper); stroke-width: 3; stroke-linecap: round; fill: none; }
+  .oc .end { fill: var(--copper); }
+  .oc .spark { stroke: var(--copper); stroke-width: 2; stroke-linecap: round; opacity: 0; animation: spark 1.6s infinite; }
+  .oc .spark:nth-of-type(2n) { animation-delay: .35s; }
+  .oc .spark:nth-of-type(3n) { animation-delay: .8s; }
+  .oc .gap { fill: var(--ink-3); font: 500 14px var(--text); }
+  @keyframes spark { 0%, 62% { opacity: 0; } 64% { opacity: 1; } 70% { opacity: .2; } 72% { opacity: 1; } 80%, 100% { opacity: 0; } }
+  .oc h1 { margin: 0 0 8px; font-family: var(--display); font-weight: 700; font-size: clamp(36px, 6vw, 64px); line-height: 1; }
+  .oc p { margin: 0 0 24px; color: var(--ink-2); max-width: 46ch; }
+  .oc a.home { color: var(--mask); font-size: 19px; }
+  @media (prefers-reduced-motion: reduce) { .oc .spark { animation: none; opacity: .8; } }
+</style>
+</head>
+<body>
+<main class="oc">
+  <p class="code" aria-hidden="true">404</p>
+  <div class="brk" aria-hidden="true">
+    <i></i>
+    <svg viewBox="0 0 120 60" width="120" height="60">
+      <circle class="end" cx="12" cy="30" r="4" /><circle class="end" cx="108" cy="30" r="4" />
+      <path class="t" d="M0,30 H12 M108,30 H120" />
+      <path class="spark" d="M18,26 L28,16" /><path class="spark" d="M19,33 L31,40" /><path class="spark" d="M16,22 L19,8" />
+      <path class="spark" d="M102,26 L92,15" /><path class="spark" d="M101,34 L89,43" /><path class="spark" d="M104,22 L101,9" />
+    </svg>
+    <i></i>
+  </div>
+  <h1>Open circuit</h1>
+  <p>Nothing is connected at this address. The link may be broken, or the page may have moved.</p>
+  <a class="home" href="/">Back to meandelman.com</a>
+</main>
+</body>
+</html>

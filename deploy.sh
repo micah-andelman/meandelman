@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p dist
-cp styles.css main.js favicon.svg resume.pdf dist/
+cp styles.css main.js favicon.svg resume.pdf og.png 404.html dist/
 [ -d photos ] && cp -r photos dist/
 css=$(md5sum styles.css | cut -c1-8)
 js=$(md5sum main.js | cut -c1-8)

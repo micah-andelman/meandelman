@@ -20,7 +20,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #101614;
     --board: #16201c;
     --ink: #e8ece8;
@@ -32,6 +32,17 @@
     --focus: #4fbf92;
   }
 }
+:root[data-theme="dark"] {
+    --paper: #101614;
+    --board: #16201c;
+    --ink: #e8ece8;
+    --ink-2: #aab5b0;
+    --ink-3: #7d8a85;
+    --rule: #2c3833;
+    --mask: #4fbf92;
+    --copper: #e0965a;
+    --focus: #4fbf92;
+}
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -40,6 +51,7 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
+  position: relative;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--text);
@@ -61,7 +73,7 @@ a:hover { color: var(--mask); }
 /* ---------- header ---------- */
 .top {
   position: sticky; top: 0; z-index: 5;
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px);
   padding: 14px var(--gutter);
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(8px);
@@ -70,7 +82,7 @@ a:hover { color: var(--mask); }
 }
 .top.scrolled { border-bottom-color: var(--rule); }
 .mark { font-family: var(--display); font-weight: 600; font-size: 20px; text-decoration: none; letter-spacing: .01em; }
-.top nav { display: flex; gap: clamp(14px, 2.5vw, 28px); }
+.top nav { display: flex; gap: clamp(14px, 2.5vw, 28px); margin-left: auto; }
 .top nav a { text-decoration: none; font-size: 16px; color: var(--ink-2); }
 .top nav a:hover { color: var(--ink); }
 
@@ -303,6 +315,9 @@ a:hover { color: var(--mask); }
   body { font-size: 17px; }
   .top { padding-top: 12px; padding-bottom: 12px; }
   .top nav a[href="#experience"] { display: none; }
+  .mark { white-space: nowrap; }
+  .top { gap: 16px; }
+  .top nav { gap: 16px; }
   .hero { min-height: calc(100svh - 52px); }
   .hero-foot, .p-head, .p-body { grid-template-columns: 1fr; }
   .index { justify-self: stretch; width: 100%; }
@@ -340,3 +355,121 @@ a:hover { color: var(--mask); }
   .tr, .blk rect, .top, .parts li::before, .hero-trace .drop, .pad { transition: none; }
   .arena .site.sampling .rip { animation: none; }
 }
+
+
+/* ---------- power switch (theme) ---------- */
+.power { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
+.power:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 12px; }
+.power .track { position: relative; width: 34px; height: 18px; border: 1.5px solid var(--ink-3); border-radius: 10px; transition: border-color .2s; }
+.power .knob { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--ink-3); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
+.power[aria-checked="true"] .track { border-color: var(--copper); }
+.power[aria-checked="true"] .knob { transform: translateX(16px); background: var(--copper); box-shadow: 0 0 6px var(--copper); }
+.power:hover .track { border-color: var(--ink-2); }
+
+/* flipping the switch "powers up" the board: one copper flash along every trace */
+@keyframes power-trace { 0%, 30% { stroke: var(--copper); } 100% { stroke: var(--rule); } }
+@keyframes power-line { 0%, 30% { filter: brightness(1.6) drop-shadow(0 0 6px var(--copper)); } 100% { filter: none; } }
+@keyframes power-flicker { 0% { opacity: .82; } 18% { opacity: 1; } 30% { opacity: .9; } 44%, 100% { opacity: 1; } }
+html.powerup .tr:not(.on), html.powerup .mtrace .base { animation: power-trace .9s ease-out; }
+html.powerup .hero-trace .line, html.powerup .hero-trace .via, html.powerup .mtrace .drawn { animation: power-line .9s ease-out; }
+html.powerup main { animation: power-flicker .45s steps(1); }
+
+/* ---------- margin trace drawn by scrolling ---------- */
+.mtrace { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; overflow: visible; }
+.mtrace path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mtrace .base { stroke: var(--rule); stroke-width: 2; }
+.mtrace .drawn { stroke: var(--copper); stroke-width: 2.5; }
+.mtrace .stub { stroke: var(--rule); stroke-width: 2; transition: stroke .3s; }
+.mtrace .via { fill: var(--paper); stroke: var(--rule); stroke-width: 2; transition: fill .3s, stroke .3s; }
+.mtrace .lit .stub { stroke: var(--copper); }
+.mtrace .lit .via { fill: var(--copper); stroke: var(--copper); }
+@media (max-width: 760px) { .mtrace { display: none; } }
+
+/* ---------- oscilloscope intro: the name is traced by a beam, once ---------- */
+html.scope-pending .hero h1 { color: transparent; }
+.hero h1 { position: relative; transition: color .7s ease; }
+.scope { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.scope text { fill: none; stroke: var(--mask); stroke-width: 1.8; stroke-linejoin: round; }
+.scope .beam { fill: var(--mask); }
+.hero.scoping .hero-trace .line, .hero.scoping .hero-trace .via { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.powerup .tr, html.powerup .mtrace .base, html.powerup .hero-trace .line, html.powerup .hero-trace .via, html.powerup .mtrace .drawn, html.powerup main { animation: none; }
+  .power .knob, .mtrace .stub, .mtrace .via { transition: none; }
+}
+
+/* ---------- print: the page becomes a datasheet ---------- */
+.print-head { display: none; }
+@media print {
+  @page { size: letter; margin: 12mm 14mm 14mm; }
+  :root:not(.p1):not(.p2), :root[data-theme]:not(.p1):not(.p2) {
+    --paper: #fff; --board: #f3f5f2; --ink: #111; --ink-2: #3c444a; --ink-3: #6b757a;
+    --rule: #c9d0cc; --mask: #0e6a4c; --copper: #b8692a; --focus: #0e6a4c;
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-size: 9.5pt; line-height: 1.4; background: #fff; }
+  .top, .skip, .mtrace, .replay, .scope, .hero-trace .drop, .diagram .scroll, .diagram figcaption, .index, .contact li:last-child { display: none !important; }
+
+  .print-head { display: grid; grid-template-columns: 1fr auto; gap: 2px 24px; align-items: end; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+  .print-head p { margin: 0; }
+  .ph-name { font-family: var(--display); font-weight: 700; font-size: 30pt; line-height: .95; }
+  .ph-rev { grid-row: 1; grid-column: 2; font-size: 8.5pt; color: var(--ink-3); text-align: right; }
+  .ph-sub { grid-column: 1; color: var(--ink-2); }
+  .ph-contact { grid-column: 2; grid-row: 2; display: flex; gap: 12px; font-size: 8.5pt; color: var(--ink-2); }
+
+  .hero { min-height: 0; padding: 8px 0 0; display: block; }
+  .hero h1 { display: none; }
+  .hero-trace { display: none; }
+  .hero-foot { display: block; }
+  .who p { max-width: none; }
+
+  .project, .experience, .contact { padding: 10px 0 6px; border-top: 1px solid var(--rule); }
+  .project h2, .project.minor h2, .experience h2, .contact h2 { font-size: 20pt; line-height: 1; margin: 0; }
+  .experience h2, .contact h2 { margin-bottom: 6px; }
+  .p-head { grid-template-columns: 1.3fr 1fr; gap: 6px 24px; align-items: start; }
+  .meta { font-size: 8.5pt; gap: 1px; }
+  .meta div { grid-template-columns: 62px 1fr; gap: 8px; }
+  .p-body { grid-template-columns: 1.3fr 1fr; gap: 0 24px; margin-top: 6px; }
+  .p-body > p { margin-bottom: 5px; max-width: none; }
+  .p-body > p.lede { font-size: 10pt; }
+  .specs { gap: 4px 18px; }
+  .specs dt { font-size: 16pt; }
+  .specs dd { font-size: 8pt; margin-top: 0; }
+
+  /* the block diagrams print as pin-description tables */
+  .diagram { margin: 8px 0 0; }
+  .parts { display: block; columns: 2; column-gap: 24px; }
+  .parts-h { margin: 0 0 2px; font-size: 8pt; font-weight: 600; color: var(--ink-3); break-after: avoid; }
+  .parts ul { padding: 0; margin-bottom: 6px; }
+  .parts ul::before, .parts li::before { display: none; }
+  .parts li { break-inside: avoid; padding: 3px 0; border-top: 1px solid var(--rule); }
+  .parts li + li { margin-top: 0; }
+  .parts button { padding: 0; border: 0; background: none !important; display: grid; }
+  .parts li.mcu .pt, .parts li.mcu .ps, .parts li.mcu .pp { color: var(--ink); }
+  .parts .pt { font-size: 9pt; }
+  .parts .pt::after { content: none; }
+  .parts .ps, .parts .pp { font-size: 8pt; }
+  .parts .pn, .parts .pn[hidden] { display: block; margin: 1px 0 0; font-size: 8.5pt; color: var(--ink-2); }
+  .parts .pn img { display: none; }
+
+  .arena { margin: 8px 0 0; break-inside: avoid; }
+  .arena svg { max-height: 62mm; width: auto; max-width: 100%; border-radius: 0; }
+  .arena figcaption p { font-size: 8.5pt; max-width: none; }
+
+  .experience table { display: table; }
+  .experience tbody { display: table-row-group; }
+  .experience tr { display: table-row; padding: 0; border: 0; break-inside: avoid; }
+  .experience th, .experience td { display: table-cell; padding: 4px 16px 4px 0; font-size: 9pt; border-top: 1px solid var(--rule); }
+  .experience th { width: 26%; }
+  .experience td.when { text-align: right; padding-right: 0; padding-top: 4px; font-size: 9pt; white-space: nowrap; }
+  .who p:first-child { display: none; }
+  .contact p, .contact ul { font-size: 10pt; margin-bottom: 4px; }
+  .contact ul { flex-direction: row; gap: 4px 24px; }
+  .contact h2 { margin-bottom: 4px; }
+  .contact a { color: var(--ink); text-decoration: none; }
+  .contact a[href^="https"]::after { content: " (" attr(href) ")"; color: var(--ink-3); font-size: 8.5pt; }
+  .foot { display: none; }
+  a { text-decoration: none; }
+}
+
+@media (max-width: 420px) { .top nav a[href="#work"] { display: none; } }
