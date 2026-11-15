@@ -358,13 +358,13 @@ a:hover { color: var(--mask); }
 
 
 /* ---------- power switch (theme) ---------- */
-.power { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
-.power:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 12px; }
-.power .track { position: relative; width: 34px; height: 18px; border: 1.5px solid var(--ink-3); border-radius: 10px; transition: border-color .2s; }
-.power .knob { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--ink-3); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
-.power[aria-checked="true"] .track { border-color: var(--copper); }
-.power[aria-checked="true"] .knob { transform: translateX(16px); background: var(--copper); box-shadow: 0 0 6px var(--copper); }
-.power:hover .track { border-color: var(--ink-2); }
+button.power { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
+button.power:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 12px; }
+button.power .track { position: relative; width: 34px; height: 18px; border: 1.5px solid var(--ink-3); border-radius: 10px; transition: border-color .2s; }
+button.power .knob { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--ink-3); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
+button.power[aria-checked="true"] .track { border-color: var(--copper); }
+button.power[aria-checked="true"] .knob { transform: translateX(16px); background: var(--copper); box-shadow: 0 0 6px var(--copper); }
+button.power:hover .track { border-color: var(--ink-2); }
 
 /* flipping the switch "powers up" the board: one copper flash along every trace */
 @keyframes power-trace { 0%, 30% { stroke: var(--copper); } 100% { stroke: var(--rule); } }
@@ -395,7 +395,7 @@ html.scope-pending .hero h1 { color: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
   html.powerup .tr, html.powerup .mtrace .base, html.powerup .hero-trace .line, html.powerup .hero-trace .via, html.powerup .mtrace .drawn, html.powerup main { animation: none; }
-  .power .knob, .mtrace .stub, .mtrace .via { transition: none; }
+  button.power .knob, .mtrace .stub, .mtrace .via { transition: none; }
 }
 
 /* ---------- print: the page becomes a datasheet ---------- */
@@ -474,6 +474,26 @@ html.scope-pending .hero h1 { color: transparent; }
 
 @media (max-width: 420px) { .top nav a[href="#work"] { display: none; } }
 
-/* Scroll signal flow: a copper fill over each trace, driven by scroll position. */
-.sig { fill: none; stroke: var(--copper); stroke-width: 2; stroke-linejoin: round; opacity: .6; pointer-events: none; }
-@media print { .sig { display: none; } }
+/* Signal scenes: pinned diagrams whose traces light up as you scroll through them. */
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto; }
+.lenis.lenis-stopped { overflow: hidden; }
+.scene { position: relative; margin-top: clamp(36px, 6vh, 64px); }
+.scene > .diagram { position: sticky; margin-top: 0; }
+.sig { fill: none; stroke: var(--copper); stroke-width: 2.5; stroke-linejoin: round; pointer-events: none; }
+.dots circle { pointer-events: none; transition: opacity .2s; }
+.dots .lead { fill: var(--copper); filter: drop-shadow(0 0 5px var(--copper)) drop-shadow(0 0 2px var(--copper)); }
+.dots .drop { fill: color-mix(in srgb, var(--copper) 80%, var(--ink)); }
+.blk.mcu rect { transition: filter .5s; }
+.blk.mcu.hot rect { filter: drop-shadow(0 0 16px color-mix(in srgb, var(--mask) 55%, transparent)); }
+.steps { display: flex; gap: 28px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--ink-3); }
+.steps li { position: relative; padding-left: 16px; transition: color .3s; }
+.steps li::before { content: ""; position: absolute; left: 0; top: .55em; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; transition: background .3s; }
+.steps li.on { color: var(--ink); }
+.steps li.on::before { background: var(--copper); border-color: var(--copper); }
+@media (max-width: 760px) { .scene { height: auto !important; } .scene > .diagram { position: static; } .steps { display: none; } }
+@media print {
+  .scene { height: auto !important; margin-top: 0; }
+  .scene > .diagram { position: static; }
+  .sig, .dots, .steps { display: none; }
+}

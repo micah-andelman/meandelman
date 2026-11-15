@@ -296,7 +296,7 @@ onScroll();
 
 // Power switch: flips light/dark, remembers the choice, and flashes the traces once.
 (() => {
-  const btn = document.querySelector(".power");
+  const btn = document.querySelector("button.power");
   if (!btn) return;
   const root = document.documentElement;
   const sys = matchMedia("(prefers-color-scheme: dark)");
@@ -447,11 +447,26 @@ onScroll();
   h1.addEventListener("dblclick", () => { if (!REDUCED && !h1.querySelector(".scope")) trace(); });
 })();
 
-// Scroll-stepped signal flow. When a diagram comes fully into view it snaps to the middle of the
-// screen and holds. Scroll 1 sends a pulse from the inputs into the controller, scroll 2 sends one
-// out to the outputs, and scroll 3 lets the page move on. Scrolling up is never held.
+// Smooth scrolling (Lenis). The page still scrolls natively underneath; Lenis just eases the wheel.
+const lenis = (() => {
+  if (REDUCED || !window.Lenis) return null;
+  const head = document.querySelector(".top");
+  const l = new Lenis({ lerp: 0.11, anchors: { offset: -(head ? head.offsetHeight : 0) - 8 } });
+  const raf = (t) => { l.raf(t); requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
+  return l;
+})();
+
+// Signal scenes. Each diagram with groups sits in a tall section and stays pinned while you scroll
+// through it. Scroll position drives the signal: copper runs in from the inputs, the controller
+// lights, then copper runs out to the outputs. Once a trace is lit, dots keep flowing along it.
+// Diagrams without groups just fill as they scroll into view.
 (() => {
   if (REDUCED) return;
+  const head = document.querySelector(".top");
+  const wide = matchMedia("(min-width: 761px)");
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const ease = (t) => t * t * (3 - 2 * t);
   const pathInfo = (d) => {
     const tok = d.match(/[MHVL]|-?[\d.]+/g);
     let x = 0, y = 0, cmd = "", len = 0, x0 = null;
@@ -466,128 +481,132 @@ onScroll();
     }
     return { len, x0 };
   };
-  const figs = [...document.querySelectorAll("[data-diagram]")].map((fig) => {
+  const circle = (g, cls, r) => {
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("r", r);
+    c.setAttribute("class", cls);
+    g.appendChild(c);
+    return c;
+  };
+
+  const scenes = [...document.querySelectorAll("[data-diagram]")].map((fig) => {
     const svg = fig.querySelector("svg");
     const mid = (svg.viewBox.baseVal.width || 960) / 2;
-    const stages = [[], []];
-    svg.querySelectorAll(".tr").forEach((tr) => {
+    const groups = fig.dataset.groups ? fig.dataset.groups.split("|") : null;
+    const dots = document.createElementNS(SVGNS, "g");
+    dots.setAttribute("class", "dots");
+    svg.insertBefore(dots, svg.querySelector(".blk"));
+    const traces = [...svg.querySelectorAll(".tr")].map((tr) => {
       const { len, x0 } = pathInfo(tr.getAttribute("d"));
       const s = document.createElementNS(SVGNS, "path");
       s.setAttribute("d", tr.getAttribute("d"));
       s.setAttribute("class", "sig");
-      s.style.strokeDasharray = `${len} ${len}`;
-      s.style.strokeDashoffset = len;
+      s.style.strokeDasharray = `${len} ${len + 2}`;
       tr.after(s);
-      stages[x0 < mid ? 0 : 1].push({ tr, s, len, x0 });
+      return {
+        tr, s, len, x0, f: -1,
+        stage: groups && x0 >= mid ? 1 : 0,
+        lead: circle(dots, "lead", 4.5),
+        flow: [circle(dots, "drop", 3), circle(dots, "drop", 3)],
+      };
     });
-    return { svg, stages, step: 0 };
+    // Within a stage, traces start in order from left to right.
+    [0, 1].forEach((st) => {
+      const xs = traces.filter((t) => t.stage === st).map((t) => t.x0);
+      const lo = Math.min(...xs), span = Math.max(...xs) - lo || 1;
+      traces.filter((t) => t.stage === st).forEach((t) => (t.k = (t.x0 - lo) / span));
+    });
+    let steps = null, wrap = null;
+    if (groups) {
+      wrap = document.createElement("div");
+      wrap.className = "scene";
+      fig.before(wrap);
+      wrap.appendChild(fig);
+      steps = document.createElement("ol");
+      steps.className = "steps";
+      steps.setAttribute("aria-hidden", "true");
+      steps.innerHTML = groups.map((g) => `<li>${g}</li>`).join("");
+      fig.querySelector(".scroll").after(steps);
+    }
+    return { fig, svg, wrap, steps, traces, mcu: svg.querySelector(".blk.mcu"), extra: 0, p: -1, onScreen: false };
   });
 
-  // One pulse per trace, with the copper fill following it in.
-  const fire = (list) => {
-    const t0 = Math.min(...list.map((t) => t.x0));
-    list.forEach(({ tr, s, len, x0 }) => {
-      const duration = Math.max(500, len * 2.6);
-      const delay = (x0 - t0) * 1.4;
-      const p = document.createElementNS(SVGNS, "path");
-      p.setAttribute("d", tr.getAttribute("d"));
-      p.setAttribute("class", "pulse");
-      p.style.strokeDasharray = `14 ${len + 14}`;
-      tr.after(p);
-      const opts = { duration, delay, easing: "ease-in-out", fill: "both" };
-      p.animate([{ strokeDashoffset: 14 }, { strokeDashoffset: -len }], opts)
-        .finished.then(() => p.remove(), () => p.remove());
-      s.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], opts)
-        .finished.then(() => (s.style.strokeDashoffset = 0), () => {});
-    });
-  };
-  const clear = (f) => {
-    f.step = 0;
-    f.stages.flat().forEach(({ s, len }) => {
-      s.getAnimations().forEach((a) => a.cancel());
-      s.style.strokeDashoffset = len;
+  // Size each scene: the pinned diagram plus about two screens of scroll to play through.
+  const layout = () => {
+    const h = head ? head.offsetHeight : 0;
+    scenes.forEach((sc) => {
+      if (!sc.wrap) return;
+      if (!wide.matches) { sc.wrap.style.height = ""; sc.extra = 0; return; }
+      const fh = sc.fig.offsetHeight;
+      const room = innerHeight - h;
+      sc.pin = h + Math.max(8, (room - fh) / 2);
+      sc.fig.style.top = sc.pin + "px";
+      sc.extra = Math.round(innerHeight * 1.8);
+      sc.wrap.style.height = fh + sc.extra + "px";
     });
   };
 
-  const header = document.querySelector(".top");
-  // Scroll position that centers the drawing below the header, or null if it can't fit.
-  const target = (f) => {
-    if (!f.svg.getClientRects().length) return null;
-    const r = f.svg.getBoundingClientRect();
-    const head = header ? header.offsetHeight : 0;
-    const room = innerHeight - head;
-    if (r.height > room - 16) return null;
-    return scrollY + r.top - head - (room - r.height) / 2;
+  const fillOf = (sc, t, p) => {
+    if (!sc.wrap) return ease(clamp((p - t.k * 0.35) / 0.65));
+    const [a, b] = t.stage === 0 ? [0.04, 0.4] : [0.54, 0.9];
+    const w = (b - a) * 0.6;
+    return ease(clamp((p - a - t.k * (b - a - w)) / w));
   };
 
-  let held = null, lastStep = 0, lastEvt = 0;
-  // Returns true when this downward scroll should be swallowed.
-  const onDown = (delta, gesture) => {
-    const now = performance.now();
-    const quiet = now - lastEvt; // gap since the previous scroll event
-    lastEvt = now;
-    if (held) {
-      const fresh = gesture || (now - lastStep > 700 && (quiet > 120 || now - lastStep > 1500));
-      if (!fresh) return true;
-      lastStep = now;
-      if (held.step < 2) {
-        fire(held.stages[held.step]);
-        held.step++;
-        return true;
+  const render = (now) => {
+    scenes.forEach((sc) => { try { frame(sc, now); } catch (e) {} });
+    if (scenes.some((sc) => sc.onScreen)) requestAnimationFrame(render);
+    else running = false;
+  };
+  const frame = (sc, now) => {
+    {
+      if (!sc.onScreen || !sc.svg.getClientRects().length) return;
+      let p;
+      if (sc.wrap && sc.extra) {
+        const top = sc.wrap.getBoundingClientRect().top;
+        p = clamp((sc.pin - top) / sc.extra);
+      } else {
+        const r = sc.svg.getBoundingClientRect();
+        p = clamp((innerHeight * 0.92 - r.top) / (innerHeight * 0.55));
       }
-      held.step = 3;
-      held = null;
-      return false;
-    }
-    for (const f of figs) {
-      if (f.step >= 3) continue;
-      const y = target(f);
-      if (y === null) continue;
-      // Lock when this scroll reaches or crosses the centered position, or the drawing is
-      // already fully on screen just past it.
-      const r = f.svg.getBoundingClientRect();
-      const head = header ? header.offsetHeight : 0;
-      const crossing = scrollY < y - 2 && scrollY + delta >= y - 2;
-      const inView = scrollY >= y - 2 && r.top >= head && r.bottom <= innerHeight;
-      if (crossing || inView) {
-        held = f;
-        lastStep = now;
-        scrollTo({ top: y, behavior: "smooth" });
-        return true;
+      sc.traces.forEach((t) => {
+        const f = fillOf(sc, t, p);
+        if (f !== t.f) { t.s.style.strokeDashoffset = t.len * (1 - f); t.f = f; }
+        // A bright dot rides the leading edge while the trace is filling.
+        if (f > 0.001 && f < 0.999) {
+          const pt = t.tr.getPointAtLength(f * t.len);
+          t.lead.setAttribute("cx", pt.x); t.lead.setAttribute("cy", pt.y);
+          t.lead.style.opacity = 1;
+        } else t.lead.style.opacity = 0;
+        // Once lit, dots keep flowing toward the sink.
+        const period = Math.max(900, t.len * 6);
+        t.flow.forEach((d, i) => {
+          if (f < 0.999) { d.style.opacity = 0; return; }
+          const u = ((now / period) + i / t.flow.length + t.k * 0.37) % 1;
+          const pt = t.tr.getPointAtLength(u * t.len);
+          d.setAttribute("cx", pt.x); d.setAttribute("cy", pt.y);
+          d.style.opacity = Math.min(1, u * 6, (1 - u) * 6);
+        });
+      });
+      if (sc.mcu) sc.mcu.classList.toggle("hot", p > 0.36);
+      if (sc.steps) {
+        const cur = p < 0.36 ? 0 : p < 0.54 ? 1 : 2;
+        [...sc.steps.children].forEach((li, i) => li.classList.toggle("on", i === cur && p > 0.02));
       }
     }
-    return false;
   };
 
-  addEventListener("wheel", (e) => {
-    if (e.ctrlKey || e.deltaY <= 0) { if (e.deltaY < 0) held = null; return; }
-    const px = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
-    if (onDown(px, false)) e.preventDefault();
-  }, { passive: false });
-
-  addEventListener("keydown", (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest("input, textarea, select, [contenteditable]")) return;
-    if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home" || (e.key === " " && e.shiftKey)) { held = null; return; }
-    const delta = { ArrowDown: 40, PageDown: innerHeight * 0.85, " ": innerHeight * 0.85 }[e.key];
-    if (delta && onDown(delta, true)) e.preventDefault();
+  let running = false;
+  const kick = () => { if (!running) { running = true; requestAnimationFrame(render); } };
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => { const sc = scenes.find((s) => s.fig === e.target); if (sc) sc.onScreen = e.isIntersecting; });
+    kick();
   });
+  scenes.forEach((sc) => io.observe(sc.fig));
 
-  let ty = null, tUsed = false;
-  addEventListener("touchstart", (e) => { ty = e.touches[0].clientY; tUsed = false; }, { passive: true });
-  addEventListener("touchmove", (e) => {
-    if (ty === null) return;
-    const dy = ty - e.touches[0].clientY;
-    if (dy < -10) { held = null; return; }
-    if (dy < 10) return;
-    if (tUsed) { if (held) e.preventDefault(); return; }
-    tUsed = true;
-    if (onDown(dy, true)) e.preventDefault();
-  }, { passive: false });
-
-  // Scrolling back above a diagram resets it, so it plays again on the next pass down.
-  addEventListener("scroll", () => {
-    figs.forEach((f) => {
-      if (f !== held && f.step && f.svg.getClientRects().length && f.svg.getBoundingClientRect().top > innerHeight) clear(f);
-    });
-  }, { passive: true });
+  layout();
+  addEventListener("resize", () => { layout(); kick(); });
+  document.fonts?.ready.then(() => { layout(); lenis?.resize(); dispatchEvent(new Event("resize")); });
+  // Printing shows every trace lit.
+  addEventListener("beforeprint", () => scenes.forEach((sc) => sc.traces.forEach((t) => { t.s.style.strokeDashoffset = 0; t.f = 1; })));
 })();
