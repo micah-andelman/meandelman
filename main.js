@@ -2,9 +2,12 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // A note is the template's text, plus a photo when the template names one:
 // <template data-k="arm" data-photo="photos/otv-arm.jpg" data-alt="...">
-const noteHTML = (t) =>
-  t.innerHTML.trim() +
-  (t.dataset.photo ? `<img src="${t.dataset.photo}" alt="${t.dataset.alt || ""}" loading="lazy">` : "");
+const noteHTML = (t) => {
+  if (!t.dataset.photo) return t.innerHTML.trim();
+  const blk = t.closest("figure")?.querySelector(`.blk[data-k="${t.dataset.k}"]`);
+  const alt = t.dataset.alt || (blk ? "Photo: " + blk.getAttribute("aria-label") : "");
+  return t.innerHTML.trim() + `<img src="${t.dataset.photo}" alt="${alt}" loading="lazy">`;
+};
 
 // A copper pulse that runs along a trace in its direction of travel (traces are drawn source to sink).
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -442,4 +445,74 @@ onScroll();
     root.classList.remove("scope-pending");
   }
   h1.addEventListener("dblclick", () => { if (!REDUCED && !h1.querySelector(".scope")) trace(); });
+})();
+
+// Scroll signal flow: as a diagram scrolls into view, copper fills its traces left to right
+// (inputs, then controller outputs). Once it's fully in view, one pulse runs down every trace.
+(() => {
+  if (REDUCED) return;
+  const pathLen = (d) => {
+    const tok = d.match(/[MHVL]|-?[\d.]+/g);
+    let x = 0, y = 0, cmd = "", len = 0, x0 = null;
+    for (let i = 0; i < tok.length; ) {
+      if (/[MHVL]/.test(tok[i])) cmd = tok[i++];
+      const px = x, py = y;
+      if (cmd === "H") x = +tok[i++];
+      else if (cmd === "V") y = +tok[i++];
+      else { x = +tok[i++]; y = +tok[i++]; }
+      if (cmd === "M") x0 ??= x;
+      else len += Math.hypot(x - px, y - py);
+    }
+    return { len, x0 };
+  };
+  const figs = [...document.querySelectorAll("[data-diagram]")].map((fig) => {
+    const svg = fig.querySelector("svg");
+    const vbW = svg.viewBox.baseVal.width || 960;
+    const sigs = [...svg.querySelectorAll(".tr")].map((tr) => {
+      const { len, x0 } = pathLen(tr.getAttribute("d"));
+      const s = document.createElementNS(SVGNS, "path");
+      s.setAttribute("d", tr.getAttribute("d"));
+      s.setAttribute("class", "sig");
+      s.style.strokeDasharray = `${len} ${len}`;
+      s.style.strokeDashoffset = len;
+      tr.after(s);
+      return { tr, s, len, start: (x0 / vbW) * 0.55 };
+    });
+    return { fig, svg, sigs, fired: false };
+  });
+  const onePulse = (tr, delay) => {
+    const len = tr.getTotalLength();
+    const p = document.createElementNS(SVGNS, "path");
+    p.setAttribute("d", tr.getAttribute("d"));
+    p.setAttribute("class", "pulse");
+    p.style.strokeDasharray = `14 ${len + 14}`;
+    p.style.strokeDashoffset = 14;
+    tr.after(p);
+    p.animate([{ strokeDashoffset: 14 }, { strokeDashoffset: -len }],
+      { duration: Math.max(450, len * 2.6), delay, easing: "ease-in-out", fill: "backwards" })
+      .finished.then(() => p.remove(), () => p.remove());
+  };
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const vh = innerHeight;
+    figs.forEach((f) => {
+      if (!f.svg.getClientRects().length) return; // hidden (phone parts list)
+      const r = f.svg.getBoundingClientRect();
+      // 0 when the drawing's top reaches 95% of the screen, 1 when its top reaches 40%.
+      const prog = Math.min(1, Math.max(0, (vh * 0.95 - r.top) / (vh * 0.55)));
+      f.sigs.forEach(({ s, len, start }) => {
+        const p = Math.min(1, Math.max(0, (prog - start) / 0.45));
+        s.style.strokeDashoffset = len * (1 - p);
+      });
+      if (prog >= 1 && !f.fired) {
+        f.fired = true;
+        f.sigs.forEach(({ tr, start }) => onePulse(tr, start * 900));
+      } else if (prog === 0) f.fired = false;
+    });
+  };
+  const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener("scroll", req, { passive: true });
+  addEventListener("resize", req);
+  update();
 })();
