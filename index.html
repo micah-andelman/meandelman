@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Micah Andelman, electrical engineering, University of Maryland</title>
+<meta name="description" content="Micah Andelman studies electrical engineering at the University of Maryland. Autonomous robots, personal agents and hardware, with block diagrams of how each one works.">
+<meta property="og:title" content="Micah Andelman">
+<meta property="og:description" content="Electrical engineering, University of Maryland, class of 2030. Robots, agents and hardware.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#work">Skip to projects</a>
+
+<header class="top">
+  <a class="mark" href="#">Micah Andelman</a>
+  <nav aria-label="Sections">
+    <a href="#work">Work</a>
+    <a href="#experience">Experience</a>
+    <a href="resume.pdf">Résumé</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="name">
+    <h1 id="name">Micah<br>Andelman</h1>
+    <div class="hero-trace" aria-hidden="true"><i class="line"></i><i class="via"></i></div>
+    <div class="hero-foot">
+      <div class="who">
+        <p>Electrical engineering, University of Maryland, class of 2030.</p>
+        <p>Electrical and software lead on ENES100 team H2Woah. Autonomous subteam, Terps Racing EV.</p>
+      </div>
+      <ol class="index" aria-label="Projects">
+        <li><a href="#otv"><span>H2Woah OTV</span><span class="yr">2026</span></a></li>
+        <li><a href="#pluto"><span>Pluto</span><span class="yr">2026</span></a></li>
+        <li><a href="#glasses"><span>Macro-tracking glasses</span><span class="yr">2026</span></a></li>
+        <li><a href="#nutrition"><span>Fast food nutrition calculator</span><span class="yr">2026</span></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <div id="work">
+
+  <!-- ================= OTV ================= -->
+  <article class="project" id="otv" aria-labelledby="otv-t">
+    <div class="p-head">
+      <h2 id="otv-t">H2Woah OTV</h2>
+      <dl class="meta">
+        <div><dt>When</dt><dd>Fall 2026</dd></div>
+        <div><dt>Role</dt><dd>Electrical and software lead</dd></div>
+        <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. It finds itself in the arena from an overhead camera, hugs a wall past the obstacles, threads the limbo gap, then lowers an arm to measure the water's depth, check it for pollution and pump a sample.</p>
+      <p>I wire the robot and own its code. Teammates write each subsystem as its own Arduino sketch; I port them into one codebase, fix what breaks, and test it in ENES100's browser simulator before it ever touches the hardware. The same source builds for both, behind one flag.</p>
+      <dl class="specs">
+        <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
+        <div><dt>1,620</dt><dd>lines of firmware</dd></div>
+        <div><dt>7</dt><dd>bench tests, one per subsystem</dd></div>
+      </dl>
+    </div>
+
+    <figure class="diagram" data-diagram>
+      <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
+        <defs>
+          <pattern id="grid-a" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" /></pattern>
+        </defs>
+        <rect class="grid" width="960" height="440" fill="url(#grid-a)" />
+
+        <!-- traces (drawn under blocks) -->
+        <path class="tr" data-k="vision"  d="M240,68 H300 V150 H380" />
+        <path class="tr" data-k="front"   d="M240,158 H320 V190 H380" />
+        <path class="tr" data-k="depth"   d="M240,248 H320 V230 H380" />
+        <path class="tr" data-k="color"   d="M240,338 H300 V270 H380" />
+        <path class="tr" data-k="drive"   d="M580,150 H660 V68 H720" />
+        <path class="tr" data-k="drive"   d="M580,190 H640 V158 H720" />
+        <path class="tr" data-k="arm"     d="M580,230 H640 V248 H720" />
+        <path class="tr" data-k="pump"    d="M580,270 H660 V338 H720" />
+        <path class="tr power" data-k="power" d="M580,398 H690 V68 H720" />
+        <path class="tr power" data-k="power" d="M690,158 H720" />
+
+        <!-- pin labels at the MCU -->
+        <g class="pins" aria-hidden="true">
+          <text x="372" y="145" text-anchor="end">Wi-Fi</text>
+          <text x="372" y="185" text-anchor="end">D2 A4</text>
+          <text x="372" y="225" text-anchor="end">D7 D8</text>
+          <text x="372" y="265" text-anchor="end">×6</text>
+          <text x="588" y="145">D3 D5</text>
+          <text x="588" y="185">D6 D9</text>
+          <text x="588" y="225">D11 A2</text>
+          <text x="588" y="265">D10</text>
+        </g>
+
+        <!-- blocks -->
+        <g class="blk" data-k="vision" tabindex="0" role="button" aria-label="Overhead vision">
+          <rect x="40" y="40" width="200" height="56" /><text x="56" y="64">Overhead vision</text><text class="sub" x="56" y="84">ArUco marker, over Wi-Fi</text></g>
+        <g class="blk" data-k="front" tabindex="0" role="button" aria-label="Front ultrasonic sensor">
+          <rect x="40" y="130" width="200" height="56" /><text x="56" y="154">Front ultrasonic</text><text class="sub" x="56" y="174">HC-SR04, obstacles</text></g>
+        <g class="blk" data-k="depth" tabindex="0" role="button" aria-label="Arm ultrasonic sensor">
+          <rect x="40" y="220" width="200" height="56" /><text x="56" y="244">Arm ultrasonic</text><text class="sub" x="56" y="264">HC-SR04, water depth</text></g>
+        <g class="blk" data-k="color" tabindex="0" role="button" aria-label="Color sensor">
+          <rect x="40" y="310" width="200" height="56" /><text x="56" y="334">Color sensor</text><text class="sub" x="56" y="354">Pollution check</text></g>
+
+        <g class="blk mcu" data-k="mcu" tabindex="0" role="button" aria-label="Arduino UNO R4 WiFi">
+          <rect x="380" y="120" width="200" height="200" /><text x="396" y="148">Arduino</text><text x="396" y="170">UNO R4 WiFi</text><text class="sub" x="396" y="300">1,620 lines of C++</text></g>
+
+        <g class="blk" data-k="drive" tabindex="0" role="button" aria-label="Motor drivers">
+          <rect x="720" y="40" width="200" height="56" /><text x="736" y="64">DRV8871, left</text><text class="sub" x="736" y="84">Drive motor</text></g>
+        <g class="blk" data-k="drive" tabindex="0" role="button" aria-label="Motor drivers">
+          <rect x="720" y="130" width="200" height="56" /><text x="736" y="154">DRV8871, right</text><text class="sub" x="736" y="174">Drive motor</text></g>
+        <g class="blk" data-k="arm" tabindex="0" role="button" aria-label="Sampling arm">
+          <rect x="720" y="220" width="200" height="56" /><text x="736" y="244">Sampling arm</text><text class="sub" x="736" y="264">2 × SG90 servo</text></g>
+        <g class="blk" data-k="pump" tabindex="0" role="button" aria-label="Pump">
+          <rect x="720" y="310" width="200" height="56" /><text x="736" y="334">Pump</text><text class="sub" x="736" y="354">MOSFET switched</text></g>
+
+        <g class="blk power" data-k="power" tabindex="0" role="button" aria-label="Battery">
+          <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Drive power</text></g>
+      </svg>
+      <figcaption>
+        <p class="cap" data-default="Select a block to see what it does and how it's wired.">Select a block to see what it does and how it's wired.</p>
+        <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and reports its position and heading over Wi-Fi. All navigation runs on that.</template>
+        <template data-k="front">Watches for obstacles ahead so the robot can detour around them. Every distance is the median of several pings, so one bad echo can't stop the robot.</template>
+        <template data-k="depth">Measures down to the water from a known height. Depth is that height minus the distance to the surface.</template>
+        <template data-k="color">Reads the water's color through filtered channels to flag pollution. It needs six pins, the most of any subsystem.</template>
+        <template data-k="mcu">One codebase, two targets: a build flag switches the same C++ between the real robot and ENES100's browser simulator. CI compiles both on every push.</template>
+        <template data-k="drive">Two DRV8871 H-bridges. PWM is capped at 153 of 255, because the 6 V motors run from a 9.6 V pack.</template>
+        <template data-k="arm">Two SG90 servos move together, one degree at a time, so their current spikes don't brown out the shared 5 V rail.</template>
+        <template data-k="pump">A MOSFET on D10 switches the pump that pulls the water sample.</template>
+        <template data-k="power">A 9.6 V pack feeds the motor drivers directly. The logic runs from the Arduino's regulated supply.</template>
+      </figcaption>
+    </figure>
+  </article>
+
+  <!-- ================= PLUTO ================= -->
+  <article class="project" id="pluto" aria-labelledby="pluto-t">
+    <div class="p-head">
+      <h2 id="pluto-t">Pluto</h2>
+      <dl class="meta">
+        <div><dt>When</dt><dd>2026 to now</dd></div>
+        <div><dt>Role</dt><dd>Solo, successor to Mercury</dd></div>
+        <div><dt>Built with</dt><dd>Python, Claude Code, Telegram, Google APIs, Fly.io</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">A personal agent I text on Telegram. Claude Code runs headless on a server with its own tools for my calendar, email, Canvas, grades and the campus buses. It sends a morning brief, an evening check-in and a Sunday review.</p>
+      <p>Most of the work is in the tools, not the prompt. Each one answers a single question carefully: a guessed exam date never reads like a confirmed one, an unknown room comes back as unknown, and a bus has to beat walking by five minutes before it's suggested.</p>
+      <dl class="specs">
+        <div><dt>36</dt><dd>tool modules</dd></div>
+        <div><dt>24</dt><dd>offline test suites, run on every push</dd></div>
+        <div><dt>82</dt><dd>commits</dd></div>
+      </dl>
+    </div>
+
+    <figure class="diagram" data-diagram>
+      <svg viewBox="0 0 960 420" role="group" aria-label="Block diagram of Pluto: phone and location on the left, the agent in the middle, its tools on the right">
+        <rect class="grid" width="960" height="420" fill="url(#grid-a)" />
+
+        <path class="tr" data-k="phone"    d="M210,190 H330" />
+        <path class="tr" data-k="location" d="M210,330 H270 V250 H330" />
+        <path class="tr" data-k="schedule" d="M460,96 V140" />
+        <path class="tr" data-k="calendar" d="M590,170 H650 V52 H720" />
+        <path class="tr" data-k="gmail"    d="M590,190 H665 V106 H720" />
+        <path class="tr" data-k="canvas"   d="M590,210 H680 V160 H720" />
+        <path class="tr" data-k="grades"   d="M590,230 H690 V214 H720" />
+        <path class="tr" data-k="planner"  d="M590,250 H690 V268 H720" />
+        <path class="tr" data-k="transit"  d="M590,270 H680 V322 H720" />
+        <path class="tr" data-k="places"   d="M590,290 H665 V376 H720" />
+
+        <g class="blk" data-k="phone" tabindex="0" role="button" aria-label="iPhone, Telegram">
+          <rect x="40" y="160" width="170" height="60" /><text x="56" y="186">iPhone</text><text class="sub" x="56" y="206">Telegram</text></g>
+        <g class="blk" data-k="location" tabindex="0" role="button" aria-label="Location">
+          <rect x="40" y="300" width="170" height="60" /><text x="56" y="326">Location</text><text class="sub" x="56" y="346">OwnTracks fixes</text></g>
+
+        <g class="blk" data-k="schedule" tabindex="0" role="button" aria-label="Schedule">
+          <rect x="330" y="40" width="260" height="56" /><text x="346" y="64">Schedule</text><text class="sub" x="346" y="84">Brief, check-in, review</text></g>
+
+        <g class="blk mcu" data-k="agent" tabindex="0" role="button" aria-label="Pluto agent">
+          <rect x="330" y="140" width="260" height="170" /><text x="346" y="168">Pluto</text><text class="sub" x="346" y="190">Claude Code, headless</text><text class="sub" x="346" y="290">on Fly.io</text></g>
+
+        <g class="blk" data-k="calendar" tabindex="0" role="button" aria-label="Calendar tool"><rect x="720" y="30" width="200" height="44" /><text x="736" y="58">Calendar</text></g>
+        <g class="blk" data-k="gmail" tabindex="0" role="button" aria-label="Email tool"><rect x="720" y="84" width="200" height="44" /><text x="736" y="112">Email</text></g>
+        <g class="blk" data-k="canvas" tabindex="0" role="button" aria-label="Canvas sync"><rect x="720" y="138" width="200" height="44" /><text x="736" y="166">Canvas sync</text></g>
+        <g class="blk" data-k="grades" tabindex="0" role="button" aria-label="Grade projection"><rect x="720" y="192" width="200" height="44" /><text x="736" y="220">Grade projection</text></g>
+        <g class="blk" data-k="planner" tabindex="0" role="button" aria-label="Study planner"><rect x="720" y="246" width="200" height="44" /><text x="736" y="274">Study planner</text></g>
+        <g class="blk" data-k="transit" tabindex="0" role="button" aria-label="Campus buses"><rect x="720" y="300" width="200" height="44" /><text x="736" y="328">Campus buses</text></g>
+        <g class="blk" data-k="places" tabindex="0" role="button" aria-label="Campus map"><rect x="720" y="354" width="200" height="44" /><text x="736" y="382">Campus map</text></g>
+      </svg>
+      <figcaption>
+        <p class="cap" data-default="Select a block to see what it does.">Select a block to see what it does.</p>
+        <template data-k="phone">I text it like a person. Replies, briefs and reminders come back in the same Telegram chat.</template>
+        <template data-k="location">The phone posts location fixes to the one inbound route the bot has. It fails closed: with no token configured it refuses every request.</template>
+        <template data-k="schedule">A morning brief, an evening check-in and a Sunday review, sent without being asked.</template>
+        <template data-k="agent">Claude Code running headless on my subscription, with the official Telegram channel plugin. If the subscription window runs out it falls back to an API key, then switches back.</template>
+        <template data-k="calendar">Creates, moves and searches events, and finds free time between classes.</template>
+        <template data-k="gmail">Triage and digests. It extracts dates conservatively, so a rescheduled exam or an extension that never reached the calendar still gets surfaced.</template>
+        <template data-k="canvas">Every six hours it mirrors new Canvas assignments onto my calendar, moves them if the deadline moves, and sends one summary.</template>
+        <template data-k="grades">Category-weighted grades that leave ungraded categories out instead of counting them as zero, plus what I need on the remaining work.</template>
+        <template data-k="planner">Plans study blocks into free calendar gaps, caps the daily load, and reports what didn't fit instead of quietly dropping it.</template>
+        <template data-k="transit">Compares walking, biking and the Shuttle-UM buses that are actually running, from live vehicle positions rather than a timetable.</template>
+        <template data-k="places">Building codes and coordinates from UMD's own facilities map. An ambiguous name comes back as both candidates.</template>
+      </figcaption>
+    </figure>
+  </article>
+
+  <!-- ================= GLASSES ================= -->
+  <article class="project minor" id="glasses" aria-labelledby="glasses-t">
+    <div class="p-head">
+      <h2 id="glasses-t">Macro-tracking glasses</h2>
+      <dl class="meta">
+        <div><dt>When</dt><dd>Fall 2026, in progress</dd></div>
+        <div><dt>Role</dt><dd>Hardware lead, with a CS partner</dd></div>
+        <div><dt>Built with</dt><dd>Camera glasses, Wi-Fi, iPhone app</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">DIY camera glasses that log what you eat. They stream low-resolution video to an iPhone, and when the phone spots a nutrition label it asks the glasses for one high-resolution still to read.</p>
+    </div>
+    <figure class="diagram flow" data-diagram>
+      <svg viewBox="0 0 960 150" role="group" aria-label="Flow: glasses stream to the phone, the phone detects a label, the glasses capture a still, the macros are logged">
+        <path class="tr" data-k="stream"  d="M200,75 H270" />
+        <path class="tr" data-k="detect"  d="M450,75 H520" />
+        <path class="tr" data-k="still"   d="M700,75 H770" />
+        <g class="blk" data-k="cam" tabindex="0" role="button" aria-label="Camera glasses"><rect x="20" y="45" width="180" height="60" /><text x="36" y="71">Camera glasses</text><text class="sub" x="36" y="91">Low-res stream</text></g>
+        <g class="blk" data-k="stream" tabindex="0" role="button" aria-label="iPhone app"><rect x="270" y="45" width="180" height="60" /><text x="286" y="71">iPhone app</text><text class="sub" x="286" y="91">Watches for labels</text></g>
+        <g class="blk" data-k="detect" tabindex="0" role="button" aria-label="High-resolution still"><rect x="520" y="45" width="180" height="60" /><text x="536" y="71">High-res still</text><text class="sub" x="536" y="91">One frame, on request</text></g>
+        <g class="blk" data-k="still" tabindex="0" role="button" aria-label="Macros logged"><rect x="770" y="45" width="170" height="60" /><text x="786" y="71">Macros logged</text><text class="sub" x="786" y="91">Calories, protein</text></g>
+      </svg>
+      <figcaption>
+        <p class="cap" data-default="Select a step.">Select a step.</p>
+        <template data-k="cam">I'm building the glasses: camera, power and Wi-Fi in a frame you'd actually wear.</template>
+        <template data-k="stream">Streaming stays low resolution, so it's light on the battery and the network.</template>
+        <template data-k="detect">Only a detected label earns a full-resolution frame, which is what makes the small print readable.</template>
+        <template data-k="still">The phone reads the label and logs the meal. This step is still being built.</template>
+      </figcaption>
+    </figure>
+  </article>
+
+  <!-- ================= NUTRITION ================= -->
+  <article class="project minor" id="nutrition" aria-labelledby="nutrition-t">
+    <div class="p-head">
+      <h2 id="nutrition-t">Fast food nutrition calculator</h2>
+      <dl class="meta">
+        <div><dt>When</dt><dd>Summer 2026</dd></div>
+        <div><dt>Role</dt><dd>Solo</dd></div>
+        <div><dt>Built with</dt><dd>Claude Code, Vercel</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">A searchable calculator for fast food. I converted each chain's official nutrition PDFs into structured data, then added fuzzy search, chain filters and drink modifiers.</p>
+      <dl class="specs">
+        <div><dt>2,051</dt><dd>menu items</dd></div>
+        <div><dt>15+</dt><dd>chains</dd></div>
+      </dl>
+    </div>
+  </article>
+
+  </div>
+
+  <!-- ================= EXPERIENCE ================= -->
+  <section class="experience" id="experience" aria-labelledby="exp-t">
+    <h2 id="exp-t">Experience</h2>
+    <table>
+      <caption class="sr">Work experience and activities</caption>
+      <tbody>
+        <tr><th scope="row">Terps Racing EV</th><td>Autonomous subteam</td><td class="when">Oct 2026 to now</td></tr>
+        <tr><th scope="row">CISteks Technology Group</th><td>Sales automation intern. Replaced manual cold calling with automated email outreach, and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
+        <tr><th scope="row">Independent math tutor</th><td>7th-grade math through calculus and SAT Math, with my own clients and curriculum.</td><td class="when">2025 to now</td></tr>
+        <tr><th scope="row">B2Q Associates</th><td>Engineering support intern on commercial HVAC energy-efficiency assessments.</td><td class="when">Summer 2024</td></tr>
+        <tr><th scope="row">Bedford High School</th><td>Varsity soccer captain. President of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="contact" id="contact" aria-labelledby="contact-t">
+    <h2 id="contact-t">Get in touch</h2>
+    <p>I'm looking for a summer 2027 internship in electrical, embedded or robotics work.</p>
+    <ul>
+      <li><a href="mailto:micah.andelman@gmail.com">micah.andelman@gmail.com</a></li>
+      <li><a href="https://www.linkedin.com/in/micah-andelman">LinkedIn</a></li>
+      <li><a href="resume.pdf">Résumé (PDF)</a></li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Micah Andelman, College Park and Bedford.</p>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>
