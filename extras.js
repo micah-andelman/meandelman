@@ -61,34 +61,54 @@
     pop.style.right = Math.max(12, innerWidth - r.right - 6) + "px";
   };
   const openPop = (open) => {
+    if (pop.hidden === !open) return;
     pop.hidden = !open;
     eggBtn.setAttribute("aria-expanded", open);
-    if (open) { placePop(); markNew(false); store.set("eggNew", 0); }
+    if (open) {
+      placePop(); markNew(false); store.set("eggNew", 0);
+      pop.querySelector("button")?.focus({ preventScroll: true });
+    } else if (pop.contains(document.activeElement)) eggBtn.focus({ preventScroll: true });
   };
   if (eggBtn) {
     eggBtn.addEventListener("click", (e) => { e.stopPropagation(); openPop(pop.hidden); });
     document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target)) openPop(false); });
     addEventListener("resize", () => !pop.hidden && placePop());
   }
-  const scrollToEl = (target, block = "start") => {
+  // Scroll through Lenis when it's running (main.js), so the two never fight over the page.
+  const smooth = () => (typeof lenis !== "undefined" && lenis) || null;
+  const glide = (y) => {
+    const l = smooth();
+    if (l) l.scrollTo(y, { duration: 1.2 });
+    else scrollTo({ top: y, behavior: REDUCED ? "auto" : "smooth" });
+  };
+  const head = () => $(".top")?.offsetHeight || 0;
+  const scrollToEl = (target) => {
     if (!target) return;
-    target.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block });
+    // A pinned diagram: go to the end of its scene, where every trace is lit.
+    const scene = target.closest(".scene");
+    if (scene && scene.offsetHeight > target.offsetHeight + 40) {
+      const r = scene.getBoundingClientRect();
+      return glide(scrollY + r.top + scene.offsetHeight - target.offsetHeight - innerHeight * 0.1);
+    }
+    glide(scrollY + target.getBoundingClientRect().top - head() - 16);
   };
   pop.addEventListener("click", (e) => {
     const b = e.target.closest("[data-egg]");
     if (!b) return;
     openPop(false);
     const id = b.dataset.egg;
-    if (id === "intro") {
-      scrollTo({ top: 0, behavior: REDUCED ? "auto" : "smooth" });
-      setTimeout(() => $("#name")?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })), REDUCED ? 0 : 700);
-    } else if (id === "probe") scrollToEl($("#otv [data-diagram]"), "center");
+    if (id === "intro") replayIntro();
+    else if (id === "probe") scrollToEl($("#otv [data-diagram]"));
     else if (id === "heat") setHeat(!document.documentElement.classList.contains("thermal"));
     else if (id === "serial") openMonitor(true);
     else if (id === "pluto") { openMonitor(true); run("status pluto"); }
     else if (id === "print") print();
     else if (id === "open") location.href = "/open-circuit";
   });
+  const replayIntro = () => {
+    glide(0);
+    setTimeout(() => $("#name")?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })), REDUCED ? 0 : 1000);
+  };
   $("#name")?.addEventListener("dblclick", () => find("intro"));
   addEventListener("beforeprint", () => find("print"));
 
@@ -207,6 +227,15 @@
     probe.style.left = left + "px";
     probe.style.top = top + "px";
   };
+  let probedTr = null;
+  const hideProbe = (tr) => {
+    probe.hidden = true;
+    probeAnim?.cancel();
+    (tr || probedTr)?.classList.remove("probed");
+    probedTr = null;
+  };
+  // The page can scroll out from under a still pointer, so scrolling puts the probe away.
+  addEventListener("scroll", () => { if (!probe.hidden) hideProbe(); }, { passive: true });
   $$("[data-diagram] svg").forEach((svg) => {
     const before = svg.querySelector(".blk");
     svg.querySelectorAll(".tr").forEach((tr) => {
@@ -214,9 +243,9 @@
       hit.setAttribute("d", tr.getAttribute("d"));
       hit.setAttribute("class", "hit");
       svg.insertBefore(hit, before);
-      hit.addEventListener("mouseenter", (e) => { if (showProbe(tr.dataset.k, e.clientX, e.clientY)) tr.classList.add("probed"); });
+      hit.addEventListener("mouseenter", (e) => { if (showProbe(tr.dataset.k, e.clientX, e.clientY)) { tr.classList.add("probed"); probedTr = tr; } });
       hit.addEventListener("mousemove", (e) => moveProbe(e.clientX, e.clientY));
-      hit.addEventListener("mouseleave", () => { probe.hidden = true; probeAnim?.cancel(); tr.classList.remove("probed"); });
+      hit.addEventListener("mouseleave", () => hideProbe(tr));
     });
   });
 
@@ -240,6 +269,7 @@
   dlg.innerHTML = `<div class="cvh"><div><b></b><span>From the OTV repository. Real code, trimmed to the relevant functions.</span></div><button type="button" class="x" aria-label="Close">Close</button></div><div class="cvb" data-lenis-prevent></div>`;
   document.body.appendChild(dlg);
   dlg.querySelector(".x").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("close", () => smooth()?.start());
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
   const openCode = (k) => {
     const t = $(`template[data-code="${k}"]`);
@@ -254,6 +284,7 @@
       return `<div class="seg"><p class="file">${s.dataset.file}, line ${start}</p><pre>${lines.map((ln, i) => `<span class="ln">${start + i}</span>${hl(ln)}`).join("\n")}</pre></div>`;
     }).join("");
     dlg.showModal();
+    smooth()?.stop();
     dlg.querySelector(".cvb").scrollTop = 0;
   };
   document.addEventListener("click", (e) => {
@@ -274,7 +305,7 @@
     fig.querySelector("svg").after(box);
     const cv = box.querySelector("canvas");
     const ctx = cv.getContext("2d");
-    const WIN = 5000;
+    let WIN = 5000;
     let hist = [], W = 0, Hh = 0, dpr = 1, t0 = null;
     const ROW = 22, TOP = 20;
     const size = () => {
@@ -356,7 +387,7 @@
             ctx.globalAlpha = 1;
           } else if (key === "front" || key === "arm" || key === "servo") {
             const period = key === "servo" ? 20 : key === "arm" ? 60 : 60;
-            ctx.strokeStyle = key === "servo" ? mask : cu;
+            ctx.strokeStyle = cu;
             for (let t = Math.ceil(a.t / period) * period; t < b.t; t += period) {
               const x = X(t);
               if (x < LW) continue;
@@ -393,6 +424,19 @@
     addEventListener("resize", size);
     new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
     size();
+    // With reduced motion the replay doesn't animate, so show one finished run as a still capture.
+    if (REDUCED) {
+      const seg = [[0, 1100, 0], [1100, 1350, 0.3], [1350, 3550, "s"], [3550, 3800, -0.3], [3800, 6200, 0.02], [6200, 6450, -0.3], [6450, 8800, 0]];
+      seg.forEach(([a, b, turn]) => {
+        for (let t = a; t < b; t += 16) {
+          hist.push(sample(turn === "s" ? { t, sampling: true, held: t - a } : { t, turn }));
+        }
+      });
+      hist.push(sample({ t: 8800, done: true }));
+      t0 = 0;
+      WIN = 8800;
+      draw();
+    }
   })();
 
   // ---------------------------------------------------------------- Pluto status (demo endpoint)
@@ -430,7 +474,7 @@
       print_("Target: PORTFOLIO", "dim");
       print_("Type help to see what this board understands.");
     }
-    setTimeout(() => inp.focus(), 0);
+    inp.focus({ preventScroll: true });
   };
   const go = (sel) => { openMonitor(false); scrollToEl($(sel)); };
   const CMDS = {
@@ -487,7 +531,7 @@
       print_(`Theme: ${a}.`);
     },
     replay: (a) => {
-      if (a === "intro") { print_("Replaying the intro."); openMonitor(false); scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => $("#name")?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })), 700); }
+      if (a === "intro") { print_("Replaying the intro."); openMonitor(false); replayIntro(); }
       else if (a === "route") { print_("Replaying the route."); go("#otv-route"); setTimeout(() => $("#otv-route .replay")?.click(), 600); }
       else print_("replay: intro or route", "err");
     },

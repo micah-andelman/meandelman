@@ -554,8 +554,8 @@ html.thermal .heatkey { display: flex; }
 .probe p { margin: 8px 0 0; line-height: 1.35; color: #aab5b0; }
 
 /* code viewer */
-.code-btn { all: unset; cursor: pointer; margin-left: 4px; color: var(--copper); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-.code-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.code-btn, .parts button.code-btn { all: unset; cursor: pointer; display: inline; width: auto; margin-left: 4px; color: var(--copper); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.code-btn:focus-visible, .parts button.code-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .codeview { width: min(820px, calc(100vw - 32px)); max-height: min(80vh, 760px); padding: 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
 .codeview::backdrop { background: rgba(8, 12, 10, .55); }
 .codeview[open] { display: flex; flex-direction: column; }
@@ -604,3 +604,9 @@ html.thermal .heatkey { display: flex; }
   .la, .probe, .serial, .eggs, .codeview, .code-btn, .tools, .heatkey, .status { display: none !important; }
 }
 @media (max-width: 760px) { .la { padding: 0 16px; } }
+
+/* ---------- audit fixes ---------- */
+/* Hash links (meandelman.com/#otv-route) land below the sticky header. */
+#otv-route, #experience, #contact { scroll-margin-top: 76px; }
+@media (max-width: 760px) { .cvb pre { font-size: 12.5px; } .cvh { padding: 12px 14px; } .cvb pre, .cvb .file { padding-left: 14px; margin-left: 0; } }
+@media print { .parts { margin-top: 14px; } }
