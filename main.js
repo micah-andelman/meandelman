@@ -3,10 +3,13 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // A note is the template's text, plus a photo when the template names one:
 // <template data-k="arm" data-photo="photos/otv-arm.jpg" data-alt="...">
 const noteHTML = (t) => {
-  if (!t.dataset.photo) return t.innerHTML.trim();
-  const blk = t.closest("figure")?.querySelector(`.blk[data-k="${t.dataset.k}"]`);
+  const k = t.dataset.k;
+  const code = t.parentElement.querySelector(`template[data-code="${k}"]`)
+    ? ` <button class="code-btn" type="button" data-code="${k}">View code</button>` : "";
+  if (!t.dataset.photo) return t.innerHTML.trim() + code;
+  const blk = t.closest("figure")?.querySelector(`.blk[data-k="${k}"]`);
   const alt = t.dataset.alt || (blk ? "Photo: " + blk.getAttribute("aria-label") : "");
-  return t.innerHTML.trim() + `<img src="${t.dataset.photo}" alt="${alt}" loading="lazy">`;
+  return t.innerHTML.trim() + code + `<img src="${t.dataset.photo}" alt="${alt}" loading="lazy">`;
 };
 
 // A copper pulse that runs along a trace in its direction of travel (traces are drawn source to sink).
@@ -64,7 +67,9 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   const cap = fig.querySelector(".cap");
   const notes = {};
   fig.querySelectorAll("template[data-k]").forEach((t) => (notes[t.dataset.k] = noteHTML(t)));
-  let pinned = null;
+  let pinned = null, leaveT = 0;
+  cap.addEventListener("mouseenter", () => clearTimeout(leaveT));
+  cap.addEventListener("mouseleave", () => { clearTimeout(leaveT); leaveT = setTimeout(() => show(pinned), 400); });
 
   const show = (k) => {
     fig.querySelectorAll(".on").forEach((el) => el.classList.remove("on"));
@@ -84,8 +89,9 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
 
   fig.querySelectorAll(".blk").forEach((b) => {
     const k = b.dataset.k;
-    b.addEventListener("mouseenter", () => show(k));
-    b.addEventListener("mouseleave", () => show(pinned));
+    b.addEventListener("mouseenter", () => { clearTimeout(leaveT); show(k); });
+    // Wait a moment before clearing the note, so the pointer can reach its "View code" button.
+    b.addEventListener("mouseleave", () => { clearTimeout(leaveT); leaveT = setTimeout(() => show(pinned), 900); });
     b.addEventListener("focus", () => show(k));
     b.addEventListener("blur", () => show(pinned));
     b.addEventListener("click", () => {
@@ -242,6 +248,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       return;
     }
     let heading = angleAt(route, 2), last = performance.now(), d = 0, held = 0;
+    fig.dispatchEvent(new CustomEvent("otvstart"));
     const tick = (now) => {
       const dt = Math.min(250, now - last);
       last = now;
@@ -256,6 +263,11 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       heading += Math.sign(step) * Math.min(Math.abs(step), dt * 0.35);
       place(route, d, heading);
       trail.style.strokeDashoffset = glow.style.strokeDashoffset = len - d;
+      // State for the logic analyzer (extras.js).
+      fig.dispatchEvent(new CustomEvent("otvtick", { detail: {
+        t: now, d, held, turn: dt ? step / dt : 0, done: d >= len,
+        sampling: d >= SAMPLE_AT && held > 0 && held < SAMPLE_MS,
+      } }));
       if (d < len) raf = requestAnimationFrame(tick);
       else which = 1 - which;
     };

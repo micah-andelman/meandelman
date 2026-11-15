@@ -46,7 +46,11 @@
     <a href="resume.pdf">Résumé</a>
     <a href="#contact">Contact</a>
   </nav>
-  <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"></span></span></button>
+  <div class="tools">
+    <button class="heat" type="button" aria-pressed="false" aria-label="Thermal view" title="Thermal view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0Z" /><circle cx="12" cy="17" r="1.7" /><path class="lvl" d="M12 15.3V9" /></svg></button>
+    <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"></span></span></button>
+    <button class="egg" type="button" aria-expanded="false" aria-controls="eggs" aria-label="Things to find" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.3 0 6 5.2 6 9.5a6 6 0 0 1-12 0c0-4.3 2.7-9.5 6-9.5Z" /></svg></button>
+  </div>
 </header>
 
 <main>
@@ -163,6 +167,150 @@
         <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
         <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
         <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly. The Arduino runs from its own regulated supply.</template>
+        <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
+// heading error, clamped to MIN_TURN_PWM..MAX_PWM.
+// Positive error = counter-clockwise = left wheel back, right forward.
+bool turnTo(float heading) {
+  unsigned long start = millis();
+  while (true) {
+    if (!waitForVision(VISION_LOST_MS)) {
+      stopDrive();
+      logMsg(&quot;turnTo: vision lost&quot;);
+      return false;
+    }
+    if (millis() - start &gt;= MOVE_TIMEOUT_MS) {
+      stopDrive();
+      logMsg(&quot;turnTo: timeout&quot;);
+      return false;
+    }
+
+    float err = wrapAngle(heading - Enes100.getTheta());
+    if (fabs(err) &lt;= TURN_TOL_RAD) {
+      stopDrive();
+      return true;
+    }
+
+    int pwm = constrain((int)(TURN_GAIN * fabs(err)), MIN_TURN_PWM, MAX_PWM);
+    if (err &gt; 0) setDrive(-pwm, pwm);
+    else setDrive(pwm, -pwm);
+    delay(LOOP_MS);
+  }
+}</code></template>
+        <template data-code="front"><code data-file="otv/nav.ino" data-start="128">  // Front HC-SR04: ping at most every US_PING_GAP_MS (old echoes), and
+  // only report an obstacle after FRONT_HITS_NEEDED close pings in a row.
+  // No echo (-1) = nothing in range = clear.
+  if (millis() - gFrontPingMs &lt; US_PING_GAP_MS) return false;
+  gFrontPingMs = millis();
+  float mm = pingMM(PIN_FRONT_US_TRIG, PIN_FRONT_US_ECHO);
+  if (mm &gt;= 0 &amp;&amp; mm &lt; FRONT_OBSTACLE_MM) gFrontHits++;
+  else gFrontHits = 0;
+  if (gFrontHits &lt; FRONT_HITS_NEEDED) return false;
+  gFrontHits = 0;  // consumed: the next stop needs fresh close pings
+  return true;</code><code data-file="otv/mission.ino" data-start="93">float pingMM(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  unsigned long duration = pulseIn(echoPin, HIGH, US_TIMEOUT_US);
+  if (duration == 0) return -1;
+  return US_MM_PER_US * duration / 2.0;
+}</code></template>
+        <template data-code="depth"><code data-file="otv/mission.ino" data-start="104">float readDistanceMM() {
+  float readings[US_SAMPLES];
+  int valid = 0;
+  for (int i = 0; i &lt; US_SAMPLES; i++) {
+    float mm = pingMM(PIN_US_TRIG, PIN_US_ECHO);
+    if (mm &gt;= 0) readings[valid++] = mm;
+    delay(US_PING_GAP_MS);
+  }
+  if (valid == 0) return -1;
+  return medianOf(readings, valid);
+}</code><code data-file="otv/mission.ino" data-start="70">// Median of the first n values (sorts v in place). Ignores outliers that
+// would drag an average off.
+static float medianOf(float *v, int n) {
+  for (int i = 1; i &lt; n; i++) {
+    float key = v[i];
+    int j = i - 1;
+    while (j &gt;= 0 &amp;&amp; v[j] &gt; key) {
+      v[j + 1] = v[j];
+      j--;
+    }
+    v[j + 1] = key;
+  }
+  if (n % 2 == 1) return v[n / 2];
+  return (v[n / 2 - 1] + v[n / 2]) / 2.0;
+}</code></template>
+        <template data-code="color"><code data-file="otv/mission.ino" data-start="131">static int readColorPW(int s2, int s3) {
+  digitalWrite(PIN_COLOR_S2, s2);
+  digitalWrite(PIN_COLOR_S3, s3);
+  float pws[COLOR_SAMPLES];
+  int valid = 0;
+  for (int i = 0; i &lt; COLOR_SAMPLES; i++) {
+    unsigned long pw = pulseIn(PIN_COLOR_OUT, LOW, COLOR_TIMEOUT_US);
+    if (pw &gt; 0) pws[valid++] = pw;
+  }
+  delay(COLOR_SETTLE_MS);
+  if (valid == 0) return 0;
+  return (int)medianOf(pws, valid);
+}</code><code data-file="otv/mission.ino" data-start="151">// Adiel&#x27;s rule: polluted if ANY channel&#x27;s pulse width is below the
+// threshold (a strong non-black color). Threshold is uncalibrated.
+// 0 = no reading on that channel, so it never counts as a color.
+static bool pwSeesColor(int pw) { return pw &gt; 0 &amp;&amp; pw &lt; COLOR_POLLUTED_THRESH; }</code></template>
+        <template data-code="mcu"><code data-file="otv/drive.ino" data-start="1">// Drive layer: the ONLY code that touches motor pins or Tank.
+// Navigation calls setDrive()/stopDrive() and nothing else, so this
+// file is the single switch point between simulator and robot.
+// PWM is -255..255 per side (+ = forward), clamped to +/-MAX_PWM.</code><code data-file="otv/drive.ino" data-start="6">#if SIM</code><code data-file="otv/drive.ino" data-start="14">void setDrive(int left, int right) {
+  Tank.setLeftMotorPWM(constrain(left, -MAX_PWM, MAX_PWM));
+  Tank.setRightMotorPWM(constrain(right, -MAX_PWM, MAX_PWM));
+}</code><code data-file="otv/drive.ino" data-start="23">#else</code><code data-file="otv/drive.ino" data-start="53">void setDrive(int left, int right) {
+  writeMotor(PIN_LEFT_IN1, PIN_LEFT_IN2, constrain(left, -MAX_PWM, MAX_PWM), LEFT_INVERT);
+  writeMotor(PIN_RIGHT_IN1, PIN_RIGHT_IN2, constrain(right, -MAX_PWM, MAX_PWM), RIGHT_INVERT);
+}</code></template>
+        <template data-code="drive"><code data-file="otv/drive.ino" data-start="24">// ---------------- Robot: one DRV8871 per motor ----------------
+// Forward = PWM on IN1, 0 on IN2. Reverse = the opposite.
+// Stop = both 0 (coast).
+//
+// analogWrite is used on BOTH pins in every state, including writing 0.
+// On the UNO R4, mixing digitalWrite and analogWrite on the same pin can
+// leave it stuck in PWM mode, so these pins never see digitalWrite.
+static void writeMotor(int in1, int in2, int pwm, bool invert) {
+  if (invert) pwm = -pwm;
+  if (pwm &gt; 0) {
+    analogWrite(in1, pwm);
+    analogWrite(in2, 0);
+  } else if (pwm &lt; 0) {
+    analogWrite(in1, 0);
+    analogWrite(in2, -pwm);
+  } else {
+    analogWrite(in1, 0);
+    analogWrite(in2, 0);
+  }
+}</code></template>
+        <template data-code="arm"><code data-file="otv/mission.ino" data-start="40">static void writeArm(int angle) {
+  armServo1.write(angle);
+  armServo2.write(SERVO2_MIRRORED ? 180 - angle : angle);
+}</code><code data-file="otv/mission.ino" data-start="45">// Sweep 1 degree at a time to limit current spikes on the shared 5 V rail.
+static void moveArmTo(int target) {
+  while (armAngle != target) {
+    armAngle += (target &gt; armAngle) ? 1 : -1;
+    writeArm(armAngle);
+    delay(SERVO_STEP_MS);
+  }
+}</code></template>
+        <template data-code="pump"><code data-file="otv/mission.ino" data-start="57">// ---- Pump (from Walter&#x27;s Arduino_Pump.ino) ----
+// Fixes: D10 MOSFET gate (D6 is the right motor); no fake trigger on D2
+// (D2 is the front ultrasonic TRIG). PUMP_ML_PER_S is still unmeasured.
+void pumpRunMs(unsigned long ms) {
+  digitalWrite(PIN_PUMP_GATE, HIGH);
+  delay(ms);
+  digitalWrite(PIN_PUMP_GATE, LOW);
+}</code><code data-file="otv/mission.ino" data-start="66">void pumpDispenseML(float ml) {
+  pumpRunMs((unsigned long)(ml / PUMP_ML_PER_S * 1000.0));
+}</code></template>
+        <template data-code="power"><code data-file="otv/config.h" data-start="121">// ---- Drive (DO NOT RAISE MAX_PWM without asking Micah) ----
+// 6 V motors on a 9.6 V pack: cap at 60% (0.60 * 255 = 153).
+const int  MAX_PWM      = 153;</code></template>
       </figcaption>
     </figure>
 
@@ -249,6 +397,7 @@
         <div><dt>When</dt><dd>2026 to now</dd></div>
         <div><dt>Role</dt><dd>Solo</dd></div>
         <div><dt>Built with</dt><dd>Python, Claude Code, Telegram, Google APIs, Fly.io</dd></div>
+        <div class="status"><dt>Status</dt><dd><i class="led" aria-hidden="true"></i>Checking</dd></div>
       </dl>
     </div>
     <div class="p-body">
@@ -381,5 +530,6 @@
 
 <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
 <script src="main.js" defer></script>
+<script src="extras.js" defer></script>
 </body>
 </html>

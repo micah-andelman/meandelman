@@ -497,3 +497,110 @@ html.lenis { scroll-behavior: auto; }
   .scene > .diagram { position: static; }
   .sig, .dots, .steps { display: none; }
 }
+
+/* ---------- header tools: thermal toggle, theme switch, egg ---------- */
+.tools { display: flex; align-items: center; gap: 12px; }
+.tools button.heat, .tools button.egg { all: unset; cursor: pointer; position: relative; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; color: var(--ink-3); -webkit-tap-highlight-color: transparent; transition: color .2s, opacity .2s; }
+.tools svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.tools .heat circle { fill: currentColor; stroke: none; }
+.tools .heat .lvl { stroke-width: 2.2; }
+.tools .heat:hover { color: var(--ink); }
+.tools .heat[aria-pressed="true"] { color: #f07a2a; }
+.tools button.egg { width: 16px; opacity: .4; }
+.tools .egg svg { width: 14px; height: 14px; }
+.tools .egg:hover, .tools .egg[aria-expanded="true"] { opacity: 1; color: var(--copper); }
+.tools .egg.new { opacity: .8; }
+.tools .egg.new::after { content: ""; position: absolute; top: 3px; right: -1px; width: 5px; height: 5px; border-radius: 50%; background: var(--copper); }
+.tools button.heat:focus-visible, .tools button.egg:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; opacity: 1; }
+@media (max-width: 760px) { .tools .heat { display: none !important; } .tools { gap: 10px; } }
+
+/* egg list */
+.eggs { position: fixed; z-index: 20; width: min(300px, calc(100vw - 24px)); padding: 14px 10px 8px; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
+.eggs .eh { display: flex; justify-content: space-between; margin: 0 6px 6px; font-size: 15px; font-weight: 600; }
+.eggs .eh span { font-weight: 400; color: var(--ink-3); }
+.eggs ul { margin: 0; padding: 0; list-style: none; }
+.eggs button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 12px 1fr; gap: 10px; width: 100%; padding: 7px 6px; border-radius: 5px; }
+.eggs button:hover, .eggs button:focus-visible { background: var(--board); }
+.eggs i { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+.eggs .got i { background: var(--copper); border-color: var(--copper); }
+.eggs b { display: block; font-size: 15px; font-weight: 500; }
+.eggs em { display: block; font-size: 13.5px; font-style: normal; color: var(--ink-3); }
+.eggs .got b { color: var(--ink-2); }
+
+/* thermal view: diagrams recolored by estimated heat */
+html.thermal .diagram svg { background: #0d0718; }
+html.thermal .diagram .grid { opacity: .18; }
+html.thermal .diagram .blk rect { fill: var(--h, #2a1446); stroke: color-mix(in srgb, var(--h, #2a1446) 55%, #fff); filter: drop-shadow(0 0 14px var(--h, transparent)); }
+html.thermal .diagram .blk text { fill: var(--hi, #fff6ec) !important; opacity: 1; }
+html.thermal .diagram .tr, html.thermal .diagram .sig { stroke: var(--h, #3a2356); }
+html.thermal .diagram .dots circle { fill: #ffe9a8; filter: none; }
+html.thermal .diagram .pad { fill: #2a1446; stroke: #5a3a7a; }
+html.thermal .diagram .fid .fc { stroke: #5a3a7a; }
+.heatkey { display: none; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; font-size: 14px; color: var(--ink-3); }
+html.thermal .heatkey { display: flex; }
+.heatkey i { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgb(22, 11, 54), rgb(96, 18, 110), rgb(190, 55, 82), rgb(240, 120, 32), rgb(250, 222, 92)); }
+.heatkey small { flex-basis: 100%; font-size: 13.5px; }
+
+/* signal probe */
+.hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path d='M2 22 9 15' stroke='%23e0965a' stroke-width='2.2' stroke-linecap='round'/><path d='M9 15 19 5l3 3-10 10z' fill='%23101614' stroke='%23e8ece8' stroke-width='1.5' stroke-linejoin='round'/></svg>") 2 22, crosshair; }
+.tr.probed { stroke: var(--copper); stroke-width: 3; }
+.probe { position: fixed; z-index: 30; width: 250px; padding: 10px 12px 12px; background: #0b100e; color: #cfe3d8; border: 1px solid #2c3833; border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .35); pointer-events: none; font-size: 13.5px; }
+.probe .ph { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.probe .ph b { font-weight: 600; color: #e8ece8; }
+.probe .ph span { color: #7d8a85; text-align: right; }
+.probe svg { display: block; width: 100%; height: 72px; background: #0f1a15; border-radius: 3px; overflow: hidden; }
+.probe .pg line { stroke: #1d2b25; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.probe .pw path { fill: none; stroke: #6ff0b4; stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #6ff0b4); }
+.probe p { margin: 8px 0 0; line-height: 1.35; color: #aab5b0; }
+
+/* code viewer */
+.code-btn { all: unset; cursor: pointer; margin-left: 4px; color: var(--copper); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.code-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.codeview { width: min(820px, calc(100vw - 32px)); max-height: min(80vh, 760px); padding: 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
+.codeview::backdrop { background: rgba(8, 12, 10, .55); }
+.codeview[open] { display: flex; flex-direction: column; }
+.cvh { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.cvh b { display: block; font-size: 17px; }
+.cvh span { font-size: 14px; color: var(--ink-3); }
+.cvh .x, .serial .x { all: unset; cursor: pointer; padding: 3px 9px; font-size: 14px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 5px; }
+.cvh .x:focus-visible, .serial .x:focus-visible { outline: 2px solid var(--focus); }
+.cvb { overflow: auto; padding: 4px 0 16px; background: var(--board); }
+.cvb .file { margin: 14px 18px 6px; font-size: 13.5px; color: var(--ink-3); }
+.cvb pre { margin: 0; padding: 0 18px; font: 13.5px/1.6 ui-monospace, "Cascadia Code", Consolas, monospace; font-variant-ligatures: none; white-space: pre; tab-size: 2; }
+.cvb .ln { display: inline-block; width: 3.4em; color: var(--ink-3); opacity: .7; user-select: none; }
+.cvb .m { color: var(--ink-3); font-style: italic; }
+.cvb .k { color: var(--mask); font-weight: 600; }
+.cvb .n, .cvb .s { color: var(--copper); }
+.cvb .c { color: var(--ink-2); font-weight: 600; }
+
+/* serial monitor */
+.serial { position: fixed; z-index: 40; right: 16px; bottom: 16px; display: flex; flex-direction: column; width: min(560px, calc(100vw - 32px)); height: min(340px, 60vh); background: #0b100e; color: #cfe3d8; border: 1px solid #2c3833; border-radius: 8px; box-shadow: 0 16px 48px rgba(0, 0, 0, .4); font: 13.5px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; font-variant-ligatures: none; }
+.serial[hidden] { display: none; }
+.serial .sh { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-bottom: 1px solid #1f2a25; font-family: var(--text); }
+.serial .sh b { font-weight: 600; color: #e8ece8; }
+.serial .sh span { margin-right: auto; font-size: 13px; color: #7d8a85; }
+.serial .x { color: #aab5b0; border-color: #2c3833; }
+.serial .out { flex: 1; margin: 0; padding: 10px 14px; overflow: auto; white-space: pre-wrap; }
+.serial .dim { color: #6f7d77; }
+.serial .cmd { color: #e0965a; }
+.serial .err { color: #ff8a7a; }
+.serial form { display: flex; align-items: center; gap: 8px; padding: 8px 14px 10px; border-top: 1px solid #1f2a25; }
+.serial label { color: #4fbf92; }
+.serial input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #e8ece8; font: inherit; }
+
+/* logic analyzer under the route replay */
+.la { margin-top: 14px; }
+.la canvas { display: block; width: 100%; }
+.lanote { max-width: 70ch; margin: 8px 0 0; font-size: 14px; color: var(--ink-3); }
+
+/* Pluto status light */
+.led { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--ink-3); vertical-align: 1px; }
+.led.on { background: #3fd68f; box-shadow: 0 0 6px #3fd68f; animation: led 2.4s ease-in-out infinite; }
+@keyframes led { 50% { opacity: .45; } }
+.status abbr { margin-left: 6px; font-size: 13px; color: var(--ink-3); text-decoration: underline dotted; cursor: help; }
+@media (prefers-reduced-motion: reduce) { .led.on { animation: none; } }
+
+@media print {
+  .la, .probe, .serial, .eggs, .codeview, .code-btn, .tools, .heatkey, .status { display: none !important; }
+}
+@media (max-width: 760px) { .la { padding: 0 16px; } }

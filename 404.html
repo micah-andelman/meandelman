@@ -9,7 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<script>try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<script>
+  try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  // Easter egg: finding this page counts toward the list behind the egg icon.
+  try {
+    var eggs = JSON.parse(localStorage.getItem("eggs") || "[]");
+    if (eggs.indexOf("open") < 0) { eggs.push("open"); localStorage.setItem("eggs", JSON.stringify(eggs)); localStorage.setItem("eggNew", "1"); }
+  } catch (e) {}
+</script>
 <link rel="stylesheet" href="/styles.css">
 <style>
   .oc { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 48px var(--gutter); }
