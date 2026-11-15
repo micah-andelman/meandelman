@@ -32,6 +32,21 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   svg.replaceWith(wrap);
   wrap.appendChild(svg);
 
+  // Solder pads where each trace lands on a block; they light up with the trace.
+  svg.querySelectorAll(".tr").forEach((tr) => {
+    const len = tr.getTotalLength();
+    [0, len].forEach((at) => {
+      const pt = tr.getPointAtLength(at);
+      const pad = document.createElementNS(SVGNS, "circle");
+      pad.setAttribute("cx", pt.x);
+      pad.setAttribute("cy", pt.y);
+      pad.setAttribute("r", 4);
+      pad.setAttribute("class", "pad");
+      pad.dataset.k = tr.dataset.k;
+      svg.appendChild(pad);
+    });
+  });
+
   const cap = fig.querySelector(".cap");
   const notes = {};
   fig.querySelectorAll("template[data-k]").forEach((t) => (notes[t.dataset.k] = noteHTML(t)));
@@ -175,12 +190,13 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   const fig = document.getElementById("otv-route");
   if (!fig) return;
   const routes = [fig.querySelector("#route-a"), fig.querySelector("#route-b")];
-  const pools = fig.querySelectorAll(".pool circle"); // [site A (top), site B (bottom)]
+  const pools = fig.querySelectorAll(".pool .site"); // [site A (top), site B (bottom)]
   const trail = fig.querySelector(".trail");
+  const glow = fig.querySelector(".glow");
   const bot = fig.querySelector(".bot");
   const SPEED = 0.14; // px per ms: 1,100 px route in about 8 s
   const SAMPLE_AT = 150; // route length where the robot reaches the pool
-  const SAMPLE_MS = 1400;
+  const SAMPLE_MS = 2200;
   let which = 0, raf = 0;
 
   const place = (route, d, heading) => {
@@ -200,10 +216,14 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
     pools.forEach((c, i) => c.classList.toggle("on", i === which));
     routes.forEach((r, i) => r.classList.toggle("off", i !== which));
     const len = route.getTotalLength();
-    trail.setAttribute("d", route.getAttribute("d"));
-    trail.style.strokeDasharray = `${len} ${len}`;
+    [trail, glow].forEach((p) => {
+      p.setAttribute("d", route.getAttribute("d"));
+      p.style.strokeDasharray = `${len} ${len}`;
+      p.style.strokeDashoffset = len;
+    });
+    pools.forEach((c) => c.classList.remove("sampling"));
     if (REDUCED) {
-      trail.style.strokeDashoffset = 0;
+      trail.style.strokeDashoffset = glow.style.strokeDashoffset = 0;
       place(route, len, 0);
       return;
     }
@@ -211,15 +231,17 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
     const tick = (now) => {
       const dt = Math.min(250, now - last);
       last = now;
-      if (d >= SAMPLE_AT && held < SAMPLE_MS) held += dt;
-      else d = Math.min(len, d + dt * SPEED);
+      if (d >= SAMPLE_AT && held < SAMPLE_MS) {
+        held += dt;
+        pools[which].classList.toggle("sampling", held < SAMPLE_MS);
+      } else d = Math.min(len, d + dt * SPEED);
       // Face the direction of travel, except when backing up (keep facing forward), and turn at a finite rate.
       let target = angleAt(route, d);
       if (Math.abs(diff(heading, target)) > 120) target += 180;
       const step = diff(heading, target);
       heading += Math.sign(step) * Math.min(Math.abs(step), dt * 0.35);
       place(route, d, heading);
-      trail.style.strokeDashoffset = len - d;
+      trail.style.strokeDashoffset = glow.style.strokeDashoffset = len - d;
       if (d < len) raf = requestAnimationFrame(tick);
       else which = 1 - which;
     };
@@ -228,7 +250,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
 
   place(routes[0], 0, angleAt(routes[0], 2));
   routes[1].classList.add("off");
-  trail.style.strokeDasharray = "0 99999";
+  trail.style.strokeDasharray = glow.style.strokeDasharray = "0 99999";
   let started = false;
   new IntersectionObserver((es, io) => {
     if (es[0].isIntersecting && !started) { started = true; run(); io.disconnect(); }

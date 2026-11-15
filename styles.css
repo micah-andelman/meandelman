@@ -159,7 +159,7 @@ a:hover { color: var(--mask); }
 .tr.on { stroke: var(--copper); stroke-width: 3; }
 
 .blk { cursor: pointer; outline: none; }
-.blk rect { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; rx: 4; transition: fill .15s, stroke .15s; }
+.blk rect { fill: var(--paper); stroke: color-mix(in srgb, var(--ink) 55%, var(--paper)); stroke-width: 1.5; rx: 4; transition: fill .15s, stroke .15s; }
 .blk.mcu rect { fill: var(--mask); stroke: var(--mask); }
 .blk.mcu text, .blk.mcu .sub { fill: var(--paper); }
 .blk text { font-size: 17px; font-weight: 600; fill: var(--ink); }
@@ -201,8 +201,8 @@ a:hover { color: var(--mask); }
 /* ---------- board details: reference designators, fiducials ---------- */
 .blk .ref { font-size: 11.5px; font-weight: 500; fill: var(--ink-3); letter-spacing: .04em; }
 .blk.mcu .ref { fill: var(--paper); opacity: .75; }
-.fid circle { fill: var(--copper); opacity: .55; stroke: var(--board); stroke-width: 0; }
-.fid circle { paint-order: stroke; }
+.pad { fill: var(--board); stroke: var(--rule); stroke-width: 1.5; transition: fill .15s, stroke .15s; }
+.pad.on { fill: var(--copper); stroke: var(--copper); }
 .foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .foot .rev { font-variant-numeric: tabular-nums; }
 
@@ -219,22 +219,44 @@ a:hover { color: var(--mask); }
   .index a.lit span:first-child { color: var(--copper); }
 }
 
-/* ---------- arena route ---------- */
+/* ---------- arena route: drawn like a dimensioned top view ---------- */
 .arena { margin: clamp(28px, 5vh, 48px) 0 0; }
 .arena svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
 .arena .floor { fill: url(#grid-a); }
-.arena .zone rect { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 5; }
-.arena .pool circle { fill: color-mix(in srgb, var(--mask) 22%, transparent); stroke: var(--mask); stroke-width: 2; opacity: 0; transition: opacity .3s; }
-.arena .pool circle.on { opacity: 1; }
-.arena .obst rect { fill: var(--ink-3); opacity: .35; }
-.arena .limbo rect { fill: var(--ink-2); }
-.arena .alabel text { font-size: 17px; fill: var(--ink-2); }
-.arena .route { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
-.arena .route.ghost { stroke: var(--rule); stroke-dasharray: 2 7; }
-.arena .route.trail { stroke: var(--copper); }
+.arena .major path { stroke: var(--rule); stroke-width: 1; opacity: .55; }
+.arena .wall { fill: none; stroke: var(--ink-3); stroke-width: 3; }
+.arena .zone rect { fill: none; stroke: var(--ink-3); stroke-width: 1.25; stroke-dasharray: 6 5; }
+.arena .zone .goalz { fill: color-mix(in srgb, var(--mask) 7%, transparent); stroke: var(--mask); opacity: .8; }
+#hatch line { stroke: var(--ink-3); stroke-width: 1.5; opacity: .6; }
+.arena .keepout rect { fill: url(#hatch); stroke: var(--ink-3); stroke-width: 1.25; }
+.arena .posts rect { fill: var(--ink-2); }
+.arena .site { opacity: .28; transition: opacity .4s; }
+.arena .site.on { opacity: 1; }
+.arena .site .ring { fill: color-mix(in srgb, var(--mask) 16%, transparent); stroke: var(--mask); stroke-width: 1.5; }
+.arena .site .dot { fill: var(--mask); }
+.arena .site .rip { fill: none; stroke: var(--mask); stroke-width: 1.5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.arena .site.sampling .rip { animation: ripple 1.1s ease-out infinite; }
+.arena .site.sampling .rip.two { animation-delay: .55s; }
+@keyframes ripple { from { opacity: .9; transform: scale(.3); } to { opacity: 0; transform: scale(1); } }
+.arena .dim path, .arena .dimn path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+#tick line { stroke: var(--ink-3); stroke-width: 1.4; }
+.arena .dimbg { fill: var(--board); }
+.arena .dim text, .arena .dimn text { font-size: 13px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+.arena .alabel text { font-size: 13px; font-weight: 500; fill: var(--ink-2); letter-spacing: .02em; paint-order: stroke; stroke: var(--board); stroke-width: 4px; }
+.arena .route { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.arena .route.ghost { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 1 6; opacity: .8; }
 .arena .route.off { display: none; }
-.arena .bot rect { fill: var(--mask); stroke: var(--paper); stroke-width: 2; }
-.arena .bot path { fill: none; stroke: var(--paper); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.arena .route.trail { stroke: var(--copper); stroke-width: 2.5; }
+.arena .route.glow { stroke: var(--copper); stroke-width: 10; opacity: .16; }
+.arena .bot .tread { fill: #2b3431; stroke: #44504b; stroke-width: 1; }
+.arena .bot .body { fill: var(--mask); }
+.arena .bot .aruco { fill: #fff; }
+.arena .bot .aruco-in { fill: #111; }
+.arena .bot .sonar { fill: var(--ink-2); }
+.arena .bot .nose { fill: none; stroke: var(--paper); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.arena .bot { filter: drop-shadow(0 2px 3px rgb(0 0 0 / .25)); }
+.fid .fc { fill: none; stroke: var(--rule); stroke-width: 1.25; }
+.fid circle:not(.fc) { fill: var(--copper); opacity: .8; }
 .arena figcaption { display: flex; gap: 12px 32px; align-items: start; justify-content: space-between; margin-top: 14px; }
 .arena figcaption p { margin: 0; max-width: 70ch; color: var(--ink-2); font-size: 17px; }
 .replay { font: inherit; font-size: 16px; color: var(--ink); background: none; border: 1.5px solid var(--ink); border-radius: 4px; padding: 6px 14px; cursor: pointer; flex: none; }
@@ -306,7 +328,8 @@ a:hover { color: var(--mask); }
   .contact ul { flex-direction: column; gap: 14px; }
   .arena { margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter)); }
   .arena svg { border-radius: 0; }
-  .arena .alabel text { font-size: 24px; }
+  .arena .alabel text { font-size: 26px; stroke-width: 6px; }
+  .arena .dim text, .arena .dimn text { font-size: 22px; }
   .arena figcaption { flex-direction: column; padding: 0 var(--gutter); }
   .contact li a { overflow-wrap: anywhere; }
 }
@@ -314,5 +337,6 @@ a:hover { color: var(--mask); }
 @media (prefers-reduced-motion: reduce) {
   .hero-trace .line { animation: none; transform: none; }
   .hero-trace .via { animation: none; opacity: 1; transform: none; }
-  .tr, .blk rect, .top, .parts li::before, .hero-trace .drop { transition: none; }
+  .tr, .blk rect, .top, .parts li::before, .hero-trace .drop, .pad { transition: none; }
+  .arena .site.sampling .rip { animation: none; }
 }
