@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Micah Andelman, electrical engineering, University of Maryland</title>
-<meta name="description" content="Micah Andelman studies electrical engineering at the University of Maryland. Autonomous robots, personal agents and hardware, with block diagrams of how each one works.">
+<meta name="description" content="Micah Andelman studies electrical engineering at the University of Maryland. Projects include an autonomous water-sampling robot and a personal agent he texts on Telegram, each with a block diagram of how it works.">
 <link rel="canonical" href="https://meandelman.com/">
 <meta property="og:url" content="https://meandelman.com/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Micah Andelman">
-<meta property="og:description" content="Electrical engineering, University of Maryland, class of 2030. Robots, agents and hardware.">
+<meta property="og:description" content="Electrical engineering student at the University of Maryland, class of 2030. Projects and experience.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,7 @@
     <div class="hero-foot">
       <div class="who">
         <p>Electrical engineering, University of Maryland, class of 2030.</p>
-        <p>Electrical and software lead on ENES100 team H2Woah. Autonomous subteam, Terps Racing EV.</p>
+        <p>I lead electrical and software for ENES100 team H2Woah and work on the autonomous subteam at Terps Racing EV.</p>
       </div>
       <ol class="index" aria-label="Projects">
         <li><a href="#otv"><span>H2Woah OTV</span><span class="yr">2026</span></a></li>
@@ -60,8 +60,8 @@
       </dl>
     </div>
     <div class="p-body">
-      <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. It finds itself in the arena from an overhead camera, hugs a wall past the obstacles, threads the limbo gap, then lowers an arm to measure the water's depth, check it for pollution and pump a sample.</p>
-      <p>I wire the robot and own its code. Teammates write each subsystem as its own Arduino sketch; I port them into one codebase, fix what breaks, and test it in ENES100's browser simulator before it ever touches the hardware. The same source builds for both, behind one flag.</p>
+      <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
+      <p>I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>
@@ -129,15 +129,15 @@
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a block to see what it does and how it's wired.">Select a block to see what it does and how it's wired.</p>
-        <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and reports its position and heading over Wi-Fi. All navigation runs on that.</template>
-        <template data-k="front">Watches for obstacles ahead so the robot can detour around them. Every distance is the median of several pings, so one bad echo can't stop the robot.</template>
-        <template data-k="depth">Measures down to the water from a known height. Depth is that height minus the distance to the surface.</template>
-        <template data-k="color">Reads the water's color through filtered channels to flag pollution. It needs six pins, the most of any subsystem.</template>
-        <template data-k="mcu">One codebase, two targets: a build flag switches the same C++ between the real robot and ENES100's browser simulator. CI compiles both on every push.</template>
-        <template data-k="drive">Two DRV8871 H-bridges. PWM is capped at 153 of 255, because the 6 V motors run from a 9.6 V pack.</template>
-        <template data-k="arm">Two SG90 servos move together, one degree at a time, so their current spikes don't brown out the shared 5 V rail.</template>
-        <template data-k="pump">A MOSFET on D10 switches the pump that pulls the water sample.</template>
-        <template data-k="power">A 9.6 V pack feeds the motor drivers directly. The logic runs from the Arduino's regulated supply.</template>
+        <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and sends its position and heading over Wi-Fi. Every navigation decision uses that position.</template>
+        <template data-k="front">Watches for obstacles ahead so the robot can steer around them. Each reading is the median of several pings, so a single bad echo won't stop the robot.</template>
+        <template data-k="depth">Points down at the water from a known height. The depth is that height minus the distance to the surface.</template>
+        <template data-k="color">Reads the water's color through filtered channels to check for pollution. It uses six pins, more than any other part.</template>
+        <template data-k="mcu">The same C++ runs on the real robot and in ENES100's browser simulator, chosen by a build flag. GitHub Actions compiles both versions on every push.</template>
+        <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
+        <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
+        <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
+        <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly. The Arduino runs from its own regulated supply.</template>
       </figcaption>
     </figure>
 
@@ -210,7 +210,7 @@
         <g class="fid" aria-hidden="true"><g><circle class="fc" cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="3.5" /></g><g><circle class="fc" cx="868" cy="12" r="7" /><circle cx="868" cy="12" r="3.5" /></g><g><circle class="fc" cx="12" cy="464" r="7" /><circle cx="12" cy="464" r="3.5" /></g></g>
       </svg>
       <figcaption>
-        <p>The route the code drives in ENES100's simulator, to scale on the 4 × 2 m arena. The robot starts in a random square and samples the pool in the other one, then runs up to the top wall and follows it through the 25 cm gap past both obstacle rows, and drops onto the limbo lane to reach the goal. Every randomized run passed a footprint check: the drawn robot never strayed more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p>
+        <p>The route my code drives in ENES100's simulator, drawn to scale on the 4 × 2 m arena. The robot starts in a random square and samples the pool in the other one. It then drives up to the top wall, follows it through the 25 cm gap past both rows of obstacles, and cuts down to the limbo lane to reach the goal. I checked 40 randomized runs against the robot's footprint. It never went more than 1 mm past a wall, and it cleared the obstacles by 1.6 to 2 cm.</p>
         <button type="button" class="replay">Replay</button>
       </figcaption>
     </figure>
@@ -227,8 +227,8 @@
       </dl>
     </div>
     <div class="p-body">
-      <p class="lede">A personal agent I text on Telegram. Claude Code runs headless on a server with its own tools for my calendar, email, Canvas, grades and the campus buses. It sends a morning brief, an evening check-in and a Sunday review.</p>
-      <p>Most of the work is in the tools, not the prompt. Each one answers a single question carefully: a guessed exam date never reads like a confirmed one, an unknown room comes back as unknown, and a bus has to beat walking by five minutes before it's suggested.</p>
+      <p class="lede">A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.</p>
+      <p>Most of my time went into the tools. Each one does one job and is careful about what it doesn't know. If it guessed an exam date, it says so. If it can't find a room, it says that too. It only suggests a bus when the bus beats walking by at least five minutes.</p>
       <dl class="specs">
         <div><dt>36</dt><dd>tool modules</dd></div>
         <div><dt>24</dt><dd>offline test suites, run on every push</dd></div>
@@ -272,17 +272,17 @@
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a block to see what it does.">Select a block to see what it does.</p>
-        <template data-k="phone">I text it like a person. Replies, briefs and reminders come back in the same Telegram chat.</template>
-        <template data-k="location">The phone posts location fixes to the one inbound route the bot has. It fails closed: with no token configured it refuses every request.</template>
-        <template data-k="schedule">A morning brief, an evening check-in and a Sunday review, sent without being asked.</template>
-        <template data-k="agent">Claude Code running headless on my subscription, with the official Telegram channel plugin. If the subscription window runs out it falls back to an API key, then switches back.</template>
+        <template data-k="phone">I text it the way I'd text a person, and everything it sends comes back in the same Telegram chat.</template>
+        <template data-k="location">My phone posts its location to the one inbound route the bot has. If the token isn't set up, that route refuses every request.</template>
+        <template data-k="schedule">The bot messages me on its own each morning and evening, plus a longer review on Sundays.</template>
+        <template data-k="agent">Claude Code runs headless on my subscription with the official Telegram channel plugin. When I hit the subscription limit it switches to an API key, and it switches back once the limit resets.</template>
         <template data-k="calendar">Creates, moves and searches events, and finds free time between classes.</template>
-        <template data-k="gmail">Triage and digests. It extracts dates conservatively, so a rescheduled exam or an extension that never reached the calendar still gets surfaced.</template>
-        <template data-k="canvas">Every six hours it mirrors new Canvas assignments onto my calendar, moves them if the deadline moves, and sends one summary.</template>
-        <template data-k="grades">Category-weighted grades that leave ungraded categories out instead of counting them as zero, plus what I need on the remaining work.</template>
-        <template data-k="planner">Plans study blocks into free calendar gaps, caps the daily load, and reports what didn't fit instead of quietly dropping it.</template>
-        <template data-k="transit">Compares walking, biking and the Shuttle-UM buses that are actually running, from live vehicle positions rather than a timetable.</template>
-        <template data-k="places">Building codes and coordinates from UMD's own facilities map. An ambiguous name comes back as both candidates.</template>
+        <template data-k="gmail">It sorts my inbox and sends digests. It also pulls dates out of emails, so a rescheduled exam or an extension that never made it onto my calendar still shows up.</template>
+        <template data-k="canvas">Every six hours it copies new Canvas assignments onto my calendar, moves any whose deadline changed, and sends me one summary.</template>
+        <template data-k="grades">Works out my grade by category weight, leaving out categories with nothing graded yet, and tells me what I need on the rest of the work.</template>
+        <template data-k="planner">Fits study blocks into the free time on my calendar, up to a daily limit. If something doesn't fit, it tells me.</template>
+        <template data-k="transit">Compares walking, biking and the Shuttle-UM buses, using live bus positions instead of the posted schedule.</template>
+        <template data-k="places">Looks up building codes and coordinates from UMD's facilities map. If a name could mean two buildings, it returns both.</template>
       </figcaption>
     </figure>
   </article>
@@ -298,7 +298,7 @@
       </dl>
     </div>
     <div class="p-body">
-      <p class="lede">DIY camera glasses that log what you eat. They stream low-resolution video to an iPhone, and when the phone spots a nutrition label it asks the glasses for one high-resolution still to read.</p>
+      <p class="lede">Homemade camera glasses that log what you eat. They stream low-resolution video to an iPhone. When the phone spots a nutrition label, it asks the glasses for a single high-resolution photo to read.</p>
     </div>
     <figure class="diagram flow" data-diagram>
       <svg viewBox="0 0 960 150" role="group" aria-label="Flow: glasses stream to the phone, the phone detects a label, the glasses capture a still, the macros are logged">
@@ -312,10 +312,10 @@
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a step.">Select a step.</p>
-        <template data-k="cam">I'm building the glasses: camera, power and Wi-Fi in a frame you'd actually wear.</template>
-        <template data-k="stream">Streaming stays low resolution, so it's light on the battery and the network.</template>
-        <template data-k="detect">Only a detected label earns a full-resolution frame, which is what makes the small print readable.</template>
-        <template data-k="still">The phone reads the label and logs the meal. This step is still being built.</template>
+        <template data-k="cam">My part is the glasses themselves. The goal is a camera, battery and Wi-Fi in a frame that looks normal to wear.</template>
+        <template data-k="stream">The stream stays at low resolution to save battery and bandwidth.</template>
+        <template data-k="detect">The glasses only take a full-resolution photo when the phone sees a label. That's what makes the small print readable.</template>
+        <template data-k="still">The phone reads the label and logs the meal. We're still building this step.</template>
       </figcaption>
     </figure>
   </article>
@@ -331,7 +331,7 @@
       </dl>
     </div>
     <div class="p-body">
-      <p class="lede">A searchable calculator for fast food. I converted each chain's official nutrition PDFs into structured data, then added fuzzy search, chain filters and drink modifiers.</p>
+      <p class="lede">A searchable nutrition calculator for fast food. I turned each chain's official nutrition PDFs into structured data and built search on top, with filters by chain and options for drink sizes and add-ins.</p>
       <dl class="specs">
         <div><dt>2,051</dt><dd>menu items</dd></div>
         <div><dt>15+</dt><dd>chains</dd></div>
@@ -348,10 +348,10 @@
       <caption class="sr">Work experience and activities</caption>
       <tbody>
         <tr><th scope="row">Terps Racing EV</th><td>Autonomous subteam</td><td class="when">Oct 2026 to now</td></tr>
-        <tr><th scope="row">CISteks Technology Group</th><td>Sales automation intern. Replaced manual cold calling with automated email outreach, and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
-        <tr><th scope="row">Independent math tutor</th><td>7th-grade math through calculus and SAT Math, with my own clients and curriculum.</td><td class="when">2025 to now</td></tr>
-        <tr><th scope="row">B2Q Associates</th><td>Engineering support intern on commercial HVAC energy-efficiency assessments.</td><td class="when">Summer 2024</td></tr>
-        <tr><th scope="row">Bedford High School</th><td>Varsity soccer captain. President of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
+        <tr><th scope="row">CISteks Technology Group</th><td>Sales automation intern. I replaced manual cold calling with automated email outreach and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
+        <tr><th scope="row">Independent math tutor</th><td>I tutor 7th-grade math up through calculus and SAT Math, with my own clients and lesson plans.</td><td class="when">2025 to now</td></tr>
+        <tr><th scope="row">B2Q Associates</th><td>Engineering support intern. I helped with energy-efficiency assessments of commercial HVAC systems.</td><td class="when">Summer 2024</td></tr>
+        <tr><th scope="row">Bedford High School</th><td>Captain of the varsity soccer team and president of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
       </tbody>
     </table>
   </section>
@@ -359,7 +359,7 @@
   <!-- ================= CONTACT ================= -->
   <section class="contact" id="contact" aria-labelledby="contact-t">
     <h2 id="contact-t">Get in touch</h2>
-    <p>I'm looking for a summer 2027 internship in electrical, embedded or robotics work.</p>
+    <p>I'm looking for a summer 2027 internship in electrical engineering, embedded systems or robotics. Email is the fastest way to reach me.</p>
     <ul>
       <li><a href="mailto:micah.andelman@gmail.com">micah.andelman@gmail.com</a></li>
       <li><a href="https://www.linkedin.com/in/micah-andelman">LinkedIn</a></li>
