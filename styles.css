@@ -197,6 +197,52 @@ a:hover { color: var(--mask); }
 .foot { padding: 28px var(--gutter) 40px; color: var(--ink-3); font-size: 15px; border-top: 1px solid var(--rule); }
 .foot p { margin: 0; }
 
+
+/* ---------- board details: reference designators, fiducials ---------- */
+.blk .ref { font-size: 11.5px; font-weight: 500; fill: var(--ink-3); letter-spacing: .04em; }
+.blk.mcu .ref { fill: var(--paper); opacity: .75; }
+.fid circle { fill: var(--copper); opacity: .55; stroke: var(--board); stroke-width: 0; }
+.fid circle { paint-order: stroke; }
+.foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.foot .rev { font-variant-numeric: tabular-nums; }
+
+/* ---------- signal pulse on a selected trace ---------- */
+.pulse { fill: none; stroke: var(--copper); stroke-width: 5; stroke-linecap: round; pointer-events: none; filter: drop-shadow(0 0 3px var(--copper)); }
+
+/* ---------- hero: trace drops to the project you're pointing at ---------- */
+.hero-trace { position: relative; }
+.hero-trace .drop { position: absolute; right: 7.5px; top: 15px; width: 3px; height: 0; background: var(--copper); transition: height .28s cubic-bezier(.4, 0, .2, 1); pointer-events: none; }
+.hero-trace .drop b { position: absolute; left: -4.5px; bottom: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--copper); opacity: 0; transition: opacity .15s .2s; }
+.hero-trace .drop.on b { opacity: 1; }
+@media (hover: hover) and (min-width: 761px) {
+  .index a { padding-right: 34px; }
+  .index a.lit span:first-child { color: var(--copper); }
+}
+
+/* ---------- arena route ---------- */
+.arena { margin: clamp(28px, 5vh, 48px) 0 0; }
+.arena svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
+.arena .floor { fill: url(#grid-a); }
+.arena .zone rect { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.arena .pool circle { fill: color-mix(in srgb, var(--mask) 22%, transparent); stroke: var(--mask); stroke-width: 2; opacity: 0; transition: opacity .3s; }
+.arena .pool circle.on { opacity: 1; }
+.arena .obst rect { fill: var(--ink-3); opacity: .35; }
+.arena .limbo rect { fill: var(--ink-2); }
+.arena .alabel text { font-size: 17px; fill: var(--ink-2); }
+.arena .route { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.arena .route.ghost { stroke: var(--rule); stroke-dasharray: 2 7; }
+.arena .route.trail { stroke: var(--copper); }
+.arena .route.off { display: none; }
+.arena .bot rect { fill: var(--mask); stroke: var(--paper); stroke-width: 2; }
+.arena .bot path { fill: none; stroke: var(--paper); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.arena figcaption { display: flex; gap: 12px 32px; align-items: start; justify-content: space-between; margin-top: 14px; }
+.arena figcaption p { margin: 0; max-width: 70ch; color: var(--ink-2); font-size: 17px; }
+.replay { font: inherit; font-size: 16px; color: var(--ink); background: none; border: 1.5px solid var(--ink); border-radius: 4px; padding: 6px 14px; cursor: pointer; flex: none; }
+.replay:hover { border-color: var(--copper); color: var(--copper); }
+
+/* ---------- photo in a block's note ---------- */
+.cap img, .parts .pn img { display: block; width: 100%; max-width: 420px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; margin: 10px 0 0; background: var(--board); }
+
 /* ---------- parts list (phone version of each diagram) ---------- */
 .parts { display: none; }
 .parts-h { margin: 22px 0 6px; font-size: 14px; color: var(--ink-3); }
@@ -258,11 +304,15 @@ a:hover { color: var(--mask); }
   .experience td.when { text-align: left; padding-top: 4px; font-size: 15px; }
   .experience tr:last-child th, .experience tr:last-child td { border-bottom: 0; }
   .contact ul { flex-direction: column; gap: 14px; }
+  .arena { margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter)); }
+  .arena svg { border-radius: 0; }
+  .arena .alabel text { font-size: 24px; }
+  .arena figcaption { flex-direction: column; padding: 0 var(--gutter); }
   .contact li a { overflow-wrap: anywhere; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-trace .line { animation: none; transform: none; }
   .hero-trace .via { animation: none; opacity: 1; transform: none; }
-  .tr, .blk rect, .top, .parts li::before { transition: none; }
+  .tr, .blk rect, .top, .parts li::before, .hero-trace .drop { transition: none; }
 }
