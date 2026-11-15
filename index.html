@@ -69,7 +69,7 @@
       </dl>
     </div>
 
-    <figure class="diagram" data-diagram>
+    <figure class="diagram" data-diagram data-groups="Sensors|Controller and power|Outputs">
       <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
         <defs>
           <pattern id="grid-a" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" /></pattern>
@@ -101,28 +101,28 @@
         </g>
 
         <!-- blocks -->
-        <g class="blk" data-k="vision" tabindex="0" role="button" aria-label="Overhead vision">
+        <g class="blk" data-k="vision" data-pins="Wi-Fi" tabindex="0" role="button" aria-label="Overhead vision">
           <rect x="40" y="40" width="200" height="56" /><text x="56" y="64">Overhead vision</text><text class="sub" x="56" y="84">ArUco marker, over Wi-Fi</text></g>
-        <g class="blk" data-k="front" tabindex="0" role="button" aria-label="Front ultrasonic sensor">
+        <g class="blk" data-k="front" data-pins="D2 A4" tabindex="0" role="button" aria-label="Front ultrasonic sensor">
           <rect x="40" y="130" width="200" height="56" /><text x="56" y="154">Front ultrasonic</text><text class="sub" x="56" y="174">HC-SR04, obstacles</text></g>
-        <g class="blk" data-k="depth" tabindex="0" role="button" aria-label="Arm ultrasonic sensor">
+        <g class="blk" data-k="depth" data-pins="D7 D8" tabindex="0" role="button" aria-label="Arm ultrasonic sensor">
           <rect x="40" y="220" width="200" height="56" /><text x="56" y="244">Arm ultrasonic</text><text class="sub" x="56" y="264">HC-SR04, water depth</text></g>
-        <g class="blk" data-k="color" tabindex="0" role="button" aria-label="Color sensor">
+        <g class="blk" data-k="color" data-pins="6 pins" tabindex="0" role="button" aria-label="Color sensor">
           <rect x="40" y="310" width="200" height="56" /><text x="56" y="334">Color sensor</text><text class="sub" x="56" y="354">Pollution check</text></g>
 
         <g class="blk mcu" data-k="mcu" tabindex="0" role="button" aria-label="Arduino UNO R4 WiFi">
           <rect x="380" y="120" width="200" height="200" /><text x="396" y="148">Arduino</text><text x="396" y="170">UNO R4 WiFi</text><text class="sub" x="396" y="300">1,620 lines of C++</text></g>
 
-        <g class="blk" data-k="drive" tabindex="0" role="button" aria-label="Motor drivers">
+        <g class="blk" data-k="drive" tabindex="0" role="button" data-pins="D3 D5" aria-label="Motor drivers">
           <rect x="720" y="40" width="200" height="56" /><text x="736" y="64">DRV8871, left</text><text class="sub" x="736" y="84">Drive motor</text></g>
-        <g class="blk" data-k="drive" tabindex="0" role="button" aria-label="Motor drivers">
+        <g class="blk" data-k="drive" tabindex="0" role="button" data-pins="D6 D9" aria-label="Motor drivers">
           <rect x="720" y="130" width="200" height="56" /><text x="736" y="154">DRV8871, right</text><text class="sub" x="736" y="174">Drive motor</text></g>
-        <g class="blk" data-k="arm" tabindex="0" role="button" aria-label="Sampling arm">
+        <g class="blk" data-k="arm" data-pins="D11 A2" tabindex="0" role="button" aria-label="Sampling arm">
           <rect x="720" y="220" width="200" height="56" /><text x="736" y="244">Sampling arm</text><text class="sub" x="736" y="264">2 × SG90 servo</text></g>
-        <g class="blk" data-k="pump" tabindex="0" role="button" aria-label="Pump">
+        <g class="blk" data-k="pump" data-pins="D10" tabindex="0" role="button" aria-label="Pump">
           <rect x="720" y="310" width="200" height="56" /><text x="736" y="334">Pump</text><text class="sub" x="736" y="354">MOSFET switched</text></g>
 
-        <g class="blk power" data-k="power" tabindex="0" role="button" aria-label="Battery">
+        <g class="blk power" data-k="power" data-pins="VIN" tabindex="0" role="button" aria-label="Battery">
           <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Drive power</text></g>
       </svg>
       <figcaption>
@@ -160,7 +160,7 @@
       </dl>
     </div>
 
-    <figure class="diagram" data-diagram>
+    <figure class="diagram" data-diagram data-groups="Inputs|Agent|Tools">
       <svg viewBox="0 0 960 420" role="group" aria-label="Block diagram of Pluto: phone and location on the left, the agent in the middle, its tools on the right">
         <rect class="grid" width="960" height="420" fill="url(#grid-a)" />
 
