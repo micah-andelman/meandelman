@@ -976,7 +976,15 @@ html.scope-pending .hero h1::after { display: none; }
 .sym .sym-v { font: 500 14px var(--text); fill: var(--ink-2); }
 .blk.on .sym .sym-p { stroke: var(--copper); }
 .diagram.schem .blk.mcu .sym-v { fill: var(--ink-2); }
-html.thermal .diagram.schem .blk > rect { fill: var(--h); }
+/* Thermal schematic: keep the line drawing, outline each part in its heat color on the dark thermal ground. */
+html.thermal .diagram.schem svg { background: linear-gradient(rgb(255 255 255 / .05) 1px, transparent 1px) 0 0 / 20px 20px, linear-gradient(90deg, rgb(255 255 255 / .05) 1px, transparent 1px) 0 0 / 20px 20px, #0d0718; }
+html.thermal .diagram.schem .blk > text { opacity: 0; }
+html.thermal .diagram.schem .blk > rect, html.thermal .diagram.schem .blk.mcu > rect { fill: color-mix(in srgb, var(--h, #2a1446) 16%, #0d0718); stroke: color-mix(in srgb, var(--h, #5a3a7a) 80%, #fff); stroke-width: 1.5; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--h, transparent) 70%, transparent)); }
+html.thermal .diagram.schem .blk.mcu > rect { stroke-width: 2; }
+html.thermal .diagram.schem .sym .sym-p { stroke: color-mix(in srgb, var(--h, #fff6ec) 65%, #fff); }
+html.thermal .diagram.schem .sym .sym-m, html.thermal .diagram.schem .sym .sym-ref { fill: color-mix(in srgb, var(--h, #fff6ec) 65%, #fff) !important; }
+html.thermal .diagram.schem .sym .sym-v { fill: #e9dcef !important; }
+html.thermal .diagram.schem .pad { fill: #ffe9a8; stroke: #ffe9a8; }
 
 /* ---------- OTV technical drawing ---------- */
 .otvdraw { grid-column: 1; margin: 10px 0 0; max-width: 560px; }
