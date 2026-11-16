@@ -8,6 +8,7 @@ mkdir -p dist
 python photos.py
 cp styles.css main.js extras.js favicon.svg resume.pdf og.png 404.html dist/
 [ -d photos ] && cp -r photos dist/
+cp -r vendor dist/
 css=$(md5sum styles.css | cut -c1-8)
 js=$(md5sum main.js | cut -c1-8)
 xjs=$(md5sum extras.js | cut -c1-8)
