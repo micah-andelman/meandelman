@@ -154,6 +154,7 @@
         <path class="tr" data-k="pump"    d="M580,270 H660 V338 H720" />
         <path class="tr power" data-k="power" d="M580,398 H690 V68 H720" />
         <path class="tr power" data-k="power" d="M690,158 H720" />
+        <path class="tr power" data-k="power" d="M480,370 V320" />
 
         <!-- pin labels at the MCU -->
         <g class="pins" aria-hidden="true">
@@ -165,6 +166,7 @@
           <text x="588" y="185">D6 D9</text>
           <text x="588" y="225">D11 A2</text>
           <text x="588" y="265">D10</text>
+          <text x="488" y="350">VIN</text>
         </g>
 
         <!-- blocks -->
@@ -190,7 +192,7 @@
           <rect x="720" y="310" width="200" height="56" /><text x="736" y="334">Pump</text><text class="sub" x="736" y="354">MOSFET switched</text><text class="ref" x="910" y="327" text-anchor="end" aria-hidden="true">Q1</text></g>
 
         <g class="blk power" data-k="power" data-pins="VIN" tabindex="0" role="button" aria-label="Battery">
-          <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Drive power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
+          <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Main power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a block to see what it does and how it's wired.">Select a block to see what it does and how it's wired.</p>
@@ -202,7 +204,7 @@
         <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
         <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
         <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
-        <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly. The Arduino runs from its own regulated supply.</template>
+        <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V.</template>
         <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
 // heading error, clamped to MIN_TURN_PWM..MAX_PWM.
 // Positive error = counter-clockwise = left wheel back, right forward.

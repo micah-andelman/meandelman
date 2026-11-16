@@ -74,10 +74,12 @@
       const bat = place(take(power), BX, y + 10, BW, rowH);
       const [d1, d2] = outBoxes.filter((o) => o.k === "drive").map((o) => o.box);
       const R = BX + BW, bus = W - 10;
-      const [p1, p2] = traces[power];
+      const [p1, p2, p3] = traces[power];
       p1.setAttribute("d", `M${R},${bat.y + bat.h / 2} H${bus} V${d1.y + d1.h / 2} H${R}`);
       p2.setAttribute("d", `M${bus},${d2.y + d2.h / 2} H${R}`);
       p1.dataset.stage = p2.dataset.stage = 1;
+      // VIN: up the left edge, outside the output traces, into the controller.
+      if (p3) { p3.setAttribute("d", `M${BX},${bat.y + bat.h / 2} H26 V${hubBottom}`); p3.dataset.stage = 1; }
       y = bat.y + bat.h + 12;
     }
     finish(svg, y + 14);
