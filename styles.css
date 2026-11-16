@@ -1266,3 +1266,9 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 .briefs .brief.ask { margin-top: 0; }
 @media screen and (max-width: 760px) { .briefs { grid-template-columns: 1fr; } }
 @media print { .briefs { display: none; } }
+
+/* Pluto in 3D (otv3d.js, #pluto-3d): only when it's live; the chats and the 2D diagram stay either way. */
+.o3p { display: none; }
+.o3p.o3-live { display: block; height: calc(var(--o3h) * 8); }
+@media screen and (max-width: 760px) { .o3p.o3-live { height: calc(var(--o3h) * 7); } }
+@media print { .o3p { display: none !important; } }

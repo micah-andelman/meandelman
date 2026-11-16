@@ -159,13 +159,33 @@ function buildRobot(K, { pool = true } = {}) {
   };
   bendable(paint.m8, true);
 
-  // sonar cone, from the HC-SR04 at the arm tip down toward the water
-  const sonarH = 0.06;
-  const sonar = new Mesh(new THREE.ConeGeometry(0.016, sonarH, 32, 1, true), new THREE.MeshBasicMaterial({ color: "#e0965a", transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
-  sonar.position.set(0, -0.031 - sonarH / 2 + 0.002, 0.161);
-  root.add(sonar);
-  root.updateMatrixWorld(true);
-  arm.attach(sonar); // the HC-SR04 rides on the arm
+  // The arm's HC-SR04: its beam goes straight down and stops at the water; a pulse travels down, flashes
+  // on the surface, and the echo comes back up. (The sensor rides on the arm; the beam doesn't tilt.)
+  const sensorMark = new Group(); sensorMark.position.set(0, -0.029, 0.161); root.add(sensorMark);
+  root.updateMatrixWorld(true); arm.attach(sensorMark);
+  const beamMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+  const SPREAD = Math.tan(15 * Math.PI / 180); // HC-SR04: a beam about 15 degrees each side
+  const sonarG = new Group(); root.add(sonarG);
+  const sonarCone = new Mesh(new THREE.ConeGeometry(SPREAD, 1, 32, 1, true).translate(0, -0.5, 0), beamMat("#e0965a")); sonarG.add(sonarCone);
+  const ringGeo = new THREE.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2);
+  const sonarOut = new Mesh(ringGeo, beamMat("#e0965a")), sonarEcho = new Mesh(ringGeo, beamMat("#f4e6d6")), sonarHit = new Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), beamMat("#ffffff"));
+  sonarG.add(sonarOut, sonarEcho, sonarHit);
+  const WATER_Y = -0.1214 + 0.04; // 40 mm of water, in the robot's frame
+  const sp_ = new Vector3();
+  const ping = (on, time) => {
+    root.updateMatrixWorld(true);
+    sensorMark.getWorldPosition(sp_); root.worldToLocal(sp_);
+    const len = Math.max(0.004, sp_.y - WATER_Y);
+    sonarG.position.copy(sp_);
+    sonarCone.scale.set(len, len, len); sonarCone.material.opacity = on ? 0.1 : 0;
+    const ph = (time / 700) % 1, out = ph < 0.5, depth = len * (out ? ph / 0.5 : 1 - (ph - 0.5) / 0.5);
+    const ring = out ? sonarOut : sonarEcho, other = out ? sonarEcho : sonarOut;
+    ring.position.y = -depth; const rr = Math.max(0.001, depth * SPREAD); ring.scale.set(rr, 1, rr);
+    ring.material.opacity = on ? 0.7 : 0; other.material.opacity = 0;
+    const hit = Math.max(0, 1 - Math.abs(ph - 0.5) / 0.08); // a flash where it meets the water
+    sonarHit.position.y = -len + 0.0004; const hr = len * SPREAD; sonarHit.scale.set(hr, 1, hr);
+    sonarHit.material.opacity = on ? hit * 0.45 : 0;
+  };
   // front HC-SR04 under the front edge of the deck, looking ahead for obstacles (from the photos)
   const fus = new Group(); fus.position.set(0, -0.068, 0.084); root.add(fus);
   fus.add(new Mesh(new THREE.BoxGeometry(0.045, 0.02, 0.0016), std("#2a6fb0", { roughness: 0.5 })));
@@ -307,7 +327,7 @@ function buildRobot(K, { pool = true } = {}) {
   shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, -0.1212, pool ? 0.08 : 0.01); root.add(shadow);
 
   return {
-    root, arm, wheels, nets, ledMat, sonar, bend, UNO, BB, TOP, fus, pack, drivers,
+    root, arm, wheels, nets, ledMat, ping, bend, UNO, BB, TOP, fus, pack, drivers,
     // `a` runs from raised (negative) to 0 = the CAD's pose over the pool. The sensors stay above the
     // water there (the color sensor is on the bottom of the arm); the intake hose reaches down into it.
     setArm(a) { arm.rotation.x = a; bend.uAng.value = a; },
@@ -341,7 +361,7 @@ async function tour(sec) {
   const R = buildRobot(K, { pool: true });
   scene.add(R.root);
   R.sync();
-  const { UNO, BB, TOP, wheels, nets, ledMat, sonar } = R;
+  const { UNO, BB, TOP, wheels, nets, ledMat } = R;
 
   // the pool, with water
   const POOL = new Vector3(0.0027, -0.1214 + 0.04, 0.167); // water 40 mm deep; the rim is at 71 mm
@@ -446,7 +466,7 @@ async function tour(sec) {
     R.setFlow(sm(4.6, 5.0, s)); // raised until the Arm stop, then swings down over the pool
     const sec_ = time / 1000;
     const ping = REDUCED ? 0 : clamp(1 - Math.abs(s - 4) * 1.6);
-    sonar.material.opacity = ping * (0.18 + 0.12 * Math.sin(sec_ * 9));
+    R.ping(ping > 0.05, time);
     R.bend.uCut.value = 0.15 - sm(4.6, 5.0, s) * 0.16; // water runs from the pool back toward the pump
     ripples.forEach((m, j) => {
       const ph = (sec_ * 0.9 + j / 3) % 1;
@@ -652,10 +672,16 @@ async function course(sec, routes) {
   const guideMat = new THREE.LineDashedMaterial({ color: css("--copper"), dashSize: 0.03, gapSize: 0.025, transparent: true, opacity: 0 });
   const guide = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new Vector3(), new Vector3()]), guideMat); scene.add(guide);
   const setLine = (line, a, b) => { const pos = line.geometry.attributes.position; pos.setXYZ(0, a.x, a.y, a.z); pos.setXYZ(1, b.x, b.y, b.z); pos.needsUpdate = true; line.computeLineDistances(); };
-  const pingMat = new THREE.MeshBasicMaterial({ color: "#e0965a", transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
-  const frontPing = new Mesh(new THREE.ConeGeometry(0.06, 1, 24, 1, true), pingMat);
-  frontPing.geometry.translate(0, -0.5, 0); frontPing.geometry.rotateX(-Math.PI / 2); // apex at the sensor, opening along +z
-  scene.add(frontPing);
+  // front ping: a narrow beam along +z from the sensor (scaled to the distance to the first thing it hits),
+  // a ring going out, a flash where it lands, and the echo ring coming back
+  const FSPREAD = Math.tan(8 * Math.PI / 180), FRANGE = 1.5;
+  const bm = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+  const pingMat = bm("#e0965a");
+  const frontPing = new Group(); scene.add(frontPing);
+  const fCone = new Mesh(new THREE.ConeGeometry(FSPREAD, 1, 24, 1, true).translate(0, -0.5, 0).rotateX(-Math.PI / 2), pingMat); frontPing.add(fCone);
+  const fRing = new THREE.RingGeometry(0.88, 1, 40);
+  const fOut = new Mesh(fRing, bm("#e0965a")), fEcho = new Mesh(fRing, bm("#f4e6d6")), fHit = new Mesh(new THREE.CircleGeometry(1, 32), bm("#ffffff"));
+  frontPing.add(fOut, fEcho, fHit);
   const la = new Vector3(), lb = new Vector3(), fusW = new Vector3();
 
   // the pool (the CAD's size) with water and ripples
@@ -961,7 +987,7 @@ async function course(sec, routes) {
     RB.setArm(-0.35 * (1 - armDown));
     const ping = h >= 1.5 && h <= 3.6 ? 1 : 0;
     const sec_ = time / 1000;
-    RB.sonar.material.opacity = ping * (0.18 + 0.12 * Math.sin(sec_ * 9));
+    RB.ping(ping > 0, time);
     const flow = h < 0 ? 0 : sm(5.0, 7.8, Math.min(h, HOLD));
     RB.bend.uCut.value = 0.15 - flow * 0.16;
     RB.setFlow(flow);
@@ -1043,7 +1069,19 @@ async function course(sec, routes) {
     RB.fus.updateMatrixWorld(); fusW.setFromMatrixPosition(RB.fus.matrixWorld);
     const ahead = rayHit(fusW.x, fusW.z, fwd.x, fwd.z);
     frontPing.position.copy(fusW); frontPing.rotation.set(0, carrier.rotation.y, 0);
-    frontPing.scale.set(1, 1, Math.min(ahead, 1.2)); pingMat.opacity = driving ? 0.1 + 0.06 * Math.sin(time / 120) : 0;
+    {
+      const echo = ahead < FRANGE, len = Math.min(ahead, FRANGE) - 0.004;
+      fCone.scale.set(len, len, len); pingMat.opacity = driving ? 0.08 : 0;
+      const ph = (time / 900) % 1, out = ph < 0.5;
+      const dist = len * (out ? ph / 0.5 : 1 - (ph - 0.5) / 0.5);
+      const ring = out ? fOut : fEcho, other = out ? fEcho : fOut;
+      ring.position.z = dist; const rr = Math.max(0.002, dist * FSPREAD); ring.scale.set(rr, rr, 1);
+      ring.material.opacity = driving && (out || echo) ? 0.65 * (out ? 1 : 0.9) : 0; other.material.opacity = 0;
+      // no echo when nothing's in range: the pulse just fades out
+      if (!echo && out) ring.material.opacity *= 1 - ph / 0.5;
+      fHit.position.z = len; const hr = len * FSPREAD; fHit.scale.set(hr, hr, 1);
+      fHit.material.opacity = driving && echo ? Math.max(0, 1 - Math.abs(ph - 0.5) / 0.08) * 0.5 : 0;
+    }
     renderer.render(scene, cam);
 
     // tags for the current shot, once the camera has settled on it
@@ -1462,6 +1500,305 @@ async function capScene(sec) {
       T.dot.setAttribute("cx", x.toFixed(1)); T.dot.setAttribute("cy", y.toFixed(1));
       T.path.setAttribute("d", `M${x.toFixed(1)},${y.toFixed(1)} L${(x + dx * 0.5).toFixed(1)},${ty.toFixed(1)} H${(x + dx).toFixed(1)}`);
       T.t.style.transform = `translate(${(x + dx + (side === "r" ? 6 : -6)).toFixed(1)}px, ${(ty - 10).toFixed(1)}px)`;
+    });
+  };
+
+  resize();
+  sec.classList.add("o3-ready");
+  loopWhileVisible(sec, frame);
+}
+
+// ---------------------------------------------------------------- Pluto in 3D
+// Pluto isn't a physical thing, so it's drawn as a board: the agent in the middle, a chip for each tool,
+// copper to everything it can reach. Scrolling follows the example question from the phone to the tools
+// and back, then turns into the morning brief as a day laid out in blocks. Everything shown comes from
+// the two example chats on the page.
+const plutoSec = document.getElementById("pluto-3d");
+if (plutoSec) {
+  if (!GL || REDUCED) plutoSec.classList.add("o3-off");
+  else {
+    plutoSec.classList.add("o3-live");
+    dispatchEvent(new Event("resize"));
+    lazy(plutoSec, () => plutoScene(plutoSec), () => { plutoSec.classList.remove("o3-live"); plutoSec.classList.add("o3-off"); dispatchEvent(new Event("resize")); });
+  }
+}
+
+async function plutoScene(sec) {
+  const K = await kit();
+  const { THREE } = K;
+  const { Vector3, Group, Mesh, MeshStandardMaterial: Std } = THREE;
+  const stage = sec.querySelector(".o3-stage");
+  const canvas = sec.querySelector("canvas");
+  const tagsEl = sec.querySelector(".o3-tags");
+  const steps = [...sec.querySelectorAll(".o3-steps li")];
+  const bar = [...sec.querySelectorAll(".o3-bar span")];
+  const { renderer, scene } = makeRenderer(K, canvas);
+  const cam = new THREE.PerspectiveCamera(34, 1, 0.01, 20);
+  const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
+  const FONT = "Barlow, system-ui, sans-serif";
+  const canvasTex = (w, h, draw) => {
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    const redraw = (...a) => { draw(c.getContext("2d"), w, h, ...a); t.needsUpdate = true; };
+    redraw();
+    return { t, redraw };
+  };
+
+  // ---- the board
+  const world = new Group(); scene.add(world);
+  const boardG = new Group(); world.add(boardG);
+  const BW = 2.0, BD = 1.36;
+  const boardTop = canvasTex(2000, 1360, (g, w, h) => {
+    g.fillStyle = "#0f5a3d"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255,.05)"; for (let x = 20; x < w; x += 40) for (let y = 20; y < h; y += 40) g.fillRect(x - 2, y - 2, 4, 4);
+    g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 4; g.strokeRect(24, 24, w - 48, h - 48);
+    g.fillStyle = "rgba(255,255,255,.7)"; g.font = `700 44px ${FONT}`; g.fillText("PLUTO", 60, 90);
+    g.font = `500 26px ${FONT}`; g.fillText("Rev 2026", 60, 126);
+  });
+  const pcbSide = std("#0b4a32", { roughness: 0.5 });
+  const boardM = new Mesh(new THREE.BoxGeometry(BW, 0.03, BD), [pcbSide, pcbSide, new Std({ map: boardTop.t, roughness: 0.55 }), pcbSide, pcbSide, pcbSide]);
+  boardM.position.y = -0.015; boardG.add(boardM);
+  const gold = std("#d6b25a", { metalness: 0.9, roughness: 0.3 });
+
+  // chips: a body, a labelled top and gold pins along the long sides
+  const chips = {};
+  const chip = (key, name, sub, x, z, w, d, body = "#17191c") => {
+    const g = new Group(); g.position.set(x, 0, z); boardG.add(g);
+    const top = canvasTex(Math.round(w * 1000), Math.round(d * 1000), (c, W_, H_, lit = 0) => {
+      c.fillStyle = body; c.fillRect(0, 0, W_, H_);
+      if (lit) { c.fillStyle = `rgba(224,150,90,${0.25 * lit})`; c.fillRect(0, 0, W_, H_); }
+      c.fillStyle = "#f1f1ee"; c.font = `700 ${Math.round(Math.min(H_ * 0.3, 48))}px ${FONT}`; c.textBaseline = "middle";
+      c.fillText(name, W_ * 0.07, sub ? H_ * 0.38 : H_ * 0.5);
+      if (sub) { c.fillStyle = "rgba(241,241,238,.62)"; c.font = `500 ${Math.round(Math.min(H_ * 0.2, 30))}px ${FONT}`; c.fillText(sub, W_ * 0.07, H_ * 0.68); }
+      c.fillStyle = "rgba(255,255,255,.5)"; c.beginPath(); c.arc(W_ * 0.04, H_ * 0.14, Math.min(W_, H_) * 0.025, 0, 7); c.fill();
+    });
+    const side = std(body, { roughness: 0.4 });
+    const m = new Mesh(new THREE.BoxGeometry(w, 0.026, d), [side, side, new Std({ map: top.t, roughness: 0.45, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
+    m.position.y = 0.013; g.add(m);
+    const n = Math.max(3, Math.round(w / 0.03));
+    const pins = new THREE.InstancedMesh(new THREE.BoxGeometry(0.008, 0.006, 0.014), gold, n * 2);
+    const mt = new THREE.Matrix4(); let k = 0;
+    for (let i = 0; i < n; i++) for (const sz of [-1, 1]) { mt.makeTranslation(-w / 2 + (i + 0.5) * (w / n), 0.004, sz * (d / 2 + 0.006)); pins.setMatrixAt(k++, mt); }
+    g.add(pins);
+    chips[key] = { g, top, mat: m.material[2], lit: 0, at: new Vector3(x, 0.03, z), w, d };
+    return chips[key];
+  };
+  chip("core", "Pluto", "Claude Code, headless · Fly.io", 0, 0.02, 0.56, 0.5, "#0e6a4c");
+  const TOOLS = [["calendar", "Calendar", "Google Calendar"], ["gmail", "Email", "Gmail"], ["canvas", "Canvas", "Assignments, syllabi"], ["grades", "Grades", "Projection"],
+    ["planner", "Study planner", "Blocks time"], ["transit", "Campus buses", "Live positions"], ["places", "Campus map", "Rooms, buildings"]];
+  TOOLS.forEach(([k, n, s], i) => chip(k, n, s, 0.72, -0.51 + i * 0.17, 0.38, 0.12));
+  chip("telegram", "Telegram", "From my iPhone", -0.72, -0.12, 0.34, 0.13);
+  chip("location", "Location", "OwnTracks", -0.72, 0.3, 0.34, 0.13);
+  chip("schedule", "Schedule", "Brief, check-in, review", 0, -0.5, 0.42, 0.12);
+
+  // traces: copper strips on the board, each its own material so it can light up
+  const traces = {};
+  const copper = () => new Std({ color: "#c27434", metalness: 0.9, roughness: 0.35, emissive: "#ff8a3d", emissiveIntensity: 0 });
+  const trace = (key, pts) => {
+    const curve = new THREE.CurvePath();
+    for (let i = 0; i < pts.length - 1; i++) curve.add(new THREE.LineCurve3(new Vector3(pts[i][0], 0.002, pts[i][1]), new Vector3(pts[i + 1][0], 0.002, pts[i + 1][1])));
+    const mat = copper();
+    const m = new Mesh(new THREE.TubeGeometry(curve, 80, 0.006, 6, false), mat); m.scale.y = 0.4; boardG.add(m);
+    traces[key] = { curve, mat };
+  };
+  TOOLS.forEach(([k], i) => { const zc = -0.17 + i * 0.057, zt = -0.51 + i * 0.17; trace(k, [[0.28, zc], [0.42 + (i % 2) * 0.03, zc], [0.42 + (i % 2) * 0.03, zt], [0.53, zt]]); });
+  trace("telegram", [[-0.55, -0.12], [-0.4, -0.12], [-0.4, -0.05], [-0.28, -0.05]]);
+  trace("location", [[-0.55, 0.3], [-0.4, 0.3], [-0.4, 0.1], [-0.28, 0.1]]);
+  trace("schedule", [[0, -0.44], [0, -0.23]]);
+
+  // the phone, lying beside the board, with the chat on its screen
+  const phone = new Group(); phone.position.set(-1.42, 0, -0.04); phone.rotation.y = 0.12; world.add(phone);
+  const PW = 0.24, PD = 0.48;
+  const phBody = new Mesh(new THREE.BoxGeometry(PW, 0.014, PD), std("#1b1d20", { metalness: 0.6, roughness: 0.3 })); phBody.position.y = 0.007; phone.add(phBody);
+  const wrap = (c, text, maxW) => { const words = text.split(" "), lines = []; let line = ""; for (const wd of words) { const t = line ? line + " " + wd : wd; if (c.measureText(t).width > maxW && line) { lines.push(line); line = wd; } else line = t; } if (line) lines.push(line); return lines; };
+  const CHAT = [["me", "When's my next Calc III exam, where is it, and what do I need on it to keep an A?"],
+    ["p", "Exam 2 is Thursday at 2:00. That date is from the syllabus on Canvas, not your calendar, so check it in class."],
+    ["p", "I couldn't find a room for it. Canvas and the schedule don't list one yet."],
+    ["p", "To stay at an A you need about an 84 on it, assuming the final is weighted the way the syllabus says."]];
+  const screen = canvasTex(480, 960, (c, W_, H_, shown = 0) => {
+    c.fillStyle = "#0e1412"; c.fillRect(0, 0, W_, H_);
+    c.fillStyle = "#16201c"; c.fillRect(0, 0, W_, 96);
+    c.fillStyle = "#3fd68f"; c.beginPath(); c.arc(40, 50, 9, 0, 7); c.fill();
+    c.fillStyle = "#e8ece8"; c.font = `700 30px ${FONT}`; c.textBaseline = "middle"; c.fillText("Pluto", 62, 50);
+    let y = 130;
+    c.font = `500 25px ${FONT}`; c.textBaseline = "top";
+    CHAT.slice(0, shown).forEach(([who, text]) => {
+      const lines = wrap(c, text, 330), bh = lines.length * 32 + 22, me = who === "me", bw = 370;
+      const x = me ? W_ - bw - 20 : 20;
+      c.fillStyle = me ? "#5a3a20" : "#1d3b2d"; c.beginPath(); c.roundRect(x, y, bw, bh, 18); c.fill();
+      c.fillStyle = "#eef2ee"; lines.forEach((l, i) => c.fillText(l, x + 18, y + 12 + i * 32));
+      y += bh + 16;
+    });
+  });
+  const scr = new Mesh(new THREE.PlaneGeometry(PW * 0.9, PD * 0.92), new THREE.MeshBasicMaterial({ map: screen.t, toneMapped: false }));
+  scr.rotation.x = -Math.PI / 2; scr.position.y = 0.0145; phone.add(scr);
+  let screenShown = -1;
+
+  // packets: glowing beads that travel along traces (or arc through the air between the phone and Telegram)
+  const packetMat = new THREE.MeshBasicMaterial({ color: "#ffb070", toneMapped: false });
+  const packets = [0, 1, 2].map(() => { const m = new Mesh(new THREE.SphereGeometry(0.016, 16, 10), packetMat); m.visible = false; world.add(m); return m; });
+  const phoneW = new Vector3(), tmp = new Vector3();
+  const arcPt = (u, out) => { // phone screen to the Telegram chip, through the air
+    phone.getWorldPosition(phoneW); const a = phoneW.clone().setY(0.03), b = chips.telegram.at.clone().setX(chips.telegram.at.x - 0.17);
+    out.lerpVectors(a, b, u); out.y += Math.sin(u * Math.PI) * 0.22; return out;
+  };
+  const along = (key, u, reverse, out) => { traces[key].curve.getPointAt(clamp(reverse ? 1 - u : u), out); out.y = 0.012; boardG.localToWorld(out); return out; };
+  const showPacket = (i, pos) => { packets[i].visible = true; packets[i].position.copy(pos); };
+
+  // ---- the day, as blocks: the morning brief
+  const day = new Group(); day.position.set(0, 0, 1.12); world.add(day);
+  const H0 = 7, H1 = 24, DW = 1.9, hx = (hr) => -DW / 2 + ((hr - H0) / (H1 - H0)) * DW;
+  const ruler = canvasTex(1900, 120, (c, W_, H_) => {
+    c.fillStyle = "#e9ece8"; c.fillRect(0, 0, W_, H_);
+    c.fillStyle = "#6a7d73"; c.font = `600 26px ${FONT}`; c.textBaseline = "top";
+    for (let hr = H0; hr <= H1; hr++) { const x = ((hr - H0) / (H1 - H0)) * W_; c.fillRect(x - 1, 0, 2, hr % 3 === 0 ? 40 : 22);
+      if (hr % 3 === 0 && hr < H1) c.fillText(`${((hr + 11) % 12) + 1}${hr < 12 ? " AM" : " PM"}`, x + 6, 48); }
+  });
+  const rulerM = new Mesh(new THREE.BoxGeometry(DW, 0.01, 0.12), [std("#d9ddd9"), std("#d9ddd9"), new Std({ map: ruler.t, roughness: 0.8 }), std("#d9ddd9"), std("#d9ddd9"), std("#d9ddd9")]);
+  rulerM.position.set(0, 0.005, 0.12); day.add(rulerM);
+  const block = (label, sub, h0, h1, color, z = 0) => {
+    const w = Math.max(0.06, hx(h1) - hx(h0));
+    const tex = canvasTex(Math.round(w * 2600), Math.round(0.13 * 2600), (c, W_, H_) => {
+      c.fillStyle = color; c.fillRect(0, 0, W_, H_); c.textBaseline = "top";
+      const fit = (t, px, wt) => { let sz = px; c.font = `${wt} ${sz}px ${FONT}`; while (c.measureText(t).width > W_ - 28 && sz > 10) { sz -= 2; c.font = `${wt} ${sz}px ${FONT}`; } return sz; };
+      const s1 = fit(label, 82, 700); c.fillStyle = "#fff"; c.fillText(label, 14, 34);
+      fit(sub, Math.min(60, s1 * 0.75), 500); c.fillStyle = "rgba(255,255,255,.82)"; c.fillText(sub, 14, 50 + s1); });
+    const side = std(color, { roughness: 0.5 });
+    const m = new Mesh(new THREE.BoxGeometry(w, 0.04, 0.13), [side, side, new Std({ map: tex.t, roughness: 0.5, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
+    m.position.set(hx(h0) + w / 2, 0.02, z); day.add(m); return m;
+  };
+  const enes = block("ENES100", "10:00", 10, 11.25, "#2a5f8f");
+  const calc = block("Calc III", "2:00", 14, 15.25, "#2a5f8f");
+  const study = block("Study: physics", "4:00 to 5:30", 16, 17.5, "#b8692a");
+  const due = block("Physics due", "11:59 PM", 22.6, 23.98, "#9a3b34");
+  const bus = block("Bus 104", "in 6 min", 7, 8.6, "#59636b", -0.15);
+  const walk = block("Walk", "faster today", 7, 8.6, "#2f9a4a", -0.3);
+  day.visible = false;
+
+  // ---- labels (anchored to world points), same rules as the other scenes: flip at edges, never overlap
+  const svgNS = "http://www.w3.org/2000/svg";
+  const lsvg = document.createElementNS(svgNS, "svg"); tagsEl.appendChild(lsvg);
+  const TAGS = [
+    [1, () => phone.getWorldPosition(new Vector3()).setY(0.03), "My question, on Telegram"],
+    [2, () => chips.canvas.at.clone().add(boardG.position).setX(chips.canvas.at.x - 0.19), "Exam date from the syllabus, flagged: not on my calendar"],
+    [3, () => chips.places.at.clone().add(boardG.position).setX(chips.places.at.x - 0.19), "No room listed anywhere, so it says so"],
+    [4, () => chips.grades.at.clone().add(boardG.position).setX(chips.grades.at.x - 0.19), "About an 84 to keep an A, assuming the syllabus weighting"],
+    [6, () => chips.calendar.at.clone().add(boardG.position).setX(chips.calendar.at.x - 0.19), "Classes come from the calendar"],
+    [7, () => study.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Not on the calendar, so it blocks 4:00 to 5:30"],
+    [7, () => walk.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Walking beats the bus today"],
+  ].map(([ch, at, text]) => {
+    const path = document.createElementNS(svgNS, "path"); path.setAttribute("class", "o3-lead"); lsvg.appendChild(path);
+    const dot = document.createElementNS(svgNS, "circle"); dot.setAttribute("r", "3"); dot.setAttribute("class", "o3-dot"); lsvg.appendChild(dot);
+    const t = document.createElement("span"); t.className = "o3-tag r"; t.textContent = text; tagsEl.appendChild(t);
+    return { ch, at, path, dot, t, w: 0, h: 0, o: 0 };
+  });
+
+  // ---- camera: one framing per chapter, eased between them
+  const SHOTS = [
+    [[0.0, 0, 0.1], 0.35, 0.95, 2.6],   // the board
+    [[-1.05, 0, -0.06], 0.75, 0.95, 1.1], // the phone and Telegram
+    [[0.5, 0, -0.17], 0.35, 0.85, 1.05],  // Canvas
+    [[0.5, 0, 0.45], 0.55, 0.85, 1.05],   // Campus map
+    [[0.5, 0, 0.0], 0.25, 0.8, 1.05],     // Grades
+    [[-0.85, 0, -0.04], 0.6, 1.0, 1.25],  // the answer
+    [[0.0, 0, 1.1], 0.0, 0.75, 1.85],     // the day
+    [[-0.35, 0, 0.95], -0.12, 0.7, 1.75], // what it moves
+  ].map(([t_, az, el, r]) => ({ tgt: new Vector3(...t_), az, el, r }));
+  const N = SHOTS.length;
+  const ocam = orbitCam(Vector3);
+  const tg = new Vector3(), v = new Vector3();
+  let W = 0, H = 0, lastT = 0, cur = -1, p = 0;
+  const resize = () => {
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    TAGS.forEach((e) => { e.w = 0; e.h = 0; });
+    renderer.setSize(W, H, false); cam.aspect = W / H;
+    if (W >= 760) cam.setViewOffset(W, H, -W * 0.08, H * 0.03, W, H); else cam.clearViewOffset();
+    cam.updateProjectionMatrix(); lsvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  };
+  new ResizeObserver(resize).observe(stage);
+
+  const frame = (time) => {
+    if (!W) return;
+    const dt = lastT ? Math.min(0.1, (time - lastT) / 1000) : 0; lastT = time;
+    const r_ = sec.getBoundingClientRect(), travel = sec.offsetHeight - stage.offsetHeight;
+    const want = travel > 0 ? clamp(-r_.top / travel) : 0;
+    p += (want - p) * (dt ? 1 - Math.exp(-dt / 0.18) : 1);
+    const s = p * (N - 0.001), ch = Math.floor(s), f = s - ch;
+
+    // which chips and traces are lit, and the packets
+    Object.values(chips).forEach((c) => { c.want = 0; });
+    Object.values(traces).forEach((t) => { t.want = 0; });
+    packets.forEach((m) => { m.visible = false; });
+    const lit = (k, a = 1) => { if (chips[k]) chips[k].want = Math.max(chips[k].want, a); if (traces[k]) traces[k].want = Math.max(traces[k].want, a); };
+    lit("core", 0.35);
+    if (ch === 1) {
+      if (f < 0.5) showPacket(0, arcPt(smoother(clamp(f / 0.5)), tmp)); else { showPacket(0, along("telegram", smoother(clamp((f - 0.5) / 0.4)), false, tmp)); lit("telegram"); }
+      if (f > 0.85) lit("core");
+    }
+    const outTo = (k, i) => { if (f < 0.65) { showPacket(i, along(k, smoother(clamp((f - 0.05) / 0.55)), true, tmp)); lit(k); } else lit(k); };
+    if (ch === 2) outTo("canvas", 0);
+    if (ch === 3) outTo("places", 0);
+    if (ch === 4) outTo("grades", 0);
+    if (ch === 5) {
+      ["canvas", "places", "grades"].forEach((k, i) => { if (f < 0.35) { showPacket(i, along(k, smoother(clamp(f / 0.35)), false, v.clone())); lit(k, 0.7); } });
+      if (f >= 0.35 && f < 0.6) { showPacket(0, along("telegram", smoother(clamp((f - 0.35) / 0.25)), true, tmp)); lit("telegram"); }
+      if (f >= 0.6 && f < 0.85) showPacket(0, arcPt(1 - smoother(clamp((f - 0.6) / 0.25)), tmp));
+      lit("core");
+    }
+    if (ch === 6) { lit("calendar"); lit("canvas", 0.7); lit("schedule"); }
+    if (ch === 7) { lit("planner"); lit("transit"); }
+    Object.values(chips).forEach((c) => { c.lit += (c.want - c.lit) * (dt ? 1 - Math.exp(-dt / 0.2) : 1); c.mat.emissiveIntensity = c.lit * 0.5; });
+    Object.values(traces).forEach((t) => { t.mat.emissiveIntensity += ((t.want ? 0.9 + 0.3 * Math.sin(time / 160) : 0) - t.mat.emissiveIntensity) * (dt ? 1 - Math.exp(-dt / 0.15) : 1); });
+
+    // the phone's chat fills in as the answer comes back
+    const shown = ch < 1 ? 0 : ch < 5 ? 1 : ch > 5 ? 4 : 1 + Math.floor(clamp((f - 0.7) / 0.28) * 3.999);
+    if (shown !== screenShown) { screenShown = shown; screen.redraw(Math.min(4, shown)); }
+
+    // the day: the board steps back, the blocks come in, the study block drops into place
+    const dayIn = ch < 6 ? 0 : ch === 6 ? smoother(clamp(f / 0.4)) : 1;
+    day.visible = dayIn > 0.01;
+    boardG.position.z = -0.25 * dayIn; boardG.position.y = -0.02 * dayIn;
+    day.scale.setScalar(0.6 + 0.4 * dayIn);
+    const drop = ch < 7 ? 0 : smoother(clamp((f - 0.08) / 0.4));
+    study.visible = ch >= 7 && drop > 0.01; study.position.y = 0.02 + (1 - drop) * 0.4; study.material[2].emissiveIntensity = ch === 7 ? 0.35 * drop : 0;
+    const choose = ch < 7 ? 0 : smoother(clamp((f - 0.5) / 0.3));
+    bus.material.forEach((m) => { m.transparent = true; m.opacity = 1 - 0.65 * choose; });
+    walk.material[2].emissiveIntensity = 0.4 * choose;
+    due.material[2].emissiveIntensity = ch >= 6 ? 0.15 + 0.1 * Math.sin(time / 300) : 0;
+    [enes, calc].forEach((b) => { b.material[2].emissiveIntensity = ch === 6 ? 0.2 * smoother(clamp(f / 0.5)) : 0; });
+
+    // camera
+    const i0 = Math.min(N - 1, ch), i1 = Math.min(N - 1, ch + 1), u = smoother(clamp((f - 0.6) / 0.4));
+    const A = SHOTS[i0], B = SHOTS[i1];
+    const narrow = cam.aspect < 1 ? Math.min(2.6, 1.3 / cam.aspect) : 1; // phones: back off so the board fits
+    tg.lerpVectors(A.tgt, B.tgt, u);
+    const st = ocam.to(A.az + angDiff(A.az, B.az) * u + 0.05 * Math.sin(time / 4100), A.el + (B.el - A.el) * u, (A.r + (B.r - A.r) * u) * narrow, tg, dt, 0.5);
+    ocam.place(cam, cam.position); cam.lookAt(st.tgt);
+    renderer.render(scene, cam);
+
+    if (ch !== cur) { cur = ch; steps.forEach((li, j) => li.classList.toggle("on", j === ch)); bar.forEach((b, j) => b.classList.toggle("on", j === ch)); }
+
+    // labels
+    const placed = [];
+    TAGS.forEach((T_) => {
+      const want_ = T_.ch === ch && f > 0.3 ? 1 : 0;
+      T_.o += (want_ - T_.o) * (dt ? 1 - Math.exp(-dt / 0.2) : 1);
+      let o = T_.o;
+      if (o > 0.02) { v.copy(T_.at()).project(cam); if (v.z > 1 || Math.abs(v.x) > 0.96 || Math.abs(v.y) > 0.92) o = 0; } // only when its anchor is on screen
+      T_.t.style.opacity = T_.path.style.opacity = T_.dot.style.opacity = o.toFixed(3);
+      if (o < 0.02) return;
+      const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
+      const tw = T_.w ||= T_.t.offsetWidth, th = T_.h ||= T_.t.offsetHeight, reach = W < 600 ? 22 : 46;
+      let side = x > W * 0.5 ? "r" : "l";
+      if (side === "r" && x + reach + 6 + tw > W - 8) side = "l"; else if (side === "l" && x - reach - 6 - tw < 8) side = "r";
+      T_.t.classList.toggle("l", side === "l"); T_.t.classList.toggle("r", side === "r");
+      const dx = side === "r" ? reach : -reach;
+      let ty = y - 26; const lx = side === "r" ? x + dx + 6 : x + dx - 6 - tw;
+      for (let k = 0; k < 6; k++) { const hit = placed.find((q) => lx < q.x + q.w + 6 && lx + tw + 6 > q.x && ty - 10 < q.y + q.h && ty - 10 + th > q.y); if (!hit) break; ty = hit.y + hit.h + 14; }
+      placed.push({ x: lx, y: ty - 10, w: tw, h: th });
+      T_.dot.setAttribute("cx", x.toFixed(1)); T_.dot.setAttribute("cy", y.toFixed(1));
+      T_.path.setAttribute("d", `M${x.toFixed(1)},${y.toFixed(1)} L${(x + dx * 0.5).toFixed(1)},${ty.toFixed(1)} H${(x + dx).toFixed(1)}`);
+      T_.t.style.transform = `translate(${(x + dx + (side === "r" ? 6 : -6)).toFixed(1)}px, ${(ty - 10).toFixed(1)}px)`;
     });
   };
 
