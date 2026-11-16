@@ -321,24 +321,52 @@
       const t1 = svgEl("text", { x: x + 72, y: y + 24, class: "sym-ref" }, g); t1.textContent = ref;
       const t2 = svgEl("text", { x: x + 72, y: y + 43, class: "sym-v" }, g); t2.textContent = s.v;
     });
-    const bar = document.createElement("div");
-    bar.className = "viewsw";
-    bar.setAttribute("role", "group");
-    bar.setAttribute("aria-label", "Diagram style");
-    bar.innerHTML = '<button type="button" aria-pressed="true" data-v="blocks">Blocks</button><button type="button" aria-pressed="false" data-v="schem">Schematic</button>';
-    const steps = otvFig.querySelector(".steps");
-    const row = document.createElement("div");
-    row.className = "figbar";
-    (steps || otvFig.querySelector(".scroll")).after(row);
-    if (steps) row.appendChild(steps);
-    row.appendChild(bar);
-    bar.addEventListener("click", (e) => {
-      const b = e.target.closest("button");
-      if (!b) return;
-      const schem = b.dataset.v === "schem";
-      otvFig.classList.toggle("schem", schem);
-      $$("button", bar).forEach((x) => x.setAttribute("aria-pressed", x === b));
-    });
+    // Schematic wipe: a copy of the board drawn as a schematic sits on top and is revealed
+    // left to right as the fourth scroll stage (or as the board scrolls by on a phone).
+    if (!REDUCED) {
+      const sc = otvFig.querySelector(".scroll");
+      const svg = otvFig.querySelector(".scroll > svg");
+      const layer = document.createElement("div");
+      layer.className = "schem-layer diagram schem";
+      layer.setAttribute("aria-hidden", "true");
+      const copy = svg.cloneNode(true);
+      ["role", "aria-label", "aria-labelledby"].forEach((a) => copy.removeAttribute(a));
+      copy.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
+      copy.querySelectorAll("[tabindex]").forEach((e) => e.removeAttribute("tabindex"));
+      copy.querySelectorAll(".pulse, .dots, .hit, title").forEach((e) => e.remove());
+      copy.querySelectorAll(".sig").forEach((e) => (e.style.strokeDashoffset = 0));
+      layer.appendChild(copy);
+      const edge = document.createElement("i");
+      edge.className = "schem-edge";
+      edge.setAttribute("aria-hidden", "true");
+      sc.classList.add("has-schem");
+      sc.append(layer, edge);
+      // Hover and linked highlights on the real board show on the schematic too.
+      const sel = ".blk, .tr, .pad";
+      const orig = [...svg.querySelectorAll(sel)], twin = [...copy.querySelectorAll(sel)];
+      if (orig.length === twin.length) {
+        new MutationObserver((ms) => ms.forEach((m) => {
+          const i = orig.indexOf(m.target);
+          if (i >= 0) twin[i].setAttribute("class", m.target.getAttribute("class"));
+        })).observe(svg, { subtree: true, attributes: true, attributeFilter: ["class"] });
+      }
+      const setW = (w) => {
+        w = clamp(w);
+        sc.style.setProperty("--w", w.toFixed(4));
+        sc.classList.toggle("wiping", w > 0.001 && w < 0.999);
+      };
+      // Desktop: the pinned scene's progress drives it (stage four, then a short hold).
+      otvFig.addEventListener("sceneprogress", (e) => { if (WIDE.matches) setW((e.detail - 0.64) / 0.24); });
+      // Phone: driven by how far the board has scrolled up the screen.
+      const onScroll = () => {
+        if (WIDE.matches) return;
+        const r = svg.getBoundingClientRect();
+        setW((innerHeight * 0.55 - r.top) / (r.height * 0.85));
+      };
+      addEventListener("scroll", onScroll, { passive: true });
+      setW(0);
+      onScroll();
+    }
   }
 
   // ------------------------------------------------------------ Arena: camera's-eye view

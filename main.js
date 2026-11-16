@@ -544,10 +544,14 @@ const lenis = (() => {
       steps = document.createElement("ol");
       steps.className = "steps";
       steps.setAttribute("aria-hidden", "true");
-      steps.innerHTML = groups.map((g) => `<li>${g}</li>`).join("");
+      steps.innerHTML = groups.map((g) => `<li>${g}</li>`).join("") + (fig.hasAttribute("data-schem") ? "<li>Schematic</li>" : "");
       fig.querySelector(".scroll").after(steps);
     }
-    return { fig, svg, wrap, steps, traces, mcu: svg.querySelector(".blk.mcu"), extra: 0, p: -1, onScreen: false };
+    // A diagram with a schematic gets a fourth stage, so the first three play a little faster.
+    const T = fig.hasAttribute("data-schem")
+      ? { a: [0.03, 0.27], b: [0.36, 0.6], hot: 0.25, cur: [0.25, 0.36, 0.64], len: 2.8 }
+      : { a: [0.04, 0.4], b: [0.54, 0.9], hot: 0.36, cur: [0.36, 0.54, 2], len: 1.8 };
+    return { fig, svg, wrap, steps, traces, T, mcu: svg.querySelector(".blk.mcu"), extra: 0, p: -1, onScreen: false };
   });
 
   // Size each scene: the pinned diagram plus about two screens of scroll to play through.
@@ -560,14 +564,14 @@ const lenis = (() => {
       const room = innerHeight - h;
       sc.pin = h + Math.max(8, (room - fh) / 2);
       sc.fig.style.top = sc.pin + "px";
-      sc.extra = Math.round(innerHeight * 1.8);
+      sc.extra = Math.round(innerHeight * sc.T.len);
       sc.wrap.style.height = fh + sc.extra + "px";
     });
   };
 
   const fillOf = (sc, t, p) => {
     if (!sc.wrap) return ease(clamp((p - t.k * 0.35) / 0.65));
-    const [a, b] = t.stage === 0 ? [0.04, 0.4] : [0.54, 0.9];
+    const [a, b] = t.stage === 0 ? sc.T.a : sc.T.b;
     const w = (b - a) * 0.6;
     return ease(clamp((p - a - t.k * (b - a - w)) / w));
   };
@@ -607,9 +611,12 @@ const lenis = (() => {
           d.style.opacity = Math.min(1, u * 6, (1 - u) * 6);
         });
       });
-      if (sc.mcu) sc.mcu.classList.toggle("hot", p > 0.36);
+      if (sc.mcu) sc.mcu.classList.toggle("hot", p > sc.T.hot);
+      // Tell the page how far through its scene this diagram is (visuals.js runs the schematic wipe).
+      if (p !== sc.p) { sc.p = p; sc.fig.dispatchEvent(new CustomEvent("sceneprogress", { detail: p })); }
       if (sc.steps) {
-        const cur = p < 0.36 ? 0 : p < 0.54 ? 1 : 2;
+        const [c1, c2, c3] = sc.T.cur;
+        const cur = p < c1 ? 0 : p < c2 ? 1 : p < c3 ? 2 : 3;
         [...sc.steps.children].forEach((li, i) => li.classList.toggle("on", i === cur && p > 0.02));
       }
     }
