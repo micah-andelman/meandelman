@@ -1215,7 +1215,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
    Shares the .o3 stage, card and bar. While it's live the 2D map steps aside on screen; print and
    the fallbacks keep the 2D map. */
 .o3r { display: none; }
-.o3r.o3-live { display: block; height: calc(var(--o3h) * 4); }
+.o3r.o3-live { display: block; height: var(--o3h); }
 .o3r-note { display: none; }
 html.o3r-on .o3r-note { display: block; max-width: var(--measure); margin: 20px 0 0; font-size: 16px; color: var(--ink-2); }
 html.o3r-on #otv-route { display: none; }
@@ -1225,7 +1225,7 @@ html.o3r-on #otv-route { display: none; }
 .o3r.o3r-done .o3r-replay { opacity: 1; pointer-events: auto; }
 .o3r .o3r-replay:hover, .o3r .o3r-replay:focus-visible { background: var(--copper); color: var(--paper); }
 @media screen and (max-width: 760px) {
-  .o3r.o3-live { height: calc(var(--o3h) * 3.5); }
+  .o3r .o3r-hint { bottom: auto; top: calc(var(--hh, 52px) + 78px); }
   .o3r .o3r-hud { font-size: 11px; }
 }
 @media print { html.o3r-on #otv-route { display: block !important; } .o3r, .o3r-note { display: none !important; } }
@@ -1239,3 +1239,30 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 .o3c-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 .o3c-flash.go { animation: capflash .5s ease-out; }
 @media print { html.o3c-on .capscene { display: block !important; } html.o3c-on .capkey { display: revert !important; } .o3c { display: none !important; } }
+
+/* The run holds the screen while it plays: a hint, and a skip button for keyboards. */
+.o3r .o3r-hint { position: absolute; left: 50%; bottom: clamp(28px, 7vh, 72px); translate: -50% 0; margin: 0; padding: 6px 12px; border-radius: 999px; font: 600 13px var(--text); color: var(--ink-2); background: color-mix(in srgb, var(--paper) 86%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 60%, transparent); white-space: nowrap; transition: opacity .3s; }
+.o3r .o3r-hint:empty { opacity: 0; }
+.o3r .o3r-skip { position: absolute; right: var(--gutter); top: calc(var(--hh, 56px) + 12px); font: 600 13px var(--text); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--rule); color: var(--ink-2); background: color-mix(in srgb, var(--paper) 85%, transparent); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.o3r.o3r-locked .o3r-skip { opacity: 1; pointer-events: auto; }
+.o3r .o3r-skip:hover, .o3r .o3r-skip:focus-visible { border-color: var(--copper); color: var(--copper); }
+@media screen and (min-width: 761px) { .o3r .o3r-hint { left: auto; right: var(--gutter); translate: none; bottom: calc(clamp(28px, 7vh, 72px) + 44px); } }
+@media screen and (max-width: 760px) { .o3r .o3r-hint { bottom: auto; left: var(--gutter); translate: none; top: calc(var(--hh, 52px) + 74px); font-size: 12px; } .o3r .o3r-skip { top: calc(var(--hh, 52px) + 72px); } }
+@media screen and (max-width: 760px) { .o3r .o3-tag { white-space: normal; max-width: 44vw; line-height: 1.25; } }
+
+/* Asking Pluto a question: my message on the right, Pluto's answers on the left. */
+.brief.ask { margin-top: 14px; }
+.brief .msg.me { margin-left: auto; border-radius: 14px 4px 14px 14px; background: color-mix(in srgb, var(--copper) 18%, var(--paper)); }
+
+/* Scroll-driven course run: a tall section, the stage pinned while you scroll through it. */
+.o3r.o3-live.o3r-scrub { height: calc(var(--o3h) * 9); }
+.o3r.o3r-scrub .o3r-skip, .o3r.o3r-scrub .o3r-replay { display: none; }
+@media screen and (max-width: 760px) { .o3r.o3-live.o3r-scrub { height: calc(var(--o3h) * 8); } }
+.brief.ask .msg { max-width: 86%; }
+
+/* Pluto: the morning brief and the question side by side, so they don't push the page down. */
+.briefs { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; margin-top: 10px; }
+.briefs .brief { grid-column: auto; max-width: none; margin: 0; }
+.briefs .brief.ask { margin-top: 0; }
+@media screen and (max-width: 760px) { .briefs { grid-template-columns: 1fr; } }
+@media print { .briefs { display: none; } }

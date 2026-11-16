@@ -341,6 +341,7 @@ const int  MAX_PWM      = 153;</code></template>
       <h3 class="sr" id="o3r-t">The course run in 3D</h3>
       <div class="o3-stage">
         <canvas aria-hidden="true"></canvas>
+        <div class="o3-tags" aria-hidden="true"></div>
         <p class="o3r-hud" aria-hidden="true"></p>
         <ol class="o3-steps">
           <li><span class="o3-n">01 / 08</span><h4>Start</h4><p>It starts in a random square, A or B, facing a random way. An overhead camera finds the ArUco marker on top and sends position and heading over Wi-Fi. If that signal drops out, the robot stops and waits for it.</p></li>
@@ -348,12 +349,14 @@ const int  MAX_PWM      = 153;</code></template>
           <li><span class="o3-n">03 / 08</span><h4>Sample</h4><p>The arm comes down one degree at a time. The HC-SR04 pings the water several times and keeps the median for the depth. The color sensor calls the water polluted if any channel sees a strong non-black color. The pump pulls at least 20 mL up the hose.</p></li>
           <li><span class="o3-n">04 / 08</span><h4>Back off</h4><p>Arm up. It backs away from the pool and turns toward the top wall.</p></li>
           <li><span class="o3-n">05 / 08</span><h4>To the wall</h4><p>Up to the top wall, then along it, 12.5 cm off. The front HC-SR04 watches ahead the whole way.</p></li>
-          <li><span class="o3-n">06 / 08</span><h4>Obstacles</h4><p>Through the 25 cm gap between the wall and both rows of obstacles. The front sensor only calls an obstacle after several close pings in a row, so one stray echo can't stop the run.</p></li>
+          <li><span class="o3-n">06 / 08</span><h4>Obstacles</h4><p>Along the wall past both obstacle rows. Underneath: a worm-gear motor for each wheel in a printed mount, the rear caster and the front HC-SR04, which only calls an obstacle after several close pings in a row.</p></li>
           <li><span class="o3-n">07 / 08</span><h4>Limbo</h4><p>Down into the 56 cm limbo lane and under the bar, which clears the floor by 18.4 cm.</p></li>
           <li><span class="o3-n">08 / 08</span><h4>Goal</h4><p>In the goal zone. In 40 randomized simulator runs it never went more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p></li>
         </ol>
         <div class="o3-bar" aria-hidden="true"><span>Start</span><span>Pool</span><span>Sample</span><span>Back off</span><span>Wall</span><span>Obstacles</span><span>Limbo</span><span>Goal</span></div>
         <button type="button" class="o3r-replay">Replay, other start</button>
+        <button type="button" class="o3r-skip">Skip the run</button>
+        <p class="o3r-hint" aria-live="polite"></p>
         <p class="o3-load" aria-hidden="true">Loading the arena&hellip;</p>
       </div>
     </section>
@@ -446,12 +449,22 @@ const int  MAX_PWM      = 153;</code></template>
     <div class="p-body">
       <p class="lede">A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.</p>
       <p>Most of my time went into the tools. Each one does one job and is careful about what it doesn't know. If it guessed an exam date, it says so. If it can't find a room, it says that too. It only suggests a bus when the bus beats walking by at least five minutes.</p>
+      <div class="briefs">
       <div class="brief" role="group" aria-label="Example of a morning brief">
         <p class="brief-head"><i aria-hidden="true"></i>Pluto <span>7:02 AM</span></p>
-        <p class="msg">Morning. Two classes today: ENES100 at 10:00 and Calc III at 2:00.</p>
-        <p class="msg">Your physics problem set is due at 11:59 PM and isn't on your calendar, so I blocked 4:00 to 5:30.</p>
-        <p class="msg">Bus 104 leaves in 6 minutes, but walking to class is faster today.</p>
+        <p class="msg" data-keys="calendar schedule">Morning. Two classes today: ENES100 at 10:00 and Calc III at 2:00.</p>
+        <p class="msg" data-keys="canvas planner">Your physics problem set is due at 11:59 PM and isn't on your calendar, so I blocked 4:00 to 5:30.</p>
+        <p class="msg" data-keys="transit">Bus 104 leaves in 6 minutes, but walking to class is faster today.</p>
         <p class="brief-note">An example of a morning brief.</p>
+      </div>
+      <div class="brief ask" role="group" aria-label="Example of asking Pluto a question">
+        <p class="brief-head"><i aria-hidden="true"></i>Pluto <span>3:41 PM</span></p>
+        <p class="msg me" data-keys="phone">When's my next Calc III exam, where is it, and what do I need on it to keep an A?</p>
+        <p class="msg" data-keys="canvas">Exam 2 is Thursday at 2:00. That date is from the syllabus on Canvas, not your calendar, so check it in class.</p>
+        <p class="msg" data-keys="places">I couldn't find a room for it. Canvas and the schedule don't list one yet.</p>
+        <p class="msg" data-keys="grades">To stay at an A you need about an 84 on it, assuming the final is weighted the way the syllabus says.</p>
+        <p class="brief-note">An example of asking Pluto a question.</p>
+      </div>
       </div>
       <dl class="specs">
         <div><dt>36</dt><dd>tool modules</dd></div>
@@ -518,7 +531,7 @@ const int  MAX_PWM      = 153;</code></template>
       <dl class="meta">
         <div><dt>When</dt><dd>Fall 2026</dd></div>
         <div><dt>Role</dt><dd>Solo, hardware and software</dd></div>
-        <div><dt>Built with</dt><dd>Seeed XIAO ESP32S3 Sense, Herald, Gemini API</dd></div>
+        <div><dt>Built with</dt><dd>Seeed XIAO ESP32S3 Sense, <a href="https://github.com/benmross/herald" target="_blank" rel="noopener">Herald</a>, Gemini API</dd></div>
       </dl>
     </div>
     <div class="p-body">
@@ -648,7 +661,7 @@ const int  MAX_PWM      = 153;</code></template>
       <figcaption>
         <p class="cap" data-default="Select a step.">Select a step.</p>
         <template data-k="cap">A Seeed XIAO ESP32S3 Sense sits at the front of the brim, angled down at the tray, with its Wi-Fi antenna facing away from my head. A 500 mAh protected LiPo is tucked under the crown where it can't get crushed, with a slide switch, a touch pad and a recording LED. The onboard mic stays off, because Maryland requires everyone on an audio recording to consent.</template>
-        <template data-k="herald">Photos go to Herald, a Telegram bot my friend Ben built. My code runs as a Herald extension, so the results show up in a Telegram chat instead of a separate app.</template>
+        <template data-k="herald">Photos go to Herald, a Telegram bot my friend Ben built (<a href="https://github.com/benmross/herald" target="_blank" rel="noopener">source on GitHub</a>). My code runs as a Herald extension, so the results show up in a Telegram chat instead of a separate app.</template>
         <template data-k="gemini">The Gemini API only has to name each item and estimate how much of it there is. It combines cues like scoop counts and how much of the plate the food covers.</template>
         <template data-k="macros">Calories and macros come from UMD Dining's published nutrition facts, so the model never has to guess the numbers.</template>
       </figcaption>

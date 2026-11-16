@@ -193,8 +193,8 @@
   waitIntro();
 
   // ------------------------------------------------------------ Pluto: typed brief
-  const brief = $(".brief");
-  if (brief && !REDUCED) {
+  $$(".brief").forEach((brief) => {
+    if (REDUCED) return;
     const msgs = $$(".msg", brief);
     const full = msgs.map((m) => m.textContent);
     msgs.forEach((m) => { m.textContent = ""; m.classList.add("wait"); });
@@ -213,7 +213,7 @@
         await new Promise((r) => setTimeout(r, 380));
       }
     });
-  }
+  });
 
 })();
 
@@ -433,14 +433,13 @@
       added.forEach((p) => p?.classList.contains("pulse") && p.remove());
     }, ms);
   };
-  // Pluto: each line of the brief lights the tool it came from.
+  // Pluto: each message lights the tools it came from (data-keys on the message).
   const plutoFig = $("#pluto [data-diagram]");
-  const BRIEF_KEYS = [["calendar", "schedule"], ["canvas", "planner"], ["transit"]];
-  $$(".brief .msg").forEach((m, i) => {
+  $$(".brief .msg").forEach((m) => {
     new MutationObserver(() => {
       if (m.classList.contains("typing") && !m.dataset.lit) {
         m.dataset.lit = "1";
-        (BRIEF_KEYS[i] || []).forEach((k, j) => setTimeout(() => flash(plutoFig, k), j * 300));
+        (m.dataset.keys || "").split(" ").filter(Boolean).forEach((k, j) => setTimeout(() => flash(plutoFig, k), j * 300));
       }
     }).observe(m, { attributes: true, attributeFilter: ["class"] });
   });
