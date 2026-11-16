@@ -272,7 +272,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       trail.style.strokeDashoffset = glow.style.strokeDashoffset = len - d;
       // State for the logic analyzer (extras.js).
       fig.dispatchEvent(new CustomEvent("otvtick", { detail: {
-        t: now, d, held, turn: dt ? step / dt : 0, done: d >= len, x: pt.x, y: pt.y,
+        t: now, d, held, turn: dt ? step / dt : 0, done: d >= len, x: pt.x, y: pt.y, h: heading,
         sampling: d >= SAMPLE_AT && held > 0 && held < SAMPLE_MS,
       } }));
       if (d < len) raf = requestAnimationFrame(tick);

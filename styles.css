@@ -912,3 +912,160 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
   .seg7 .off { fill: none !important; }
 }
 @media print { .experience .ref { display: none !important; } }
+
+/* =====================================================================
+   Round two: exploded hero, schematic view, OTV drawing, camera view,
+   linked highlights, cursor lighting, current in the name, panel rails.
+   ===================================================================== */
+:root { --fr4: #cdbd84; --fr4-weave: rgb(120 100 40 / .18); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fr4: #5c5434; --fr4-weave: rgb(0 0 0 / .25); } }
+:root[data-theme="dark"] { --fr4: #5c5434; --fr4-weave: rgb(0 0 0 / .25); }
+
+/* ---------- Exploded hero ---------- */
+html.explode .hero-scene { height: calc(100svh - 56px + 80vh); perspective: 1900px; perspective-origin: 50% 30%; }
+html.explode .hero-scene .hero { position: sticky; top: 56px; transform-style: preserve-3d; transform-origin: 50% 55%; will-change: transform; }
+html.explode .hero > * { transform-style: preserve-3d; }
+.hero { --e: 0; }
+.ly { position: absolute; inset: 14px 10px 10px; border-radius: 14px; opacity: calc(var(--e) * 1.4); pointer-events: none; }
+.ly-core { background: repeating-linear-gradient(45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), var(--fr4); transform: translateZ(calc(var(--e) * -220px)); box-shadow: 0 30px 60px rgb(0 0 0 / calc(var(--e) * .35)); }
+.ly-mask { background: color-mix(in srgb, var(--mask) 40%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mask) 60%, transparent); transform: translateZ(calc(var(--e) * -80px)); }
+html.explode .hero h1, html.explode .hero .hero-trace, html.explode .hero .hero-nets { transform: translateZ(calc(var(--e) * 60px)); }
+html.explode .hero .silk, html.explode .hero .hero-foot { transform: translateZ(calc(var(--e) * 190px)); }
+.ly-tag { position: absolute; right: 22px; top: 18px; padding: 3px 8px; border-radius: 4px; background: var(--paper); color: var(--ink); font-size: 14px; font-weight: 600; box-shadow: 0 0 0 1px var(--rule); opacity: calc((var(--e) - .55) * 3); white-space: nowrap; }
+.ly-tag-cu { position: absolute; right: 22px; top: 42%; transform: translateZ(calc(var(--e) * 60px)); color: var(--copper); pointer-events: none; }
+.ly-tag-silk { position: absolute; right: 22px; top: 22%; transform: translateZ(calc(var(--e) * 190px)); pointer-events: none; }
+html:not(.explode) .ly, html:not(.explode) .ly-tag { display: none; }
+@media print { .hero-scene { height: auto !important; } .hero { transform: none !important; position: static !important; } .ly, .ly-tag { display: none !important; } }
+
+/* ---------- Current in the name ---------- */
+.hero h1::after {
+  content: "Micah\A Andelman"; white-space: pre; position: absolute; inset: 0; pointer-events: none;
+  color: transparent;
+  background: repeating-linear-gradient(112deg, transparent 0 70px, rgb(255 238 205 / 0) 70px, rgb(255 240 214 / .55) 78px, rgb(255 238 205 / 0) 86px, transparent 86px 150px);
+  background-size: 300px 100%;
+  -webkit-background-clip: text; background-clip: text;
+  animation: current 6s linear infinite;
+  opacity: .55;
+}
+.hero.hot h1::after { animation-duration: 1.6s; opacity: .9; }
+@keyframes current { from { background-position: 0 0; } to { background-position: 300px 0; } }
+html.scope-pending .hero h1::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .hero h1::after { display: none; } }
+@media print { .hero h1::after { display: none; } }
+
+/* ---------- Schematic view ---------- */
+.figbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 14px; }
+.figbar .steps { margin: 0; }
+.viewsw { display: inline-flex; padding: 3px; border: 1px solid var(--rule); border-radius: 8px; background: var(--board); }
+.viewsw button { all: unset; cursor: pointer; padding: 5px 12px; border-radius: 5px; font-size: 14px; color: var(--ink-2); }
+.viewsw button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1px var(--rule); }
+.viewsw button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.blk .sym { display: none; }
+.diagram.schem svg { background: linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 20px 20px, linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 20px 20px, var(--paper); background-blend-mode: normal; }
+.diagram.schem .grid, .diagram.schem .blk .deco, .diagram.schem .blk .pin1, .diagram.schem .blk .sign { display: none; }
+.diagram.schem .blk > text { opacity: 0; }
+.diagram.schem .blk .sym { display: inline; }
+.diagram.schem .blk > rect { fill: color-mix(in srgb, var(--paper) 85%, transparent); stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 5 4; }
+.diagram.schem .blk.mcu > rect { fill: var(--paper); stroke: var(--ink); stroke-width: 2; stroke-dasharray: none; }
+.diagram.schem .blk.on > rect { stroke: var(--copper); }
+.diagram.schem .tr { stroke: color-mix(in srgb, var(--ink) 55%, var(--paper)); }
+.diagram.schem .pad { fill: var(--ink); stroke: var(--ink); r: 3; }
+.sym .sym-p { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sym .sym-m { font: 700 14px var(--text); fill: var(--ink); }
+.sym .sym-ref { font: 700 15px var(--text); fill: var(--copper); }
+.sym .sym-v { font: 500 14px var(--text); fill: var(--ink-2); }
+.blk.on .sym .sym-p { stroke: var(--copper); }
+.diagram.schem .blk.mcu .sym-v { fill: var(--ink-2); }
+html.thermal .diagram.schem .blk > rect { fill: var(--h); }
+
+/* ---------- OTV technical drawing ---------- */
+.otvdraw { grid-column: 1; margin: 10px 0 0; max-width: 560px; }
+.otvdraw svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
+.otvdraw figcaption { margin-top: 8px; font-size: 14px; color: var(--ink-3); }
+.otvdraw .od-h { font: 600 14px var(--text); fill: var(--ink-3); }
+.otvdraw .od-tread { fill: color-mix(in srgb, var(--ink) 18%, var(--board)); stroke: var(--ink-2); stroke-width: 1.5; }
+.otvdraw .od-treadlines { stroke: var(--ink-3); stroke-width: 1; opacity: .7; }
+.otvdraw .od-body { fill: color-mix(in srgb, var(--mask) 22%, var(--board)); stroke: var(--ink-2); stroke-width: 1.5; }
+.otvdraw .od-marker { fill: #f4f4f0; stroke: #222; stroke-width: 1.5; }
+.otvdraw .od-markerin { fill: #111; }
+.otvdraw .od-sonar { fill: none; stroke: var(--ink-2); stroke-width: 2; }
+.otvdraw .od-sonar-s { fill: var(--ink-3); }
+.otvdraw .od-arm { fill: none; stroke: var(--copper); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.otvdraw .od-armdown { fill: none; stroke: var(--copper); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.otvdraw .od-armend { fill: var(--copper); }
+.otvdraw .od-fwd { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.otvdraw .od-wheel { fill: var(--board); stroke: var(--ink-3); stroke-width: 1.5; }
+.otvdraw .od-ground { stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 1 5; stroke-linecap: round; }
+.otvdraw .od-hidden { fill: none; stroke: var(--ink-3); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.otvdraw .od-dim path, .otvdraw .od-call path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.otvdraw .od-dim text { font: 600 13.5px var(--text); fill: var(--ink-2); }
+.otvdraw .od-call circle { fill: var(--ink-2); }
+.otvdraw .od-call text { font-size: 13.5px; fill: var(--ink-2); }
+@media print { .otvdraw { display: none; } }
+
+/* ---------- Arena: camera's-eye view ---------- */
+.arena .det { opacity: 0; transition: opacity .3s; pointer-events: none; }
+.arena .det.on { opacity: 1; }
+.arena .det-box { fill: none; stroke: #ffd257; stroke-width: 2.2; stroke-linecap: round; }
+.arena .det-axis { stroke: #ff6b5e; stroke-width: 2; }
+.arena .det-lab rect { fill: rgb(10 14 12 / .82); stroke: #ffd257; stroke-width: .8; }
+.arena .det-lab text { font: 600 11.5px var(--text); fill: #ffe9a8; white-space: pre; font-variant-numeric: tabular-nums; }
+.arena .cam-hud path { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.arena .cam-hud text { font: 600 11px var(--text); fill: var(--ink-3); letter-spacing: .03em; }
+.arena .site .ring { animation: water 3.2s ease-in-out infinite; }
+@keyframes water { 50% { fill: color-mix(in srgb, var(--mask) 26%, transparent); } }
+.arena .bot { filter: drop-shadow(3px 5px 4px rgb(0 0 0 / .35)); }
+@media (prefers-reduced-motion: reduce) { .arena .site .ring { animation: none; } }
+@media print { .arena .det, .arena .cam-hud { display: none; } }
+
+/* ---------- Linked highlights ---------- */
+.blk.linked > rect { stroke: var(--copper); }
+
+/* ---------- Cursor lighting ---------- */
+.lit-host { position: relative; transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.lit-host.lamp { transition: transform .12s linear; }
+.lit-host > .glint { position: absolute; inset: 0; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity .4s; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 236 200 / .14), transparent 60%); mix-blend-mode: screen; }
+.lit-host.lamp > .glint { opacity: 1; }
+:root[data-theme="light"] .lit-host > .glint { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / .45), transparent 60%); mix-blend-mode: soft-light; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .lit-host > .glint { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / .45), transparent 60%); mix-blend-mode: soft-light; } }
+@media print { .lit-host { transform: none !important; } .glint { display: none; } }
+
+/* ---------- Panel rails ---------- */
+.rails { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.rail { position: absolute; top: 0; bottom: 0; width: 14px; background:
+    radial-gradient(circle at 7px 7px, var(--paper) 3.2px, color-mix(in srgb, var(--ink) 30%, transparent) 4px, transparent 4.6px) 0 40px / 14px 160px repeat-y,
+    radial-gradient(circle at 7px 7px, color-mix(in srgb, var(--copper) 80%, transparent) 2.4px, transparent 3px) 0 120px / 14px 480px repeat-y,
+    linear-gradient(90deg, color-mix(in srgb, var(--fr4) 55%, var(--paper)), color-mix(in srgb, var(--fr4) 40%, var(--paper))); }
+.rail.l { left: 0; box-shadow: inset -1px 0 0 var(--rule); }
+.rail.r { right: 0; box-shadow: inset 1px 0 0 var(--rule); }
+.rail.l b { position: absolute; top: 90px; left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 10px var(--text); color: color-mix(in srgb, var(--ink) 50%, transparent); letter-spacing: .06em; white-space: nowrap; }
+@media (max-width: 760px) { .rails { display: none; } }
+@media print { .rails { display: none; } }
+html.explode .hero { isolation: auto; }
+html.explode .hero::before, html.explode .hero::after { transform: translateZ(calc(var(--e) * -80px)); }
+.hero h1::after { opacity: .32; }
+.hero.hot h1::after { opacity: .8; }
+/* Exploded hero: make the layers read as distinct plates. */
+.ly { inset: 10px 6px 6px; border-radius: 16px; }
+.ly-core { background: repeating-linear-gradient(45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), linear-gradient(160deg, color-mix(in srgb, var(--fr4) 100%, #fff 12%), var(--fr4)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--fr4) 70%, #fff), 0 40px 80px rgb(0 0 0 / calc(var(--e) * .45)); transform: translateZ(calc(var(--e) * -300px)); }
+.ly-mask { background: linear-gradient(160deg, color-mix(in srgb, var(--mask) 62%, transparent), color-mix(in srgb, var(--mask) 38%, transparent)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mask) 85%, #fff); transform: translateZ(calc(var(--e) * -120px)); }
+html.explode .hero .silk, html.explode .hero .hero-foot { transform: translateZ(calc(var(--e) * 230px)); }
+.ly-tag-silk { transform: translateZ(calc(var(--e) * 230px)); }
+.ly-tag { font-size: 19px; padding: 5px 12px; left: 26px; right: auto; top: auto; bottom: 26px; }
+.ly-tag-cu { left: auto; right: 26px; top: 38%; bottom: auto; }
+.ly-tag-silk { left: auto; right: 26px; top: 14%; bottom: auto; }
+:root { --fr4: #d2c086; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fr4: #8c7b45; } }
+:root[data-theme="dark"] { --fr4: #8c7b45; }
+html .hero > .ly.ly, html .hero > .ly-tag.ly-tag { position: absolute; z-index: auto; }
+.hero.exploding h1 { filter: drop-shadow(0 calc(var(--e) * 16px) calc(var(--e) * 14px) rgb(0 0 0 / .55)); }
+.hero.exploding .hero-trace { filter: drop-shadow(0 calc(var(--e) * 10px) calc(var(--e) * 8px) rgb(0 0 0 / .45)); }
+:root { --fr4-weave: rgb(120 100 40 / .12); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fr4-weave: rgb(0 0 0 / .16); } }
+:root[data-theme="dark"] { --fr4-weave: rgb(0 0 0 / .16); }
+.ly-mask { background: linear-gradient(160deg, color-mix(in srgb, var(--mask) 50%, transparent), color-mix(in srgb, var(--mask) 30%, transparent)); }
+.diagram .blk .sym .sym-ref { fill: var(--copper); }
+.diagram .blk .sym .sym-v { fill: var(--ink-2); }
+.diagram .blk .sym .sym-m { fill: var(--ink); }
+@media (max-width: 760px) { .viewsw { display: none; } }
+@media print { .viewsw, .figbar { display: none !important; } }

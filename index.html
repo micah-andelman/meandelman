@@ -92,6 +92,41 @@
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
       <p>I'm the only electrical engineer on the team. I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
+      <figure class="otvdraw">
+        <svg viewBox="0 0 560 300" role="img" aria-labelledby="otvdraw-t">
+          <title id="otvdraw-t">Simplified top and side views of the OTV: two treads 18 cm long, a body between them with the ArUco marker on top, the front ultrasonic sensor at the nose and the sampling arm at the front. Overall width 24 cm, under the 25 cm limit.</title>
+          <text class="od-h" x="40" y="22">Top</text>
+          <rect class="od-tread" x="78" y="54" width="144" height="30" rx="8" />
+          <rect class="od-tread" x="78" y="216" width="144" height="30" rx="8" />
+          <path class="od-treadlines" d="M90,54 v30 M104,54 v30 M118,54 v30 M132,54 v30 M146,54 v30 M160,54 v30 M174,54 v30 M188,54 v30 M202,54 v30 M90,216 v30 M104,216 v30 M118,216 v30 M132,216 v30 M146,216 v30 M160,216 v30 M174,216 v30 M188,216 v30 M202,216 v30" />
+          <rect class="od-body" x="90" y="90" width="120" height="120" rx="6" />
+          <rect class="od-marker" x="118" y="118" width="64" height="64" />
+          <path class="od-markerin" d="M126,126 h16 v16 h-16 Z M150,126 h24 v8 h-24 Z M126,150 h8 v24 h-8 Z M142,158 h16 v16 h-16 Z M166,150 h8 v8 h-8 Z" />
+          <circle class="od-sonar" cx="216" cy="136" r="6" /><circle class="od-sonar" cx="216" cy="164" r="6" />
+          <path class="od-arm" d="M196,196 L246,226" /><circle class="od-armend" cx="246" cy="226" r="5" />
+          <path class="od-fwd" d="M230,150 h22 m-7,-6 l7,6 l-7,6" />
+          <g class="od-dim">
+            <path d="M60,54 V246 M54,54 h12 M54,246 h12" /><text x="6" y="155">24 cm</text>
+            <path d="M78,274 H222 M78,268 v12 M222,268 v12" /><text x="150" y="292" text-anchor="middle">18 cm treads</text>
+          </g>
+          <text class="od-h" x="310" y="22">Side</text>
+          <path class="od-ground" d="M300,232 H548" />
+          <rect class="od-tread" x="320" y="198" width="150" height="32" rx="16" />
+          <circle class="od-wheel" cx="338" cy="214" r="11" /><circle class="od-wheel" cx="395" cy="214" r="9" /><circle class="od-wheel" cx="452" cy="214" r="11" />
+          <rect class="od-body" x="338" y="150" width="114" height="46" rx="4" />
+          <rect class="od-hidden" x="352" y="164" width="60" height="22" rx="3" />
+          <rect class="od-marker" x="368" y="142" width="54" height="8" />
+          <rect class="od-sonar-s" x="452" y="166" width="9" height="16" rx="2" />
+          <path class="od-arm" d="M446,152 L496,118 L520,146" /><path class="od-armdown" d="M520,146 L528,214" /><circle class="od-armend" cx="520" cy="146" r="4" />
+          <g class="od-call">
+            <path d="M395,142 L395,96 H330" /><text x="330" y="90">ArUco marker (vision)</text>
+            <path d="M461,174 L488,250 H548" /><circle cx="461" cy="174" r="2" /><text x="548" y="266" text-anchor="end">Front ultrasonic</text>
+            <path d="M496,118 L496,66 H548" /><text x="548" y="60" text-anchor="end">Sampling arm, 2 × SG90</text>
+            <path d="M382,186 L360,262 H310" /><circle cx="382" cy="186" r="2" /><text x="310" y="278">9.6 V pack, motor drivers, pump</text>
+          </g>
+        </svg>
+        <figcaption>Simplified top and side views. Width and tread length come from the footprint the firmware checks; part placement is approximate.</figcaption>
+      </figure>
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>

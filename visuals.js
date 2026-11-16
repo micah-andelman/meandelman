@@ -132,6 +132,7 @@
   const links = $$(".index a");
   let paths = [];
   const route = () => {
+    if (hero.classList.contains("exploding")) return; // measured flat, at the top
     net.innerHTML = "";
     paths = [];
     if (!wide.matches) return;
@@ -219,4 +220,236 @@
       cycle();
     });
   }
+})();
+
+// ===================================================================== Round two
+// Exploded hero layers, schematic view, camera's-eye arena, linked animations,
+// cursor lighting, current in the name and panel rails.
+(() => {
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const FINE = matchMedia("(hover: hover) and (pointer: fine) and (min-width: 761px)");
+  const WIDE = matchMedia("(min-width: 761px)");
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const svgEl = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const ease = (t) => t * t * (3 - 2 * t);
+
+  // ------------------------------------------------------------ Exploded hero layers
+  // The hero pins for a moment while scrolling and comes apart into the layers of a real
+  // board: FR-4 core, solder mask, copper (the name and its traces) and silkscreen.
+  const hero = $(".hero");
+  if (hero && WIDE.matches && !REDUCED) {
+    const scene = document.createElement("div");
+    scene.className = "hero-scene";
+    hero.before(scene);
+    scene.appendChild(hero);
+    document.documentElement.classList.add("explode");
+    const plate = (cls, label) => {
+      const d = document.createElement("div");
+      d.className = `ly ${cls}`;
+      d.setAttribute("aria-hidden", "true");
+      d.innerHTML = `<span class="ly-tag">${label}</span>`;
+      return d;
+    };
+    hero.prepend(plate("ly-mask", "Solder mask"));
+    hero.prepend(plate("ly-core", "FR-4 core"));
+    const tagCu = document.createElement("span");
+    tagCu.className = "ly-tag ly-tag-cu";
+    tagCu.textContent = "Copper";
+    tagCu.setAttribute("aria-hidden", "true");
+    const tagSilk = document.createElement("span");
+    tagSilk.className = "ly-tag ly-tag-silk";
+    tagSilk.textContent = "Silkscreen";
+    tagSilk.setAttribute("aria-hidden", "true");
+    hero.append(tagCu, tagSilk);
+    let last = -1;
+    const run = () => {
+      const span = innerHeight * 0.75;
+      const e = ease(clamp((scrollY - innerHeight * 0.04) / span));
+      if (Math.abs(e - last) < 0.001) return;
+      last = e;
+      hero.style.setProperty("--e", e.toFixed(4));
+      hero.style.transform = e < 0.001 ? "none"
+        : `rotateX(${(e * 52).toFixed(2)}deg) rotateZ(${(-e * 24).toFixed(2)}deg) scale(${(1 - e * 0.3).toFixed(4)})`;
+      hero.classList.toggle("exploding", e > 0.001);
+    };
+    addEventListener("scroll", run, { passive: true });
+    run();
+  }
+
+  // ------------------------------------------------------------ Schematic view (OTV)
+  const otvFig = $("#otv [data-diagram]");
+  if (otvFig) {
+    const SYM = {
+      vision: { v: "Camera link", d: (cx, cy) => `M${cx},${cy + 14} V${cy - 4} M${cx - 10},${cy - 14} L${cx + 10},${cy - 14} L${cx},${cy - 2} Z` },
+      front: { v: "HC-SR04", d: (cx, cy) => `M${cx - 10},${cy - 10} h8 v20 h-8 Z M${cx - 2},${cy - 10} l10,-6 v32 l-10,-6 M${cx + 13},${cy - 8} q6,8 0,16 M${cx + 18},${cy - 12} q9,12 0,24` },
+      depth: { v: "HC-SR04", d: (cx, cy) => `M${cx - 10},${cy - 10} h8 v20 h-8 Z M${cx - 2},${cy - 10} l10,-6 v32 l-10,-6 M${cx + 13},${cy - 8} q6,8 0,16 M${cx + 18},${cy - 12} q9,12 0,24` },
+      color: { v: "TCS3200", d: (cx, cy) => `M${cx - 9},${cy - 8} h18 l-9,14 Z M${cx - 9},${cy + 7} h18 M${cx},${cy - 8} v-8 M${cx},${cy + 7} v9 M${cx - 22},${cy - 18} l9,9 m-5,0 h5 v-5 M${cx - 24},${cy - 6} l9,9 m-5,0 h5 v-5` },
+      drive: { v: "DRV8871 to motor", d: (cx, cy) => `M${cx + 12},${cy} m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0`, t: "M" },
+      arm: { v: "SG90 servos", d: (cx, cy) => `M${cx + 12},${cy} m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 M${cx + 24},${cy} h6 M${cx + 30},${cy - 9} v18 h5 v-18 Z`, t: "M" },
+      pump: { v: "IRLZ44N, pump", d: (cx, cy) => `M${cx - 16},${cy} h8 M${cx - 8},${cy - 10} v20 M${cx - 4},${cy - 12} v6 M${cx - 4},${cy - 3} v6 M${cx - 4},${cy + 6} v6 M${cx - 4},${cy - 9} h10 v-8 M${cx - 4},${cy + 9} h10 v8 M${cx - 4},${cy} h10 v9 M${cx + 1},${cy} l-4,-3 v6 Z` },
+      power: { v: "9.6 V NiMH", d: (cx, cy) => `M${cx - 12},${cy} h6 M${cx - 6},${cy - 13} v26 M${cx},${cy - 7} v14 M${cx + 6},${cy - 13} v26 M${cx + 12},${cy - 7} v14 M${cx + 12},${cy} h6 M${cx - 10},${cy - 18} h6 M${cx - 7},${cy - 21} v6` },
+    };
+    $$(".blk", otvFig).forEach((b) => {
+      const r = b.querySelector(":scope > rect");
+      const x = +r.getAttribute("x"), y = +r.getAttribute("y"), w = +r.getAttribute("width"), h = +r.getAttribute("height");
+      const ref = b.querySelector(".ref")?.textContent || "";
+      const g = svgEl("g", { class: "sym", "aria-hidden": "true" }, b);
+      if (b.classList.contains("mcu")) {
+        const t1 = svgEl("text", { x: x + 16, y: y + 28, class: "sym-ref" }, g); t1.textContent = ref;
+        const t2 = svgEl("text", { x: x + 16, y: y + 50, class: "sym-v" }, g); t2.textContent = "Arduino UNO R4 WiFi";
+        const t3 = svgEl("text", { x: x + 16, y: y + 70, class: "sym-v" }, g); t3.textContent = "RA4M1 with ESP32-S3";
+        return;
+      }
+      const s = SYM[b.dataset.k];
+      if (!s) return;
+      const cx = x + 34, cy = y + h / 2;
+      svgEl("path", { d: s.d(cx, cy), class: "sym-p" }, g);
+      if (s.t) { const m = svgEl("text", { x: cx + 12, y: cy + 5, class: "sym-m", "text-anchor": "middle" }, g); m.textContent = s.t; }
+      const t1 = svgEl("text", { x: x + 72, y: y + 24, class: "sym-ref" }, g); t1.textContent = ref;
+      const t2 = svgEl("text", { x: x + 72, y: y + 43, class: "sym-v" }, g); t2.textContent = s.v;
+    });
+    const bar = document.createElement("div");
+    bar.className = "viewsw";
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Diagram style");
+    bar.innerHTML = '<button type="button" aria-pressed="true" data-v="blocks">Blocks</button><button type="button" aria-pressed="false" data-v="schem">Schematic</button>';
+    const steps = otvFig.querySelector(".steps");
+    const row = document.createElement("div");
+    row.className = "figbar";
+    (steps || otvFig.querySelector(".scroll")).after(row);
+    if (steps) row.appendChild(steps);
+    row.appendChild(bar);
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      const schem = b.dataset.v === "schem";
+      otvFig.classList.toggle("schem", schem);
+      $$("button", bar).forEach((x) => x.setAttribute("aria-pressed", x === b));
+    });
+  }
+
+  // ------------------------------------------------------------ Arena: camera's-eye view
+  const arena = $("#otv-route");
+  if (arena) {
+    const bot = $(".bot", arena);
+    const layer = bot.parentNode;
+    const det = svgEl("g", { class: "det", "aria-hidden": "true" }, layer);
+    svgEl("path", { class: "det-box", d: "M-24,-14 v-10 h10 M14,-24 h10 v10 M24,14 v10 h-10 M-14,24 h-10 v-10" }, det);
+    svgEl("path", { class: "det-axis", d: "M0,0 H30" }, det);
+    const lab = svgEl("g", { class: "det-lab" }, det);
+    svgEl("rect", { x: 28, y: -34, width: 150, height: 20, rx: 3 }, lab);
+    const txt = svgEl("text", { x: 34, y: -20 }, lab);
+    txt.textContent = "ArUco";
+    const hud = svgEl("g", { class: "cam-hud", "aria-hidden": "true" }, arena.querySelector("svg"));
+    svgEl("path", { d: "M8,24 V8 H24 M856,8 H872 V24 M872,452 V468 H856 M24,468 H8 V452" }, hud);
+    const camT = svgEl("text", { x: 36, y: 14 }, hud);
+    camT.textContent = "Overhead camera";
+    arena.addEventListener("otvtick", (e) => {
+      const s = e.detail;
+      if (s.x == null) return;
+      const xm = s.x / 200, ym = (400 - s.y) / 200;
+      let th = -(s.h ?? 0);
+      th = ((th + 540) % 360) - 180;
+      det.setAttribute("transform", `translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`);
+      det.querySelector(".det-axis").setAttribute("transform", `rotate(${(s.h ?? 0).toFixed(1)})`);
+      txt.textContent = `x ${xm.toFixed(2)} m   y ${ym.toFixed(2)} m   θ ${Math.round(th)}°`;
+      det.classList.add("on");
+    });
+  }
+
+  // ------------------------------------------------------------ Linked animations
+  // Light a diagram block and pulse its traces for a moment (addPulse comes from main.js).
+  const flash = (fig, k, ms = 2400) => {
+    if (!fig || REDUCED) return;
+    const added = [];
+    $$(`[data-k="${k}"]`, fig).forEach((el) => {
+      if (el.tagName === "TEMPLATE") return;
+      el.classList.add("on", "linked");
+      if (el.classList.contains("tr") && typeof addPulse === "function") {
+        addPulse(el);
+        added.push(el.nextElementSibling);
+      }
+    });
+    setTimeout(() => {
+      $$(`[data-k="${k}"].linked`, fig).forEach((el) => el.classList.remove("on", "linked"));
+      added.forEach((p) => p?.classList.contains("pulse") && p.remove());
+    }, ms);
+  };
+  // Pluto: each line of the brief lights the tool it came from.
+  const plutoFig = $("#pluto [data-diagram]");
+  const BRIEF_KEYS = [["calendar", "schedule"], ["canvas", "planner"], ["transit"]];
+  $$(".brief .msg").forEach((m, i) => {
+    new MutationObserver(() => {
+      if (m.classList.contains("typing") && !m.dataset.lit) {
+        m.dataset.lit = "1";
+        (BRIEF_KEYS[i] || []).forEach((k, j) => setTimeout(() => flash(plutoFig, k), j * 300));
+      }
+    }).observe(m, { attributes: true, attributeFilter: ["class"] });
+  });
+  // Brimcam: when the viewfinder totals up, the photo travels camera to Herald to Gemini to macros.
+  const flowFig = $("#brimcam [data-diagram]");
+  const total = $(".finder .f-total");
+  if (total && flowFig) {
+    new MutationObserver(() => {
+      if (!total.classList.contains("on")) return;
+      ["herald", "gemini", "macros"].forEach((k, i) => setTimeout(() => flash(flowFig, k, 1800), i * 500));
+    }).observe(total, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  // ------------------------------------------------------------ Cursor lighting
+  // Diagrams tilt a little toward the pointer with a moving highlight, like a board under a lamp.
+  if (FINE.matches && !REDUCED) {
+    $$(".diagram .scroll, .capdraw svg, .otvdraw svg").forEach((el) => {
+      const host = el.tagName === "svg" ? el.parentNode : el;
+      host.classList.add("lit-host");
+      const glint = document.createElement("i");
+      glint.className = "glint";
+      glint.setAttribute("aria-hidden", "true");
+      host.appendChild(glint);
+      let raf = 0;
+      host.addEventListener("pointermove", (e) => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const r = host.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+          host.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+          host.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+          host.style.setProperty("--rx", ((0.5 - py) * 3).toFixed(2) + "deg");
+          host.style.setProperty("--ry", ((px - 0.5) * 4).toFixed(2) + "deg");
+          host.classList.add("lamp");
+        });
+      });
+      host.addEventListener("pointerleave", () => {
+        cancelAnimationFrame(raf);
+        host.classList.remove("lamp");
+        host.style.setProperty("--rx", "0deg");
+        host.style.setProperty("--ry", "0deg");
+      });
+    });
+  }
+
+  // ------------------------------------------------------------ Current in the name
+  // A faint flow of current runs through the copper letters; pointing at a project net speeds it up.
+  if (hero) {
+    $$(".index a").forEach((a) => {
+      a.addEventListener("mouseenter", () => hero.classList.add("hot"));
+      a.addEventListener("mouseleave", () => hero.classList.remove("hot"));
+    });
+  }
+
+  // ------------------------------------------------------------ Panel rails
+  // The page sits in a manufacturing panel: tooling rails down both edges with holes and fiducials.
+  const rails = document.createElement("div");
+  rails.className = "rails";
+  rails.setAttribute("aria-hidden", "true");
+  rails.innerHTML = '<i class="rail l"><b>Panel MA-01</b></i><i class="rail r"></i>';
+  document.body.appendChild(rails);
 })();
