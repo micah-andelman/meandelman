@@ -1069,3 +1069,40 @@ html .hero > .ly.ly, html .hero > .ly-tag.ly-tag { position: absolute; z-index: 
 .diagram .blk .sym .sym-m { fill: var(--ink); }
 @media (max-width: 760px) { .viewsw { display: none; } }
 @media print { .viewsw, .figbar { display: none !important; } }
+
+/* =====================================================================
+   Phone: the real diagrams come back as swipeable boards above the parts
+   lists, and the round-two graphics run on touch screens too.
+   ===================================================================== */
+@media (max-width: 760px) {
+  .diagram .scroll { display: block; overflow-x: auto; overflow-y: hidden; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; overscroll-behavior-x: contain; }
+  .diagram .scroll svg { width: 660px; max-width: none; max-height: none; }
+  .diagram.flow .scroll svg { width: 620px; }
+  #pluto .diagram .scroll { margin: 0; padding: 0 22px; overflow-x: auto; }
+  .swipe-hint { display: flex; align-items: center; gap: 8px; margin: 8px 0 18px; font-size: 14px; color: var(--ink-3); }
+  .swipe-hint::before { content: ""; width: 28px; height: 2px; background: linear-gradient(90deg, var(--copper), transparent); }
+  .figbar { margin-top: 10px; }
+  .viewsw { display: inline-flex; }
+  .scene > .diagram .figbar .steps { display: none; }
+  /* exploded hero */
+  html.explode .hero-scene { height: calc(100svh - var(--hh, 52px) + 65vh); perspective: 1100px; }
+  html.explode .hero-scene .hero { top: var(--hh, 52px); }
+  .hero { --zs: .55; }
+  .ly-tag { font-size: 14px; padding: 4px 9px; }
+  /* slim panel rails */
+  .rails { display: block; }
+  .rail { width: 6px; background:
+      radial-gradient(circle at 3px 3px, var(--paper) 1.4px, color-mix(in srgb, var(--ink) 30%, transparent) 2px, transparent 2.4px) 0 40px / 6px 90px repeat-y,
+      linear-gradient(90deg, color-mix(in srgb, var(--fr4) 55%, var(--paper)), color-mix(in srgb, var(--fr4) 40%, var(--paper))); }
+  .rail.l b { display: none; }
+}
+.swipe-hint { display: none; }
+/* Exploded layer depths scale with --zs (smaller on phones). */
+.hero { --zs: 1; }
+.ly-core { transform: translateZ(calc(var(--e) * -300px * var(--zs))); }
+.ly-mask { transform: translateZ(calc(var(--e) * -120px * var(--zs))); }
+html.explode .hero h1, html.explode .hero .hero-trace, html.explode .hero .hero-nets, .ly-tag-cu { transform: translateZ(calc(var(--e) * 60px * var(--zs))); }
+html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transform: translateZ(calc(var(--e) * 230px * var(--zs))); }
+/* Touch screens: the lamp highlight sweeps with scrolling instead of following a cursor. */
+.lit-host.sweep > .glint { opacity: 1; transition: none; }
+@media (max-width: 760px) { .swipe-hint { display: flex; } }

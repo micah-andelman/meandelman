@@ -245,7 +245,10 @@
   // The hero pins for a moment while scrolling and comes apart into the layers of a real
   // board: FR-4 core, solder mask, copper (the name and its traces) and silkscreen.
   const hero = $(".hero");
-  if (hero && WIDE.matches && !REDUCED) {
+  if (hero && !REDUCED) {
+    const setHH = () => document.documentElement.style.setProperty("--hh", ($(".top")?.offsetHeight || 52) + "px");
+    setHH();
+    addEventListener("resize", setHH);
     const scene = document.createElement("div");
     scene.className = "hero-scene";
     hero.before(scene);
@@ -277,7 +280,9 @@
       last = e;
       hero.style.setProperty("--e", e.toFixed(4));
       hero.style.transform = e < 0.001 ? "none"
-        : `rotateX(${(e * 52).toFixed(2)}deg) rotateZ(${(-e * 24).toFixed(2)}deg) scale(${(1 - e * 0.3).toFixed(4)})`;
+        : WIDE.matches
+          ? `rotateX(${(e * 52).toFixed(2)}deg) rotateZ(${(-e * 24).toFixed(2)}deg) scale(${(1 - e * 0.3).toFixed(4)})`
+          : `rotateX(${(e * 48).toFixed(2)}deg) rotateZ(${(-e * 10).toFixed(2)}deg) scale(${(1 - e * 0.36).toFixed(4)})`;
       hero.classList.toggle("exploding", e > 0.001);
     };
     addEventListener("scroll", run, { passive: true });
@@ -404,6 +409,32 @@
     }).observe(total, { attributes: true, attributeFilter: ["class"] });
   }
 
+  // ------------------------------------------------------------ Phone boards
+  $$("[data-diagram]").forEach((fig) => {
+    const sc = fig.querySelector(".scroll");
+    if (!sc) return;
+    const hint = document.createElement("p");
+    hint.className = "swipe-hint";
+    hint.textContent = fig.classList.contains("flow")
+      ? "Swipe to follow the steps. Tap one for details below."
+      : "Swipe to see the whole board. Tap a part for details below.";
+    (fig.querySelector(".figbar") || sc).after(hint);
+    sc.addEventListener("click", (e) => {
+      if (WIDE.matches) return;
+      const b = e.target.closest(".blk");
+      if (!b) return;
+      const sel = `.parts button[aria-controls$="-${b.dataset.k}"]`;
+      const btn = fig.querySelector(sel) || fig.parentElement.querySelector(sel);
+      if (!btn) return;
+      if (btn.getAttribute("aria-expanded") !== "true") btn.click();
+      setTimeout(() => {
+        const l = typeof lenis !== "undefined" && lenis;
+        if (l) l.scrollTo(btn, { offset: -innerHeight * 0.3, duration: 0.9 });
+        else btn.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" });
+      }, 60);
+    });
+  });
+
   // ------------------------------------------------------------ Cursor lighting
   // Diagrams tilt a little toward the pointer with a moving highlight, like a board under a lamp.
   if (FINE.matches && !REDUCED) {
@@ -434,6 +465,28 @@
         host.style.setProperty("--ry", "0deg");
       });
     });
+  } else if (!REDUCED) {
+    const hosts = $$(".diagram .scroll, .capdraw, .otvdraw, .finder").map((host) => {
+      host.classList.add("lit-host", "sweep");
+      const glint = document.createElement("i");
+      glint.className = "glint";
+      glint.setAttribute("aria-hidden", "true");
+      host.appendChild(glint);
+      return host;
+    });
+    let ticking = false;
+    const sweep = () => {
+      ticking = false;
+      hosts.forEach((h) => {
+        const r = h.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > innerHeight) return;
+        const t = clamp((innerHeight - r.top) / (innerHeight + r.height));
+        h.style.setProperty("--mx", (10 + t * 80).toFixed(1) + "%");
+        h.style.setProperty("--my", (90 - t * 80).toFixed(1) + "%");
+      });
+    };
+    addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(sweep); } }, { passive: true });
+    sweep();
   }
 
   // ------------------------------------------------------------ Current in the name
