@@ -360,10 +360,10 @@ a:hover { color: var(--mask); }
 /* ---------- power switch (theme) ---------- */
 button.power { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
 button.power:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 12px; }
-button.power .track { position: relative; width: 34px; height: 18px; border: 1.5px solid var(--ink-3); border-radius: 10px; transition: border-color .2s; }
-button.power .knob { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--ink-3); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
+button.power .track { position: relative; width: 40px; height: 22px; box-sizing: border-box; border: 1.5px solid var(--ink-3); border-radius: 10px; transition: border-color .2s; }
+button.power .knob { position: absolute; top: 1.5px; left: 1.5px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-3); color: var(--paper); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1), background .2s; }
 button.power[aria-checked="true"] .track { border-color: var(--copper); }
-button.power[aria-checked="true"] .knob { transform: translateX(16px); background: var(--copper); box-shadow: 0 0 6px var(--copper); }
+button.power[aria-checked="true"] .knob { transform: translateX(18px); background: var(--copper); box-shadow: 0 0 6px var(--copper); }
 button.power:hover .track { border-color: var(--ink-2); }
 
 /* flipping the switch "powers up" the board: one copper flash along every trace */
@@ -610,3 +610,10 @@ html.thermal .heatkey { display: flex; }
 #otv-route, #experience, #contact { scroll-margin-top: 76px; }
 @media (max-width: 760px) { .cvb pre { font-size: 12.5px; } .cvh { padding: 12px 14px; } .cvb pre, .cvb .file { padding-left: 14px; margin-left: 0; } }
 @media print { .parts { margin-top: 14px; } }
+
+/* Theme switch icon: a sun in light mode, a moon in dark mode, riding on the knob. */
+button.power .knob svg { grid-area: 1 / 1; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s, transform .3s; }
+button.power .knob .moon { fill: currentColor; stroke: none; opacity: 0; transform: rotate(-60deg) scale(.6); }
+button.power[aria-checked="true"] .knob .sun { opacity: 0; transform: rotate(60deg) scale(.6); }
+button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { button.power .knob svg { transition: none; } }

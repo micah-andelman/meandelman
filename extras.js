@@ -494,7 +494,7 @@
       "clear, exit",
     ].forEach((l) => print_(esc(l))),
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
-    projects: () => ["H2Woah OTV        autonomous water-sampling robot", "Pluto             personal agent on Telegram", "Glasses           camera glasses that log meals"].forEach((l) => print_(l)),
+    projects: () => ["ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Glasses           camera glasses that log meals"].forEach((l) => print_(l)),
     open: (a) => {
       const map = { otv: "#otv", pluto: "#pluto", glasses: "#glasses", route: "#otv-route", experience: "#experience", contact: "#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
