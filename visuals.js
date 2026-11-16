@@ -18,6 +18,13 @@
     }, { threshold }).observe(el);
   };
 
+  // ------------------------------------------------------------ In-view marking
+  const inview = new IntersectionObserver((es) => es.forEach((e) => {
+    e.target.classList.toggle("inview", e.isIntersecting);
+    if (e.isIntersecting) e.target.dispatchEvent(new CustomEvent("inview"));
+  }), { threshold: 0.15 });
+  $$(".hero, .project, .arena, .experience, .contact, .finder, .brief, .capdraw, .otvdraw").forEach((el) => inview.observe(el));
+
   // ------------------------------------------------------------ Component artwork
   // Each block keeps its layout but gains the outline of the real part: pins on chips,
   // header pins on breakout boards, fins on the motor drivers, a horn on the servos,
@@ -178,7 +185,11 @@
   addEventListener("load", route);
   // The name is a copper pour; a sheen passes over it once the intro is done.
   const sheen = () => { if (!REDUCED) $("#name")?.classList.add("sheen"); };
-  const waitIntro = () => document.documentElement.classList.contains("scope-pending") ? setTimeout(waitIntro, 250) : setTimeout(sheen, 400);
+  const waitIntro = () => {
+    if (document.documentElement.classList.contains("scope-pending")) return setTimeout(waitIntro, 250);
+    if (hero.classList.contains("inview")) return setTimeout(sheen, 400);
+    hero.addEventListener("inview", () => setTimeout(sheen, 400), { once: true });
+  };
   waitIntro();
 
   // ------------------------------------------------------------ Pluto: typed brief
@@ -209,16 +220,18 @@
   if (finder) {
     const locks = $$(".f-lock", finder), total = $(".f-total", finder);
     if (REDUCED) { locks.forEach((l) => l.classList.add("on")); total?.classList.add("on"); }
-    else whenSeen(finder, () => {
-      const cycle = () => {
+    else {
+      let timers = [];
+      const stop = () => { timers.forEach(clearTimeout); timers = []; };
+      const play = () => {
+        stop();
         locks.forEach((l) => l.classList.remove("on"));
         total?.classList.remove("on");
-        locks.forEach((l, i) => setTimeout(() => l.classList.add("on"), 700 + i * 900));
-        setTimeout(() => total?.classList.add("on"), 700 + locks.length * 900);
-        setTimeout(cycle, 700 + locks.length * 900 + 5200);
+        locks.forEach((l, i) => timers.push(setTimeout(() => l.classList.add("on"), 500 + i * 900)));
+        timers.push(setTimeout(() => total?.classList.add("on"), 500 + locks.length * 900));
       };
-      cycle();
-    });
+      new IntersectionObserver((es) => { if (es[0].isIntersecting) play(); else stop(); }, { threshold: 0.45 }).observe(finder);
+    }
   }
 })();
 

@@ -1128,3 +1128,9 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
   html.vlayout .schem-layer.diagram { clip-path: inset(0 0 calc((1 - var(--w, 0)) * 100%) 0); }
   html.vlayout .schem-edge { left: 0; right: 0; bottom: auto; top: calc(var(--w, 0) * (100% - 4px)); width: auto; height: 2px; margin: -1px 0 0; }
 }
+
+/* Animations wait for their section: each one stays paused until its section is on screen
+   (visuals.js adds .inview), so nothing plays out of sight or on a page-load timer. */
+:is(.hero, .project, .arena, .finder, .brief):not(.inview) :is(.hero-trace .line, .hero-trace .via, .led.on, .f-rec, .site .ring, .site.sampling .rip, .runstat.live .rs-top i, .msg.typing) { animation-play-state: paused; }
+:is(.hero, .project, .arena, .finder, .brief):not(.inview) .msg.typing::after { animation-play-state: paused; }
+.hero:not(.inview) h1::after { animation-play-state: paused; }
