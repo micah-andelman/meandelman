@@ -477,7 +477,7 @@
   });
 
   // ------------------------------------------------------------ Cursor lighting
-  // Diagrams tilt a little toward the pointer with a moving highlight, like a board under a lamp.
+  // A highlight follows the pointer across diagrams, like a board under a lamp.
   if (FINE.matches && !REDUCED) {
     $$(".diagram .scroll, .capdraw svg, .otvdraw svg").forEach((el) => {
       const host = el.tagName === "svg" ? el.parentNode : el;
@@ -494,16 +494,12 @@
           const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
           host.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
           host.style.setProperty("--my", (py * 100).toFixed(1) + "%");
-          host.style.setProperty("--rx", ((0.5 - py) * 3).toFixed(2) + "deg");
-          host.style.setProperty("--ry", ((px - 0.5) * 4).toFixed(2) + "deg");
           host.classList.add("lamp");
         });
       });
       host.addEventListener("pointerleave", () => {
         cancelAnimationFrame(raf);
         host.classList.remove("lamp");
-        host.style.setProperty("--rx", "0deg");
-        host.style.setProperty("--ry", "0deg");
       });
     });
   } else if (!REDUCED) {

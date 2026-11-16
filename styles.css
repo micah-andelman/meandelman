@@ -1134,3 +1134,6 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
 :is(.hero, .project, .arena, .finder, .brief):not(.inview) :is(.hero-trace .line, .hero-trace .via, .led.on, .f-rec, .site .ring, .site.sampling .rip, .runstat.live .rs-top i, .msg.typing) { animation-play-state: paused; }
 :is(.hero, .project, .arena, .finder, .brief):not(.inview) .msg.typing::after { animation-play-state: paused; }
 .hero:not(.inview) h1::after { animation-play-state: paused; }
+/* No 3D tilt: rotating the board rasterized its text and blurred it on hover.
+   The moving highlight stays; it's a plain overlay, so text stays sharp. */
+.lit-host, .lit-host.lamp { transform: none !important; transition: none; }
