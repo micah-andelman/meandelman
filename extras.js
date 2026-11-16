@@ -276,7 +276,7 @@
     if (!t) return;
     const segs = [...t.content.querySelectorAll("code")];
     const files = [...new Set(segs.map((s) => s.dataset.file))];
-    const label = $(`[data-diagram] .blk[data-k="${k}"]`)?.getAttribute("aria-label") || k;
+    const label = $(`[data-diagram] .blk[data-k="${k}"]`)?.dataset.name || k;
     dlg.querySelector(".cvh b").textContent = `${label}: ${files.join(", ")}`;
     dlg.querySelector(".cvb").innerHTML = segs.map((s) => {
       const start = +s.dataset.start;

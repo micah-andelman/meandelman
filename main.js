@@ -1,5 +1,12 @@
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Diagram blocks: screen readers announce the visible text (name, detail, designator), so the
+// accessible name always matches what's on screen. The short name stays in data-name.
+document.querySelectorAll(".blk[aria-label]").forEach((b) => {
+  b.dataset.name = b.getAttribute("aria-label");
+  b.removeAttribute("aria-label");
+});
+
 // A note is the template's text, plus a photo when the template names one:
 // <template data-k="arm" data-photo="photos/otv-arm.jpg" data-alt="...">
 const noteHTML = (t) => {
@@ -8,7 +15,7 @@ const noteHTML = (t) => {
     ? ` <button class="code-btn" type="button" data-code="${k}">View code</button>` : "";
   if (!t.dataset.photo) return t.innerHTML.trim() + code;
   const blk = t.closest("figure")?.querySelector(`.blk[data-k="${k}"]`);
-  const alt = t.dataset.alt || (blk ? "Photo: " + blk.getAttribute("aria-label") : "");
+  const alt = t.dataset.alt || (blk ? "Photo: " + blk.dataset.name : "");
   return t.innerHTML.trim() + code + `<img src="${t.dataset.photo}" alt="${alt}" loading="lazy">`;
 };
 
@@ -125,7 +132,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
     const k = b.dataset.k;
     if (parts.has(k)) {
       const p = parts.get(k);
-      p.title = b.getAttribute("aria-label");
+      p.title = b.dataset.name;
       if (b.dataset.pins) p.pins += " " + b.dataset.pins;
       return;
     }

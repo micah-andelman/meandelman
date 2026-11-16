@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Micah Andelman, electrical engineering, University of Maryland</title>
-<meta name="description" content="Micah Andelman studies electrical engineering at the University of Maryland. Projects include an autonomous water-sampling robot and a personal agent he texts on Telegram, each with a block diagram of how it works.">
+<meta name="description" content="Micah Andelman studies electrical engineering at the University of Maryland. Projects include an autonomous water-sampling robot, a personal agent he texts on Telegram and a camera cap that estimates dining-hall macros, each with a block diagram of how it works.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person", "name": "Micah Andelman", "url": "https://meandelman.com/", "image": "https://meandelman.com/og.png", "jobTitle": "Electrical engineering student", "affiliation": {"@type": "CollegeOrUniversity", "name": "University of Maryland, College Park"}, "alumniOf": {"@type": "HighSchool", "name": "Bedford High School"}, "knowsAbout": ["Electrical engineering", "Embedded systems", "Arduino", "C++", "Robotics", "Python"], "sameAs": ["https://www.linkedin.com/in/micah-andelman", "https://github.com/micah-andelman"]}</script>
 <link rel="canonical" href="https://meandelman.com/">
 <meta property="og:url" content="https://meandelman.com/">
 <meta property="og:type" content="website">
@@ -17,9 +18,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#101614">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
 <script>
   // Theme choice and the one-time oscilloscope intro, set before first paint.
   (function () {
@@ -85,13 +85,13 @@
       <dl class="meta">
         <div><dt>Class</dt><dd>ENES100, Introduction to Engineering Design</dd></div>
         <div><dt>When</dt><dd>Fall 2026</dd></div>
-        <div><dt>Role</dt><dd>Electrical and software lead</dd></div>
+        <div><dt>Role</dt><dd>Electrical and software lead on an eight-person team</dd></div>
         <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
       </dl>
     </div>
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
-      <p>I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
+      <p>I'm the only electrical engineer on the team. I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>
@@ -505,7 +505,8 @@ const int  MAX_PWM      = 153;</code></template>
       <caption class="sr">Work experience and activities</caption>
       <tbody>
         <tr><th scope="row">Terps Racing EV</th><td>Autonomous subteam</td><td class="when">Oct 2026 to now</td></tr>
-        <tr><th scope="row">CISteks Technology Group</th><td>Sales automation intern. I replaced manual cold calling with automated email outreach and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
+        <tr><th scope="row">BuildFest hackathon</th><td>Finalist, top 5 of 44 teams, with a data dashboard for a Maryland mental health nonprofit.</td><td class="when">Fall 2026</td></tr>
+        <tr><th scope="row">CISteks Technology Group</th><td>SDR/BDR Automation Intern. I replaced manual cold calling with automated email outreach and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
         <tr><th scope="row">Independent math tutor</th><td>I tutor 7th-grade math up through calculus and SAT Math, with my own clients and lesson plans.</td><td class="when">2025 to now</td></tr>
         <tr><th scope="row">B2Q Associates</th><td>Engineering support intern. I helped with energy-efficiency assessments of commercial HVAC systems.</td><td class="when">Summer 2024</td></tr>
         <tr><th scope="row">Bedford High School</th><td>Captain of the varsity soccer team and president of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
