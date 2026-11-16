@@ -25,7 +25,7 @@ It's plain HTML, CSS and JavaScript with no framework or build step, hosted on C
 | `photos.py` | Resizes photos in `photos-in/` and strips their metadata |
 | `deploy.sh` | Builds `dist/` and deploys to Cloudflare Pages |
 | `vendor/` | [Lenis](https://github.com/darkroomengineering/lenis) smooth scrolling (MIT) and [three.js](https://threejs.org) 0.170.0 for the 3D OTV (MIT) |
-| `otv3d.js` | The OTV in 3D: pinned scroll scene with six stops, labels and part animations. Loads three.js and the model only when the section is near |
+| `otv3d.js` | The 3D scenes: the OTV tour (six stops), the course run through a 3D arena (plays on its own, scrolling speeds it up or rewinds it) and the exploded Brimcam cap. Loads three.js and the model only when a scene is near |
 | `models/otv.glb` | The OTV, converted from the team's Onshape STEP export (meshopt-compressed). The Arduino, breadboard and wiring are drawn in `otv3d.js` from photos |
 
 ## Run it locally

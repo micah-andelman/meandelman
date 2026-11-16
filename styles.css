@@ -1180,7 +1180,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 .o3-dot { fill: var(--copper); transition: opacity .25s; }
 .o3-tag { position: absolute; left: 0; top: 0; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; transition: opacity .25s; will-change: transform; padding: 2px 7px; margin-top: -2px; border-radius: 5px; background: color-mix(in srgb, var(--paper) 86%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 60%, transparent); }
 .o3-tag.l { translate: -100% 0; }
-:is(.o3-live, .o3-still) .o3-src { display: block; position: absolute; right: var(--gutter); top: calc(var(--hh, 56px) + 14px); margin: 0; max-width: 34ch; text-align: right; font-size: 13px; color: var(--ink-3); }
+:is(.o3-live, .o3-still) .o3-src { display: block; position: absolute; left: var(--gutter); top: calc(var(--hh, 56px) + 14px); margin: 0; max-width: 34ch; font-size: 13px; color: var(--ink-3); }
 .o3-live .o3-steps { position: absolute; left: var(--gutter); bottom: clamp(28px, 7vh, 72px); width: min(380px, calc(100% - 2 * var(--gutter))); padding: 0; display: block; }
 .o3-live .o3-steps li { position: absolute; left: 0; bottom: 0; width: 100%; opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s; pointer-events: none; }
 .o3-live .o3-steps li.on { opacity: 1; transform: none; pointer-events: auto; }
@@ -1210,3 +1210,32 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 /* Labels that sit on the perfboard or the arena grid get a halo in the board colour,
    so pads and grid dots never run through the letters. */
 .diagram .pins text, .arena .floor-lab, .arena svg > text, .arena g > text:not(.det-lab text) { paint-order: stroke; stroke: var(--board); stroke-width: 4px; stroke-linejoin: round; }
+
+/* ---------- The course run in 3D (otv3d.js, #otv-run) ----------
+   Shares the .o3 stage, card and bar. While it's live the 2D map steps aside on screen; print and
+   the fallbacks keep the 2D map. */
+.o3r { display: none; }
+.o3r.o3-live { display: block; height: calc(var(--o3h) * 4); }
+.o3r-note { display: none; }
+html.o3r-on .o3r-note { display: block; max-width: var(--measure); margin: 20px 0 0; font-size: 16px; color: var(--ink-2); }
+html.o3r-on #otv-route { display: none; }
+.o3r .o3r-hud { position: absolute; left: var(--gutter); top: calc(var(--hh, 56px) + 14px); margin: 0; padding: 4px 9px; border-radius: 6px; font: 600 12.5px var(--text); letter-spacing: .02em; white-space: pre; color: var(--ink-2); background: color-mix(in srgb, var(--paper) 80%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 60%, transparent); }
+.o3r .o3r-hud:empty { display: none; }
+.o3r .o3r-replay { position: absolute; right: var(--gutter); top: calc(var(--hh, 56px) + 12px); font: 600 14px var(--text); padding: 7px 14px; border-radius: 6px; border: 1.5px solid var(--copper); color: var(--copper); background: color-mix(in srgb, var(--paper) 85%, transparent); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.o3r.o3r-done .o3r-replay { opacity: 1; pointer-events: auto; }
+.o3r .o3r-replay:hover, .o3r .o3r-replay:focus-visible { background: var(--copper); color: var(--paper); }
+@media screen and (max-width: 760px) {
+  .o3r.o3-live { height: calc(var(--o3h) * 3.5); }
+  .o3r .o3r-hud { font-size: 11px; }
+}
+@media print { html.o3r-on #otv-route { display: block !important; } .o3r, .o3r-note { display: none !important; } }
+
+/* ---------- Brimcam cap in 3D (otv3d.js, #cap-3d) ----------
+   While it's live the 2D cap drawing and its parts key step aside on screen; print and the
+   fallbacks keep the 2D drawing. */
+.o3c { display: none; }
+.o3c.o3-live { display: block; height: calc(var(--o3h) * 4); margin-top: 0; }
+html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
+.o3c-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.o3c-flash.go { animation: capflash .5s ease-out; }
+@media print { html.o3c-on .capscene { display: block !important; } html.o3c-on .capkey { display: revert !important; } .o3c { display: none !important; } }

@@ -534,6 +534,11 @@
   // The cap pins while you scroll: it comes apart into its parts, holds with every part
   // labeled, goes back together, then the camera looks down at a tray and takes the shot,
   // which runs through the flow diagram below (camera, Herald, Gemini, macros).
+  // The 3D cap (otv3d.js) takes its shot by dispatching "capshot"; light the flow diagram the same way.
+  document.addEventListener("capshot", () => {
+    const fig = $("#brimcam [data-diagram]");
+    ["cap", "herald", "gemini", "macros"].forEach((k, i) => setTimeout(() => flash(fig, k, 1600), 300 + i * 450));
+  });
   const cap = $(".capx");
   if (cap) {
     const svg = cap.querySelector("svg");

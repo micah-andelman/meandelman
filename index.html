@@ -337,6 +337,27 @@ const int  MAX_PWM      = 153;</code></template>
       </figcaption>
     </figure>
 
+    <section class="o3 o3r" id="otv-run" aria-labelledby="o3r-t">
+      <h3 class="sr" id="o3r-t">The course run in 3D</h3>
+      <div class="o3-stage">
+        <canvas aria-hidden="true"></canvas>
+        <p class="o3r-hud" aria-hidden="true"></p>
+        <ol class="o3-steps">
+          <li><span class="o3-n">01 / 08</span><h4>Start</h4><p>It starts in a random square, A or B, facing a random way. An overhead camera finds the ArUco marker on top and sends position and heading over Wi-Fi. If that signal drops out, the robot stops and waits for it.</p></li>
+          <li><span class="o3-n">02 / 08</span><h4>To the pool</h4><p>It turns in place to face the pool, with wheel speed proportional to how far off its heading is, then drives at it. It has to stop within 150 mm of the edge.</p></li>
+          <li><span class="o3-n">03 / 08</span><h4>Sample</h4><p>The arm comes down one degree at a time. The HC-SR04 pings the water several times and keeps the median for the depth. The color sensor calls the water polluted if any channel sees a strong non-black color. The pump pulls at least 20 mL up the hose.</p></li>
+          <li><span class="o3-n">04 / 08</span><h4>Back off</h4><p>Arm up. It backs away from the pool and turns toward the top wall.</p></li>
+          <li><span class="o3-n">05 / 08</span><h4>To the wall</h4><p>Up to the top wall, then along it, 12.5 cm off. The front HC-SR04 watches ahead the whole way.</p></li>
+          <li><span class="o3-n">06 / 08</span><h4>Obstacles</h4><p>Through the 25 cm gap between the wall and both rows of obstacles. The front sensor only calls an obstacle after several close pings in a row, so one stray echo can't stop the run.</p></li>
+          <li><span class="o3-n">07 / 08</span><h4>Limbo</h4><p>Down into the 56 cm limbo lane and under the bar, which clears the floor by 18.4 cm.</p></li>
+          <li><span class="o3-n">08 / 08</span><h4>Goal</h4><p>In the goal zone. In 40 randomized simulator runs it never went more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p></li>
+        </ol>
+        <div class="o3-bar" aria-hidden="true"><span>Start</span><span>Pool</span><span>Sample</span><span>Back off</span><span>Wall</span><span>Obstacles</span><span>Limbo</span><span>Goal</span></div>
+        <button type="button" class="o3r-replay">Replay, other start</button>
+        <p class="o3-load" aria-hidden="true">Loading the arena&hellip;</p>
+      </div>
+    </section>
+    <p class="o3r-note"></p>
     <figure class="arena" id="otv-route">
       <svg viewBox="0 0 880 476" role="img" aria-labelledby="arena-t">
         <title id="arena-t">Top-down map of the 4 by 2 meter ENES100 arena with the route the OTV drives: start square, mission site, up to the top wall, along it past two obstacle rows, then down through the limbo to the goal.</title>
@@ -505,6 +526,23 @@ const int  MAX_PWM      = 153;</code></template>
       <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The cap does the seeing and the bot does the thinking: the hardware only has to take a good photo of the tray, and everything else happens on the Telegram side.</p>
     </div>
     <div class="brimviz">
+      <section class="o3 o3c" id="cap-3d" aria-labelledby="o3c-t">
+        <h3 class="sr" id="o3c-t">The cap, exploded in 3D</h3>
+        <div class="o3-stage">
+          <canvas aria-hidden="true"></canvas>
+          <div class="o3-tags" aria-hidden="true"></div>
+          <p class="o3-src">Exploded view, not to scale: the small parts are drawn larger as they come out. Placement follows the build; sizes are approximate.</p>
+          <ol class="o3-steps">
+            <li><span class="o3-n">01 / 04</span><h4>The cap</h4><p>Everything rides in a baseball cap: the battery, the controls, the camera and its antenna.</p></li>
+            <li><span class="o3-n">02 / 04</span><h4>Apart</h4><p>The 500 mAh LiPo is a protected cell, tucked under the crown where it can't get crushed. The touch pad is on the side of the crown and the slide switch is on the band.</p></li>
+            <li><span class="o3-n">03 / 04</span><h4>Under the brim</h4><p>The XIAO ESP32S3 Sense sits under the front of the brim, camera angled down at the tray. The Wi-Fi antenna faces away from my head and the recording LED is under the brim tip. The mic stays off, because Maryland requires everyone on an audio recording to consent.</p></li>
+            <li><span class="o3-n">04 / 04</span><h4>The shot</h4><p>It photographs the tray. A Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p></li>
+          </ol>
+          <div class="o3-bar" aria-hidden="true"><span>Cap</span><span>Apart</span><span>Brim</span><span>Shot</span></div>
+          <div class="o3c-flash" aria-hidden="true"></div>
+          <p class="o3-load" aria-hidden="true">Loading the cap&hellip;</p>
+        </div>
+      </section>
       <div class="capscene">
       <figure class="capdraw capx">
         <svg viewBox="0 -90 960 720" role="img" aria-labelledby="capdraw-t">
