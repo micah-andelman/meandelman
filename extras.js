@@ -117,7 +117,7 @@
   const HEAT = {
     vision: 0.12, front: 0.3, depth: 0.3, color: 0.38, mcu: 0.55, drive: 0.95, arm: 0.62, pump: 0.72, power: 0.8,
     phone: 0.2, location: 0.15, schedule: 0.1, agent: 0.92, calendar: 0.35, gmail: 0.45, canvas: 0.4, grades: 0.25,
-    planner: 0.3, transit: 0.5, places: 0.2, cam: 0.88, stream: 0.55, detect: 0.45, still: 0.2,
+    planner: 0.3, transit: 0.5, places: 0.2, cap: 0.85, herald: 0.3, gemini: 0.5, macros: 0.15,
   };
   // Inferno-style ramp: deep violet, magenta, orange, yellow.
   const RAMP = [[0, [22, 11, 54]], [0.3, [96, 18, 110]], [0.55, [190, 55, 82]], [0.78, [240, 120, 32]], [1, [250, 222, 92]]];
@@ -174,9 +174,9 @@
     planner: { pin: "API", name: "Study planner", wave: "burst", read: "Called only when a request needs it." },
     transit: { pin: "API", name: "Live bus positions", wave: "bus", read: "Live vehicle positions, fetched when a trip is planned." },
     places: { pin: "API", name: "Campus map", wave: "burst", read: "Looked up when a building name comes up." },
-    stream: { pin: "Wi-Fi", name: "Low-res stream", wave: "bus", read: "A steady stream of small frames to the phone." },
-    detect: { pin: "Wi-Fi", name: "Full-res request", wave: "burst", read: "Quiet until the phone sees a label, then one large frame." },
-    still: { pin: "On the phone", name: "Label text", wave: "clock", read: "The label is read on the phone and the meal is logged." },
+    herald: { pin: "Wi-Fi", name: "Tray photo", wave: "burst", read: "One JPEG per tray, sent over Wi-Fi to the bot." },
+    gemini: { pin: "HTTPS", name: "Gemini request", wave: "burst", read: "The photo goes out in one request. Item names and portion estimates come back." },
+    macros: { pin: "Lookup", name: "Nutrition facts", wave: "clock", read: "Each item is matched to UMD Dining's published facts and scaled by its portion." },
   };
   // One period of each waveform as SVG path data, in a 0..200 x 0..70 screen.
   const H = 16, L = 54;
@@ -520,7 +520,7 @@
       "help              this list",
       "whoami            who built this",
       "projects          list the projects",
-      "open <name>       jump to otv, pluto, glasses, route, experience or contact",
+      "open <name>       jump to otv, pluto, brimcam, route, experience or contact",
       "status pluto      ask Pluto how it's doing",
       "ping micah        start an email to me",
       "resume            open my résumé",
@@ -532,9 +532,9 @@
       "clear, exit",
     ].forEach((l) => print_(esc(l))),
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
-    projects: () => ["ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Glasses           camera glasses that log meals"].forEach((l) => print_(l)),
+    projects: () => ["ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
     open: (a) => {
-      const map = { otv: "#otv", pluto: "#pluto", glasses: "#glasses", route: "#otv-route", experience: "#experience", contact: "#contact" };
+      const map = { otv: "#otv", pluto: "#pluto", brimcam: "#brimcam", glasses: "#brimcam", route: "#otv-route", experience: "#experience", contact: "#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
       print_(`Opening ${a}.`);
       setTimeout(() => go(map[a]), 250);
