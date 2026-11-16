@@ -844,7 +844,7 @@ async function course(sec, routes) {
   }));
 
   // ---- camera state
-  const overPos = new Vector3(-1.05, 2.75, 1.0), overTgt = new Vector3(1.55, 0, 1.0); // from behind the start end, the gantry framing the arena
+  const overPos = new Vector3(-3.6, 3.4, 1.0), overTgt = new Vector3(1.5, 1.0, 1.0); // far enough back that the vision camera on its gantry is in view // from behind the start end, the gantry framing the arena
   const overPosTall = new Vector3(0.95, 9.4, 1.0005), overTgtTall = new Vector3(0.95, 0, 1.0); // phones: straight down, arena above the card
   const ocam = orbitCam(Vector3);
   const wantTgt = new Vector3(), camPos = new Vector3(), camTgt = new Vector3(), fwd = new Vector3(), tmp = new Vector3(), v = new Vector3();
@@ -1509,10 +1509,8 @@ async function capScene(sec) {
 }
 
 // ---------------------------------------------------------------- Pluto in 3D
-// Pluto isn't a physical thing, so it's drawn as a board: the agent in the middle, a chip for each tool,
-// copper to everything it can reach. Scrolling follows the example question from the phone to the tools
-// and back, then turns into the morning brief as a day laid out in blocks. Everything shown comes from
-// the two example chats on the page.
+// Pluto in 3D: one message followed start to finish, from my phone through Telegram to the bot on Fly.io and
+// back, ending with the block it books on my calendar.
 const plutoSec = document.getElementById("pluto-3d");
 if (plutoSec) {
   if (!GL || REDUCED) plutoSec.classList.add("o3-off");
@@ -1524,6 +1522,9 @@ if (plutoSec) {
 }
 
 async function plutoScene(sec) {
+  // One command, start to finish: a message leaves my phone, goes through Telegram's servers to the bot on
+  // Fly.io where Pluto (Claude Code, headless) runs, Pluto checks Canvas and the calendar, books the time,
+  // and the reply comes back the same way. It ends on the calendar with the new block in it.
   const K = await kit();
   const { THREE } = K;
   const { Vector3, Group, Mesh, MeshStandardMaterial: Std } = THREE;
@@ -1533,159 +1534,158 @@ async function plutoScene(sec) {
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const { renderer, scene } = makeRenderer(K, canvas);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // a light scene: full density on high-DPI screens
+  const rim = new THREE.DirectionalLight(0xbfe6ff, 0.8); rim.position.set(-1, 0.8, -1.2); scene.add(rim);
   const cam = new THREE.PerspectiveCamera(34, 1, 0.01, 20);
   const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
   const FONT = "Barlow, system-ui, sans-serif";
+  const TEX = 2; // textures drawn at twice their layout size, so text stays sharp up close
   const canvasTex = (w, h, draw) => {
-    const c = document.createElement("canvas"); c.width = w; c.height = h;
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-    const redraw = (...a) => { draw(c.getContext("2d"), w, h, ...a); t.needsUpdate = true; };
+    const c = document.createElement("canvas"); c.width = w * TEX; c.height = h * TEX;
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const redraw = (...a) => { const g = c.getContext("2d"); g.setTransform(TEX, 0, 0, TEX, 0, 0); draw(g, w, h, ...a); t.needsUpdate = true; };
     redraw();
     return { t, redraw };
   };
-
-  // ---- the board
-  const world = new Group(); scene.add(world);
-  const boardG = new Group(); world.add(boardG);
-  const BW = 2.0, BD = 1.36;
-  const boardTop = canvasTex(2000, 1360, (g, w, h) => {
-    g.fillStyle = "#0f5a3d"; g.fillRect(0, 0, w, h);
-    g.fillStyle = "rgba(255,255,255,.05)"; for (let x = 20; x < w; x += 40) for (let y = 20; y < h; y += 40) g.fillRect(x - 2, y - 2, 4, 4);
-    g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 4; g.strokeRect(24, 24, w - 48, h - 48);
-    g.fillStyle = "rgba(255,255,255,.7)"; g.font = `700 44px ${FONT}`; g.fillText("PLUTO", 60, 90);
-    g.font = `500 26px ${FONT}`; g.fillText("Rev 2026", 60, 126);
-  });
-  const pcbSide = std("#0b4a32", { roughness: 0.5 });
-  const boardM = new Mesh(new THREE.BoxGeometry(BW, 0.03, BD), [pcbSide, pcbSide, new Std({ map: boardTop.t, roughness: 0.55 }), pcbSide, pcbSide, pcbSide]);
-  boardM.position.y = -0.015; boardG.add(boardM);
-  const gold = std("#d6b25a", { metalness: 0.9, roughness: 0.3 });
-
-  // chips: a body, a labelled top and gold pins along the long sides
-  const chips = {};
-  const chip = (key, name, sub, x, z, w, d, body = "#17191c") => {
-    const g = new Group(); g.position.set(x, 0, z); boardG.add(g);
-    const top = canvasTex(Math.round(w * 1000), Math.round(d * 1000), (c, W_, H_, lit = 0) => {
-      c.fillStyle = body; c.fillRect(0, 0, W_, H_);
-      if (lit) { c.fillStyle = `rgba(224,150,90,${0.25 * lit})`; c.fillRect(0, 0, W_, H_); }
-      c.fillStyle = "#f1f1ee"; c.font = `700 ${Math.round(Math.min(H_ * 0.3, 48))}px ${FONT}`; c.textBaseline = "middle";
-      c.fillText(name, W_ * 0.07, sub ? H_ * 0.38 : H_ * 0.5);
-      if (sub) { c.fillStyle = "rgba(241,241,238,.62)"; c.font = `500 ${Math.round(Math.min(H_ * 0.2, 30))}px ${FONT}`; c.fillText(sub, W_ * 0.07, H_ * 0.68); }
-      c.fillStyle = "rgba(255,255,255,.5)"; c.beginPath(); c.arc(W_ * 0.04, H_ * 0.14, Math.min(W_, H_) * 0.025, 0, 7); c.fill();
-    });
-    const side = std(body, { roughness: 0.4 });
-    const m = new Mesh(new THREE.BoxGeometry(w, 0.026, d), [side, side, new Std({ map: top.t, roughness: 0.45, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
-    m.position.y = 0.013; g.add(m);
-    const n = Math.max(3, Math.round(w / 0.03));
-    const pins = new THREE.InstancedMesh(new THREE.BoxGeometry(0.008, 0.006, 0.014), gold, n * 2);
-    const mt = new THREE.Matrix4(); let k = 0;
-    for (let i = 0; i < n; i++) for (const sz of [-1, 1]) { mt.makeTranslation(-w / 2 + (i + 0.5) * (w / n), 0.004, sz * (d / 2 + 0.006)); pins.setMatrixAt(k++, mt); }
-    g.add(pins);
-    chips[key] = { g, top, mat: m.material[2], lit: 0, at: new Vector3(x, 0.03, z), w, d };
-    return chips[key];
-  };
-  chip("core", "Pluto", "Claude Code, headless · Fly.io", 0, 0.02, 0.56, 0.5, "#0e6a4c");
-  const TOOLS = [["calendar", "Calendar", "Google Calendar"], ["gmail", "Email", "Gmail"], ["canvas", "Canvas", "Assignments, syllabi"], ["grades", "Grades", "Projection"],
-    ["planner", "Study planner", "Blocks time"], ["transit", "Campus buses", "Live positions"], ["places", "Campus map", "Rooms, buildings"]];
-  TOOLS.forEach(([k, n, s], i) => chip(k, n, s, 0.72, -0.51 + i * 0.17, 0.38, 0.12));
-  chip("telegram", "Telegram", "From my iPhone", -0.72, -0.12, 0.34, 0.13);
-  chip("location", "Location", "OwnTracks", -0.72, 0.3, 0.34, 0.13);
-  chip("schedule", "Schedule", "Brief, check-in, review", 0, -0.5, 0.42, 0.12);
-
-  // traces: copper strips on the board, each its own material so it can light up
-  const traces = {};
-  const copper = () => new Std({ color: "#c27434", metalness: 0.9, roughness: 0.35, emissive: "#ff8a3d", emissiveIntensity: 0 });
-  const trace = (key, pts) => {
-    const curve = new THREE.CurvePath();
-    for (let i = 0; i < pts.length - 1; i++) curve.add(new THREE.LineCurve3(new Vector3(pts[i][0], 0.002, pts[i][1]), new Vector3(pts[i + 1][0], 0.002, pts[i + 1][1])));
-    const mat = copper();
-    const m = new Mesh(new THREE.TubeGeometry(curve, 80, 0.006, 6, false), mat); m.scale.y = 0.4; boardG.add(m);
-    traces[key] = { curve, mat };
-  };
-  TOOLS.forEach(([k], i) => { const zc = -0.17 + i * 0.057, zt = -0.51 + i * 0.17; trace(k, [[0.28, zc], [0.42 + (i % 2) * 0.03, zc], [0.42 + (i % 2) * 0.03, zt], [0.53, zt]]); });
-  trace("telegram", [[-0.55, -0.12], [-0.4, -0.12], [-0.4, -0.05], [-0.28, -0.05]]);
-  trace("location", [[-0.55, 0.3], [-0.4, 0.3], [-0.4, 0.1], [-0.28, 0.1]]);
-  trace("schedule", [[0, -0.44], [0, -0.23]]);
-
-  // the phone, lying beside the board, with the chat on its screen
-  const phone = new Group(); phone.position.set(-1.42, 0, -0.04); phone.rotation.y = 0.12; world.add(phone);
-  const PW = 0.24, PD = 0.48;
-  const phBody = new Mesh(new THREE.BoxGeometry(PW, 0.014, PD), std("#1b1d20", { metalness: 0.6, roughness: 0.3 })); phBody.position.y = 0.007; phone.add(phBody);
+  const placeAt = (m, x, y, z) => { m.position.set(x, y, z); return m; };
   const wrap = (c, text, maxW) => { const words = text.split(" "), lines = []; let line = ""; for (const wd of words) { const t = line ? line + " " + wd : wd; if (c.measureText(t).width > maxW && line) { lines.push(line); line = wd; } else line = t; } if (line) lines.push(line); return lines; };
-  const CHAT = [["me", "When's my next Calc III exam, where is it, and what do I need on it to keep an A?"],
-    ["p", "Exam 2 is Thursday at 2:00. That date is from the syllabus on Canvas, not your calendar, so check it in class."],
-    ["p", "I couldn't find a room for it. Canvas and the schedule don't list one yet."],
-    ["p", "To stay at an A you need about an 84 on it, assuming the final is weighted the way the syllabus says."]];
-  const screen = canvasTex(480, 960, (c, W_, H_, shown = 0) => {
+
+  const ASK = "Find time for my physics problem set today.";
+  const REPLY = "Blocked 4:00 to 5:30 for the physics problem set. It's due at 11:59 PM.";
+
+  // a soft floor so the objects sit on something
+  const floor = new Mesh(new THREE.CircleGeometry(3.2, 64), new Std({ color: "#1b2420", roughness: 1, transparent: true, opacity: 0.0 }));
+  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+
+  // ---- the phone
+  const phone = new Group(); phone.position.set(-1.55, 0, 0.05); phone.rotation.set(0, 0.18, 0); scene.add(phone);
+  const PW = 0.26, PD = 0.52;
+  {
+    const r = 0.034, sh = new THREE.Shape();
+    sh.moveTo(-PW / 2 + r, -PD / 2); sh.lineTo(PW / 2 - r, -PD / 2); sh.quadraticCurveTo(PW / 2, -PD / 2, PW / 2, -PD / 2 + r); sh.lineTo(PW / 2, PD / 2 - r);
+    sh.quadraticCurveTo(PW / 2, PD / 2, PW / 2 - r, PD / 2); sh.lineTo(-PW / 2 + r, PD / 2); sh.quadraticCurveTo(-PW / 2, PD / 2, -PW / 2, PD / 2 - r); sh.lineTo(-PW / 2, -PD / 2 + r); sh.quadraticCurveTo(-PW / 2, -PD / 2, -PW / 2 + r, -PD / 2);
+    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 4, curveSegments: 16 });
+    g.rotateX(-Math.PI / 2);
+    phone.add(placeAt(new Mesh(g, std("#1b1d20", { metalness: 0.6, roughness: 0.28 })), 0, 0.002, 0));
+  }
+  const screen = canvasTex(480, 960, (c, W_, H_, state = 0) => {
     c.fillStyle = "#0e1412"; c.fillRect(0, 0, W_, H_);
-    c.fillStyle = "#16201c"; c.fillRect(0, 0, W_, 96);
-    c.fillStyle = "#3fd68f"; c.beginPath(); c.arc(40, 50, 9, 0, 7); c.fill();
-    c.fillStyle = "#e8ece8"; c.font = `700 30px ${FONT}`; c.textBaseline = "middle"; c.fillText("Pluto", 62, 50);
-    let y = 130;
-    c.font = `500 25px ${FONT}`; c.textBaseline = "top";
-    CHAT.slice(0, shown).forEach(([who, text]) => {
-      const lines = wrap(c, text, 330), bh = lines.length * 32 + 22, me = who === "me", bw = 370;
-      const x = me ? W_ - bw - 20 : 20;
+    c.fillStyle = "#16201c"; c.fillRect(0, 0, W_, 100);
+    c.fillStyle = "#3fd68f"; c.beginPath(); c.arc(40, 52, 9, 0, 7); c.fill();
+    c.fillStyle = "#e8ece8"; c.font = `700 32px ${FONT}`; c.textBaseline = "middle"; c.fillText("Pluto", 62, 52);
+    c.fillStyle = "#7d8a85"; c.font = `500 22px ${FONT}`; c.fillText("bot", 150, 54);
+    c.font = `500 27px ${FONT}`; c.textBaseline = "top";
+    let y = 140;
+    const bubble = (text, me) => {
+      const lines = wrap(c, text, 330), bh = lines.length * 34 + 24, bw = 370, x = me ? W_ - bw - 20 : 20;
       c.fillStyle = me ? "#5a3a20" : "#1d3b2d"; c.beginPath(); c.roundRect(x, y, bw, bh, 18); c.fill();
-      c.fillStyle = "#eef2ee"; lines.forEach((l, i) => c.fillText(l, x + 18, y + 12 + i * 32));
-      y += bh + 16;
-    });
+      c.fillStyle = "#eef2ee"; lines.forEach((l, i) => c.fillText(l, x + 18, y + 12 + i * 34)); y += bh + 16;
+    };
+    if (state >= 1) bubble(ASK, true);
+    if (state === 2) { c.fillStyle = "#1d3b2d"; c.beginPath(); c.roundRect(20, y, 110, 54, 18); c.fill(); c.fillStyle = "#7d8a85"; [50, 75, 100].forEach((x) => { c.beginPath(); c.arc(x, y + 27, 6, 0, 7); c.fill(); }); }
+    if (state >= 3) bubble(REPLY, false);
   });
-  const scr = new Mesh(new THREE.PlaneGeometry(PW * 0.9, PD * 0.92), new THREE.MeshBasicMaterial({ map: screen.t, toneMapped: false }));
-  scr.rotation.x = -Math.PI / 2; scr.position.y = 0.0145; phone.add(scr);
-  let screenShown = -1;
+  const scr = new Mesh(new THREE.PlaneGeometry(PW * 0.9, PD * 0.93), new THREE.MeshBasicMaterial({ map: screen.t, toneMapped: false }));
+  scr.rotation.x = -Math.PI / 2; scr.position.y = 0.0175; phone.add(scr);
 
-  // packets: glowing beads that travel along traces (or arc through the air between the phone and Telegram)
-  const packetMat = new THREE.MeshBasicMaterial({ color: "#ffb070", toneMapped: false });
-  const packets = [0, 1, 2].map(() => { const m = new Mesh(new THREE.SphereGeometry(0.016, 16, 10), packetMat); m.visible = false; world.add(m); return m; });
-  const phoneW = new Vector3(), tmp = new Vector3();
-  const arcPt = (u, out) => { // phone screen to the Telegram chip, through the air
-    phone.getWorldPosition(phoneW); const a = phoneW.clone().setY(0.03), b = chips.telegram.at.clone().setX(chips.telegram.at.x - 0.17);
-    out.lerpVectors(a, b, u); out.y += Math.sin(u * Math.PI) * 0.22; return out;
+  // ---- a server: a rack with a lit front panel and a nameplate
+  const server = (x, z, name, sub, color, units) => {
+    const g = new Group(); g.position.set(x, 0, z); scene.add(g);
+    const RW = 0.36, RH = 0.62, RD = 0.34;
+    const frame = std("#20262b", { metalness: 0.5, roughness: 0.45 });
+    g.add(placeAt(new Mesh(new THREE.BoxGeometry(RW, RH, RD), frame), 0, RH / 2, 0));
+    const leds = [];
+    for (let i = 0; i < units; i++) {
+      const u = new Mesh(new THREE.BoxGeometry(RW * 0.86, 0.05, 0.01), std(color, { metalness: 0.3, roughness: 0.4 }));
+      u.position.set(0, 0.07 + i * 0.065, RD / 2 + 0.002); g.add(u);
+      for (let j = 0; j < 3; j++) {
+        const led = new Mesh(new THREE.BoxGeometry(0.012, 0.008, 0.004), new THREE.MeshBasicMaterial({ color: "#3fd68f", toneMapped: false }));
+        led.position.set(RW * 0.32 - j * 0.022, 0.07 + i * 0.065, RD / 2 + 0.009); g.add(led); leds.push(led);
+      }
+    }
+    const plate = canvasTex(720, 200, (c, W_, H_) => { c.fillStyle = "#11161a"; c.fillRect(0, 0, W_, H_); c.fillStyle = "#e8ece8"; c.font = `700 70px ${FONT}`; c.textBaseline = "top"; c.fillText(name, 26, 22); c.fillStyle = "#9aa6a0"; c.font = `500 40px ${FONT}`; c.fillText(sub, 26, 112); });
+    const pm = new Mesh(new THREE.PlaneGeometry(RW * 0.9, RW * 0.25), new THREE.MeshBasicMaterial({ map: plate.t, toneMapped: false }));
+    pm.position.set(0, RH + 0.065, 0); pm.rotation.x = -0.35; g.add(pm);
+    return { g, leds, top: new Vector3(x, RH, z), front: new Vector3(x, RH * 0.6, z + RD / 2) };
   };
-  const along = (key, u, reverse, out) => { traces[key].curve.getPointAt(clamp(reverse ? 1 - u : u), out); out.y = 0.012; boardG.localToWorld(out); return out; };
-  const showPacket = (i, pos) => { packets[i].visible = true; packets[i].position.copy(pos); };
-
-  // ---- the day, as blocks: the morning brief
-  const day = new Group(); day.position.set(0, 0, 1.12); world.add(day);
-  const H0 = 7, H1 = 24, DW = 1.9, hx = (hr) => -DW / 2 + ((hr - H0) / (H1 - H0)) * DW;
-  const ruler = canvasTex(1900, 120, (c, W_, H_) => {
-    c.fillStyle = "#e9ece8"; c.fillRect(0, 0, W_, H_);
-    c.fillStyle = "#6a7d73"; c.font = `600 26px ${FONT}`; c.textBaseline = "top";
-    for (let hr = H0; hr <= H1; hr++) { const x = ((hr - H0) / (H1 - H0)) * W_; c.fillRect(x - 1, 0, 2, hr % 3 === 0 ? 40 : 22);
-      if (hr % 3 === 0 && hr < H1) c.fillText(`${((hr + 11) % 12) + 1}${hr < 12 ? " AM" : " PM"}`, x + 6, 48); }
+  const tg = server(-0.5, -0.15, "Telegram", "Telegram's servers", "#3a4650", 7);
+  const fly = server(0.62, -0.15, "Fly.io", "the bot, and Pluto", "#2c4a3c", 5);
+  // Pluto's terminal on the Fly.io machine
+  const term = canvasTex(640, 420, (c, W_, H_, lines = []) => {
+    c.fillStyle = "#0b100e"; c.fillRect(0, 0, W_, H_);
+    c.fillStyle = "#6ff0b4"; c.font = `600 26px ui-monospace, Consolas, monospace`; c.textBaseline = "top";
+    c.fillText("pluto · Claude Code (headless)", 18, 14);
+    c.fillStyle = "#cfe3d8"; c.font = `500 23px ui-monospace, Consolas, monospace`;
+    lines.forEach((l, i) => c.fillText(l, 18, 64 + i * 38));
   });
-  const rulerM = new Mesh(new THREE.BoxGeometry(DW, 0.01, 0.12), [std("#d9ddd9"), std("#d9ddd9"), new Std({ map: ruler.t, roughness: 0.8 }), std("#d9ddd9"), std("#d9ddd9"), std("#d9ddd9")]);
-  rulerM.position.set(0, 0.005, 0.12); day.add(rulerM);
-  const block = (label, sub, h0, h1, color, z = 0) => {
-    const w = Math.max(0.06, hx(h1) - hx(h0));
+  const termM = new Mesh(new THREE.PlaneGeometry(0.32, 0.21), new THREE.MeshBasicMaterial({ map: term.t, toneMapped: false }));
+  termM.position.set(0, 0.62 + 0.34, -0.06); termM.rotation.x = -0.18; fly.g.add(termM); // above the nameplate
+  const stand = new Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.02), std("#20262b")); stand.position.set(0, 0.62 + 0.13, -0.08); fly.g.add(stand);
+
+  // ---- the two tools this command uses: Canvas and the calendar
+  const tile = (x, z, name, sub, color) => {
+    const g = new Group(); g.position.set(x, 0, z); scene.add(g);
+    const t = canvasTex(520, 300, (c, W_, H_, lit = 0) => { c.fillStyle = color; c.fillRect(0, 0, W_, H_); if (lit) { c.fillStyle = `rgba(224,150,90,${0.35 * lit})`; c.fillRect(0, 0, W_, H_); } c.fillStyle = "#fff"; c.font = `700 64px ${FONT}`; c.textBaseline = "top"; c.fillText(name, 28, 40); c.fillStyle = "rgba(255,255,255,.8)"; c.font = `500 36px ${FONT}`; c.fillText(sub, 28, 130); });
+    const side = std(color, { roughness: 0.5 });
+    const m = new Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.23), [side, side, new Std({ map: t.t, roughness: 0.5, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
+    m.position.y = 0.02; g.add(m);
+    return { g, m, at: new Vector3(x, 0.05, z) };
+  };
+  const canvasTool = tile(1.42, -0.42, "Canvas", "assignments", "#8f3b34");
+  const calTool = tile(1.42, 0.08, "Calendar", "free time, events", "#2a5f8f");
+
+  // ---- the day, where the block lands
+  const day = new Group(); day.position.set(0.25, 0, 0.95); scene.add(day);
+  const H0 = 7, H1 = 24, DW = 2.4, hx = (hr) => -DW / 2 + ((hr - H0) / (H1 - H0)) * DW;
+  const ruler = canvasTex(2400, 120, (c, W_) => {
+    c.fillStyle = "#e9ece8"; c.fillRect(0, 0, W_, 120); c.fillStyle = "#6a7d73"; c.font = `600 28px ${FONT}`; c.textBaseline = "top";
+    for (let hr = H0; hr <= H1; hr++) { const x = ((hr - H0) / (H1 - H0)) * W_; c.fillRect(x - 1, 0, 2, hr % 3 === 0 ? 40 : 22); if (hr % 3 === 0 && hr < H1) c.fillText(`${((hr + 11) % 12) + 1} ${hr < 12 ? "AM" : "PM"}`, x + 6, 48); }
+  });
+  const rs = std("#d9ddd9");
+  day.add(placeAt(new Mesh(new THREE.BoxGeometry(DW, 0.01, 0.12), [rs, rs, new Std({ map: ruler.t, roughness: 0.8 }), rs, rs, rs]), 0, 0.005, 0.12));
+  const block = (label, sub, h0, h1, color) => {
+    const w = hx(h1) - hx(h0);
     const tex = canvasTex(Math.round(w * 2600), Math.round(0.13 * 2600), (c, W_, H_) => {
       c.fillStyle = color; c.fillRect(0, 0, W_, H_); c.textBaseline = "top";
       const fit = (t, px, wt) => { let sz = px; c.font = `${wt} ${sz}px ${FONT}`; while (c.measureText(t).width > W_ - 28 && sz > 10) { sz -= 2; c.font = `${wt} ${sz}px ${FONT}`; } return sz; };
       const s1 = fit(label, 82, 700); c.fillStyle = "#fff"; c.fillText(label, 14, 34);
-      fit(sub, Math.min(60, s1 * 0.75), 500); c.fillStyle = "rgba(255,255,255,.82)"; c.fillText(sub, 14, 50 + s1); });
+      fit(sub, Math.min(60, s1 * 0.75), 500); c.fillStyle = "rgba(255,255,255,.82)"; c.fillText(sub, 14, 50 + s1);
+    });
     const side = std(color, { roughness: 0.5 });
     const m = new Mesh(new THREE.BoxGeometry(w, 0.04, 0.13), [side, side, new Std({ map: tex.t, roughness: 0.5, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
-    m.position.set(hx(h0) + w / 2, 0.02, z); day.add(m); return m;
+    m.position.set(hx(h0) + w / 2, 0.02, 0); day.add(m); return m;
   };
-  const enes = block("ENES100", "10:00", 10, 11.25, "#2a5f8f");
-  const calc = block("Calc III", "2:00", 14, 15.25, "#2a5f8f");
-  const study = block("Study: physics", "4:00 to 5:30", 16, 17.5, "#b8692a");
-  const due = block("Physics due", "11:59 PM", 22.6, 23.98, "#9a3b34");
-  const bus = block("Bus 104", "in 6 min", 7, 8.6, "#59636b", -0.15);
-  const walk = block("Walk", "faster today", 7, 8.6, "#2f9a4a", -0.3);
-  day.visible = false;
+  block("ENES100", "10:00", 10, 11.25, "#2a5f8f");
+  block("Calc III", "2:00", 14, 15.25, "#2a5f8f");
+  const study = block("Physics problem set", "4:00 to 5:30", 16, 17.5, "#b8692a");
+  block("Due", "11:59 PM", 22.7, 23.98, "#9a3b34");
 
-  // ---- labels (anchored to world points), same rules as the other scenes: flip at edges, never overlap
+  // ---- the message: a glowing bubble that travels in arcs between the stops
+  const msg = new Mesh(new THREE.SphereGeometry(0.03, 32, 20), new THREE.MeshBasicMaterial({ color: "#ffb070", toneMapped: false }));
+  scene.add(msg);
+  const halo = new Mesh(new THREE.RingGeometry(0.04, 0.05, 64), new THREE.MeshBasicMaterial({ color: "#ffb070", transparent: true, opacity: 0.5, side: THREE.DoubleSide, toneMapped: false }));
+  scene.add(halo);
+  const P = {
+    phone: () => phone.getWorldPosition(new Vector3()).setY(0.05),
+    tg: () => tg.top.clone().setY(0.66),
+    fly: () => fly.top.clone().setY(0.66),
+    canvas: () => canvasTool.at.clone(),
+    cal: () => calTool.at.clone(),
+    day: () => study.getWorldPosition(new Vector3()).setY(0.06),
+  };
+  const arc = (a, b, u, h = 0.45) => { const pa = P[a](), pb = P[b](); const o = pa.clone().lerp(pb, u); o.y += Math.sin(u * Math.PI) * h; return o; };
+
+  // ---- labels
   const svgNS = "http://www.w3.org/2000/svg";
   const lsvg = document.createElementNS(svgNS, "svg"); tagsEl.appendChild(lsvg);
   const TAGS = [
-    [1, () => phone.getWorldPosition(new Vector3()).setY(0.03), "My question, on Telegram"],
-    [2, () => chips.canvas.at.clone().add(boardG.position).setX(chips.canvas.at.x - 0.19), "Exam date from the syllabus, flagged: not on my calendar"],
-    [3, () => chips.places.at.clone().add(boardG.position).setX(chips.places.at.x - 0.19), "No room listed anywhere, so it says so"],
-    [4, () => chips.grades.at.clone().add(boardG.position).setX(chips.grades.at.x - 0.19), "About an 84 to keep an A, assuming the syllabus weighting"],
-    [6, () => chips.calendar.at.clone().add(boardG.position).setX(chips.calendar.at.x - 0.19), "Classes come from the calendar"],
-    [7, () => study.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Not on the calendar, so it blocks 4:00 to 5:30"],
-    [7, () => walk.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Walking beats the bus today"],
+    [0, () => P.phone(), "Sent on Telegram"],
+    [1, () => tg.top.clone().setY(0.62), "Telegram's servers"],
+    [2, () => fly.top.clone().setY(0.62), "The Telegram channel plugin hands it to Claude Code"],
+    [3, () => canvasTool.at.clone(), "Physics problem set: due 11:59 PM"],
+    [4, () => calTool.at.clone(), "Free after Calc III: 4:00 to 5:30"],
+    [4, () => study.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Blocked, within my daily study limit"],
+    [5, () => P.phone(), "The reply, in the same chat"],
   ].map(([ch, at, text]) => {
     const path = document.createElementNS(svgNS, "path"); path.setAttribute("class", "o3-lead"); lsvg.appendChild(path);
     const dot = document.createElementNS(svgNS, "circle"); dot.setAttribute("r", "3"); dot.setAttribute("class", "o3-dot"); lsvg.appendChild(dot);
@@ -1695,19 +1695,18 @@ async function plutoScene(sec) {
 
   // ---- camera: one framing per chapter, eased between them
   const SHOTS = [
-    [[0.0, 0, 0.1], 0.35, 0.95, 2.6],   // the board
-    [[-1.05, 0, -0.06], 0.75, 0.95, 1.1], // the phone and Telegram
-    [[0.5, 0, -0.17], 0.35, 0.85, 1.05],  // Canvas
-    [[0.5, 0, 0.45], 0.55, 0.85, 1.05],   // Campus map
-    [[0.5, 0, 0.0], 0.25, 0.8, 1.05],     // Grades
-    [[-0.85, 0, -0.04], 0.6, 1.0, 1.25],  // the answer
-    [[0.0, 0, 1.1], 0.0, 0.75, 1.85],     // the day
-    [[-0.35, 0, 0.95], -0.12, 0.7, 1.75], // what it moves
+    [[-1.45, 0.05, 0.05], 0.7, 1.0, 1.0],   // the phone
+    [[-0.95, 0.3, -0.05], 0.45, 0.55, 2.0], // to Telegram
+    [[0.45, 0.6, -0.15], 0.3, 0.42, 2.3],   // to Pluto on Fly.io, its terminal in view
+    [[1.0, 0.25, -0.25], 0.25, 0.65, 1.6],  // Canvas
+    [[0.85, 0.05, 0.55], -0.25, 0.9, 2.2],  // the calendar tile and the day
+    [[-0.5, 0.3, 0.1], 0.3, 0.6, 2.6],      // the reply
+    [[0.0, 0.25, 0.35], 0.0, 0.62, 3.6],    // the whole path
   ].map(([t_, az, el, r]) => ({ tgt: new Vector3(...t_), az, el, r }));
   const N = SHOTS.length;
   const ocam = orbitCam(Vector3);
-  const tg = new Vector3(), v = new Vector3();
-  let W = 0, H = 0, lastT = 0, cur = -1, p = 0;
+  const tgt = new Vector3(), v = new Vector3();
+  let W = 0, H = 0, lastT = 0, cur = -1, p = 0, screenState = -1, termState = -1;
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight;
     TAGS.forEach((e) => { e.w = 0; e.h = 0; });
@@ -1716,6 +1715,10 @@ async function plutoScene(sec) {
     cam.updateProjectionMatrix(); lsvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   };
   new ResizeObserver(resize).observe(stage);
+  const TERM = [[], ["telegram › " + "Find time for my physics", "           problem set today."],
+    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM"],
+    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM", "calendar › free 4:00–5:30", "calendar › added 4:00–5:30 ✓"],
+    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM", "calendar › added 4:00–5:30 ✓", "reply    › sent"]];
 
   const frame = (time) => {
     if (!W) return;
@@ -1724,67 +1727,52 @@ async function plutoScene(sec) {
     const want = travel > 0 ? clamp(-r_.top / travel) : 0;
     p += (want - p) * (dt ? 1 - Math.exp(-dt / 0.18) : 1);
     const s = p * (N - 0.001), ch = Math.floor(s), f = s - ch;
+    const e = (a, b) => smoother(clamp((f - a) / (b - a)));
 
-    // which chips and traces are lit, and the packets
-    Object.values(chips).forEach((c) => { c.want = 0; });
-    Object.values(traces).forEach((t) => { t.want = 0; });
-    packets.forEach((m) => { m.visible = false; });
-    const lit = (k, a = 1) => { if (chips[k]) chips[k].want = Math.max(chips[k].want, a); if (traces[k]) traces[k].want = Math.max(traces[k].want, a); };
-    lit("core", 0.35);
-    if (ch === 1) {
-      if (f < 0.5) showPacket(0, arcPt(smoother(clamp(f / 0.5)), tmp)); else { showPacket(0, along("telegram", smoother(clamp((f - 0.5) / 0.4)), false, tmp)); lit("telegram"); }
-      if (f > 0.85) lit("core");
-    }
-    const outTo = (k, i) => { if (f < 0.65) { showPacket(i, along(k, smoother(clamp((f - 0.05) / 0.55)), true, tmp)); lit(k); } else lit(k); };
-    if (ch === 2) outTo("canvas", 0);
-    if (ch === 3) outTo("places", 0);
-    if (ch === 4) outTo("grades", 0);
-    if (ch === 5) {
-      ["canvas", "places", "grades"].forEach((k, i) => { if (f < 0.35) { showPacket(i, along(k, smoother(clamp(f / 0.35)), false, v.clone())); lit(k, 0.7); } });
-      if (f >= 0.35 && f < 0.6) { showPacket(0, along("telegram", smoother(clamp((f - 0.35) / 0.25)), true, tmp)); lit("telegram"); }
-      if (f >= 0.6 && f < 0.85) showPacket(0, arcPt(1 - smoother(clamp((f - 0.6) / 0.25)), tmp));
-      lit("core");
-    }
-    if (ch === 6) { lit("calendar"); lit("canvas", 0.7); lit("schedule"); }
-    if (ch === 7) { lit("planner"); lit("transit"); }
-    Object.values(chips).forEach((c) => { c.lit += (c.want - c.lit) * (dt ? 1 - Math.exp(-dt / 0.2) : 1); c.mat.emissiveIntensity = c.lit * 0.5; });
-    Object.values(traces).forEach((t) => { t.mat.emissiveIntensity += ((t.want ? 0.9 + 0.3 * Math.sin(time / 160) : 0) - t.mat.emissiveIntensity) * (dt ? 1 - Math.exp(-dt / 0.15) : 1); });
+    // the message's journey
+    let pos = null;
+    if (ch === 0 && f > 0.55) pos = P.phone();
+    if (ch === 1) pos = arc("phone", "tg", e(0.1, 0.8), 0.55);
+    if (ch === 2) pos = arc("tg", "fly", e(0.1, 0.75), 0.4);
+    if (ch === 3) pos = f < 0.5 ? arc("fly", "canvas", e(0.05, 0.45), 0.3) : arc("canvas", "fly", e(0.55, 0.95), 0.3);
+    if (ch === 4) pos = f < 0.35 ? arc("fly", "cal", e(0.03, 0.33), 0.3) : f < 0.7 ? arc("cal", "day", e(0.38, 0.68), 0.25) : null;
+    if (ch === 5) pos = f < 0.5 ? arc("fly", "tg", e(0.05, 0.45), 0.4) : arc("tg", "phone", e(0.5, 0.92), 0.55);
+    msg.visible = halo.visible = !!pos;
+    if (pos) { msg.position.copy(pos); halo.position.copy(pos); halo.lookAt(cam.position); halo.scale.setScalar(1 + 0.25 * Math.sin(time / 180)); }
 
-    // the phone's chat fills in as the answer comes back
-    const shown = ch < 1 ? 0 : ch < 5 ? 1 : ch > 5 ? 4 : 1 + Math.floor(clamp((f - 0.7) / 0.28) * 3.999);
-    if (shown !== screenShown) { screenShown = shown; screen.redraw(Math.min(4, shown)); }
-
-    // the day: the board steps back, the blocks come in, the study block drops into place
-    const dayIn = ch < 6 ? 0 : ch === 6 ? smoother(clamp(f / 0.4)) : 1;
-    day.visible = dayIn > 0.01;
-    boardG.position.z = -0.25 * dayIn; boardG.position.y = -0.02 * dayIn;
-    day.scale.setScalar(0.6 + 0.4 * dayIn);
-    const drop = ch < 7 ? 0 : smoother(clamp((f - 0.08) / 0.4));
-    study.visible = ch >= 7 && drop > 0.01; study.position.y = 0.02 + (1 - drop) * 0.4; study.material[2].emissiveIntensity = ch === 7 ? 0.35 * drop : 0;
-    const choose = ch < 7 ? 0 : smoother(clamp((f - 0.5) / 0.3));
-    bus.material.forEach((m) => { m.transparent = true; m.opacity = 1 - 0.65 * choose; });
-    walk.material[2].emissiveIntensity = 0.4 * choose;
-    due.material[2].emissiveIntensity = ch >= 6 ? 0.15 + 0.1 * Math.sin(time / 300) : 0;
-    [enes, calc].forEach((b) => { b.material[2].emissiveIntensity = ch === 6 ? 0.2 * smoother(clamp(f / 0.5)) : 0; });
+    // the phone's chat, Pluto's terminal, the tools lighting up, the block landing
+    const scrState = ch === 0 ? (f > 0.4 ? 1 : 0) : ch < 5 ? (ch >= 2 ? 2 : 1) : (f > 0.85 || ch > 5 ? 3 : 2);
+    if (scrState !== screenState) { screenState = scrState; screen.redraw(scrState); }
+    const tState = ch < 2 ? 0 : ch === 2 ? (f > 0.75 ? 1 : 0) : ch === 3 ? (f > 0.45 ? 2 : 1) : ch === 4 ? (f > 0.3 ? 3 : 2) : 4;
+    if (tState !== termState) { termState = tState; term.redraw(TERM[tState]); }
+    canvasTool.m.material[2].emissiveIntensity = ch === 3 ? 0.45 * Math.sin(Math.PI * clamp(f / 0.9)) : 0;
+    calTool.m.material[2].emissiveIntensity = ch === 4 ? 0.45 * (1 - e(0.6, 0.9)) : 0;
+    const land = ch < 4 ? 0 : ch === 4 ? e(0.6, 0.9) : 1;
+    study.visible = land > 0.01; study.position.y = 0.02 + (1 - land) * 0.35;
+    study.material[2].emissiveIntensity = ch === 4 ? 0.4 * land : ch === 6 ? 0.25 : 0;
+    // the racks' LEDs flicker while the message passes through them
+    const busy = (srv, on) => srv.leds.forEach((l, i) => { l.material.color.set(on && Math.sin(time / 70 + i * 1.7) > 0 ? "#ffb070" : "#3fd68f"); });
+    busy(tg, (ch === 1 && f > 0.7) || (ch === 2 && f < 0.3) || (ch === 5 && f > 0.35 && f < 0.6));
+    busy(fly, (ch === 2 && f > 0.6) || ch === 3 || ch === 4 || (ch === 5 && f < 0.15));
 
     // camera
-    const i0 = Math.min(N - 1, ch), i1 = Math.min(N - 1, ch + 1), u = smoother(clamp((f - 0.6) / 0.4));
+    const i0 = Math.min(N - 1, ch), i1 = Math.min(N - 1, ch + 1), u = smoother(clamp((f - 0.62) / 0.38));
     const A = SHOTS[i0], B = SHOTS[i1];
-    const narrow = cam.aspect < 1 ? Math.min(2.6, 1.3 / cam.aspect) : 1; // phones: back off so the board fits
-    tg.lerpVectors(A.tgt, B.tgt, u);
-    const st = ocam.to(A.az + angDiff(A.az, B.az) * u + 0.05 * Math.sin(time / 4100), A.el + (B.el - A.el) * u, (A.r + (B.r - A.r) * u) * narrow, tg, dt, 0.5);
+    const narrow = cam.aspect < 1 ? Math.min(2.6, 1.3 / cam.aspect) : 1;
+    tgt.lerpVectors(A.tgt, B.tgt, u);
+    const st = ocam.to(A.az + angDiff(A.az, B.az) * u + 0.05 * Math.sin(time / 4100), A.el + (B.el - A.el) * u, (A.r + (B.r - A.r) * u) * narrow, tgt, dt, 0.5);
     ocam.place(cam, cam.position); cam.lookAt(st.tgt);
     renderer.render(scene, cam);
 
     if (ch !== cur) { cur = ch; steps.forEach((li, j) => li.classList.toggle("on", j === ch)); bar.forEach((b, j) => b.classList.toggle("on", j === ch)); }
 
-    // labels
+    // labels: flip at the edges, never overlap, only when their anchor is on screen
     const placed = [];
     TAGS.forEach((T_) => {
-      const want_ = T_.ch === ch && f > 0.3 ? 1 : 0;
+      const want_ = T_.ch === ch && f > 0.25 ? 1 : 0;
       T_.o += (want_ - T_.o) * (dt ? 1 - Math.exp(-dt / 0.2) : 1);
       let o = T_.o;
-      if (o > 0.02) { v.copy(T_.at()).project(cam); if (v.z > 1 || Math.abs(v.x) > 0.96 || Math.abs(v.y) > 0.92) o = 0; } // only when its anchor is on screen
+      if (o > 0.02) { v.copy(T_.at()).project(cam); if (v.z > 1 || Math.abs(v.x) > 0.96 || Math.abs(v.y) > 0.92) o = 0; }
       T_.t.style.opacity = T_.path.style.opacity = T_.dot.style.opacity = o.toFixed(3);
       if (o < 0.02) return;
       const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;

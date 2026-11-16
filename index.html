@@ -474,74 +474,52 @@ const int  MAX_PWM      = 153;</code></template>
     </div>
 
     <section class="o3 o3p" id="pluto-3d" aria-labelledby="o3p-t">
-      <h3 class="sr" id="o3p-t">How Pluto answers, in 3D</h3>
+      <h3 class="sr" id="o3p-t">One message to Pluto, start to finish, in 3D</h3>
       <div class="o3-stage">
         <canvas aria-hidden="true"></canvas>
         <div class="o3-tags" aria-hidden="true"></div>
         <ol class="o3-steps">
-          <li><span class="o3-n">01 / 08</span><h4>The board</h4><p>Pluto drawn as a board: the agent in the middle, a chip for each tool, and copper to everything it can reach.</p></li>
-          <li><span class="o3-n">02 / 08</span><h4>A question</h4><p>I ask on Telegram from my phone, and the message comes in to Pluto.</p></li>
-          <li><span class="o3-n">03 / 08</span><h4>Canvas</h4><p>The exam date is in the syllabus on Canvas, not on my calendar, so Pluto says where it came from.</p></li>
-          <li><span class="o3-n">04 / 08</span><h4>Campus map</h4><p>No room is listed anywhere yet. Pluto says that instead of guessing one.</p></li>
-          <li><span class="o3-n">05 / 08</span><h4>Grades</h4><p>Grade projection works out what I need on the exam to keep an A, and states what it assumed.</p></li>
-          <li><span class="o3-n">06 / 08</span><h4>The answer</h4><p>Three short replies come back to my phone, each saying how sure it is.</p></li>
-          <li><span class="o3-n">07 / 08</span><h4>The morning brief</h4><p>Every morning it lays out the day: classes from the calendar, deadlines from Canvas.</p></li>
-          <li><span class="o3-n">08 / 08</span><h4>It moves things</h4><p>The physics problem set isn't on my calendar, so it blocks 4:00 to 5:30. The bus is six minutes out, but walking is faster today.</p></li>
+          <li><span class="o3-n">01 / 07</span><h4>Ask</h4><p>I text Pluto the way I'd text a person: find time for my physics problem set today.</p></li>
+          <li><span class="o3-n">02 / 07</span><h4>Telegram</h4><p>The message goes to Telegram's servers like any other chat.</p></li>
+          <li><span class="o3-n">03 / 07</span><h4>Pluto</h4><p>Telegram hands it to my bot on Fly.io. Pluto is Claude Code running headless there, with the official Telegram channel plugin.</p></li>
+          <li><span class="o3-n">04 / 07</span><h4>Canvas</h4><p>It checks the assignment on Canvas: the problem set is due at 11:59 PM.</p></li>
+          <li><span class="o3-n">05 / 07</span><h4>Calendar</h4><p>It finds free time after my classes and blocks 4:00 to 5:30, within my daily study limit.</p></li>
+          <li><span class="o3-n">06 / 07</span><h4>Reply</h4><p>The answer goes back the same way: from the bot to Telegram to my phone.</p></li>
+          <li><span class="o3-n">07 / 07</span><h4>Done</h4><p>One message, and the time is on my calendar.</p></li>
         </ol>
-        <div class="o3-bar" aria-hidden="true"><span>Board</span><span>Ask</span><span>Canvas</span><span>Map</span><span>Grades</span><span>Answer</span><span>Brief</span><span>Day</span></div>
+        <div class="o3-bar" aria-hidden="true"><span>Ask</span><span>Telegram</span><span>Pluto</span><span>Canvas</span><span>Calendar</span><span>Reply</span><span>Done</span></div>
         <p class="o3-load" aria-hidden="true">Loading&hellip;</p>
       </div>
     </section>
 
-    <figure class="diagram" data-diagram data-groups="Inputs|Agent|Tools">
-      <svg viewBox="0 0 960 420" role="group" aria-label="Block diagram of Pluto: phone and location on the left, the agent in the middle, its tools on the right">
-        <rect class="grid" width="960" height="420" fill="url(#grid-a)" />
-
-        <path class="tr" data-k="phone"    d="M210,190 H330" />
-        <path class="tr" data-k="location" d="M210,330 H270 V250 H330" />
-        <path class="tr" data-k="schedule" d="M460,96 V140" />
-        <path class="tr" data-k="calendar" d="M590,170 H650 V52 H720" />
-        <path class="tr" data-k="gmail"    d="M590,190 H665 V106 H720" />
-        <path class="tr" data-k="canvas"   d="M590,210 H680 V160 H720" />
-        <path class="tr" data-k="grades"   d="M590,230 H690 V214 H720" />
-        <path class="tr" data-k="planner"  d="M590,250 H690 V268 H720" />
-        <path class="tr" data-k="transit"  d="M590,270 H680 V322 H720" />
-        <path class="tr" data-k="places"   d="M590,290 H665 V376 H720" />
-
-        <g class="blk" data-k="phone" tabindex="0" role="button" aria-label="iPhone, Telegram">
-          <rect x="40" y="160" width="170" height="60" /><text x="56" y="186">iPhone</text><text class="sub" x="56" y="206">Telegram</text></g>
-        <g class="blk" data-k="location" tabindex="0" role="button" aria-label="Location">
-          <rect x="40" y="300" width="170" height="60" /><text x="56" y="326">Location</text><text class="sub" x="56" y="346">OwnTracks fixes</text></g>
-
-        <g class="blk" data-k="schedule" tabindex="0" role="button" aria-label="Schedule">
-          <rect x="330" y="40" width="260" height="56" /><text x="346" y="64">Schedule</text><text class="sub" x="346" y="84">Brief, check-in, review</text></g>
-
-        <g class="blk mcu" data-k="agent" tabindex="0" role="button" aria-label="Pluto agent">
-          <rect x="330" y="140" width="260" height="170" /><text x="346" y="168">Pluto</text><text class="sub" x="346" y="190">Claude Code, headless</text><text class="sub" x="346" y="290">on Fly.io</text></g>
-
-        <g class="blk" data-k="calendar" tabindex="0" role="button" aria-label="Calendar tool"><rect x="720" y="30" width="200" height="44" /><text x="736" y="58">Calendar</text></g>
-        <g class="blk" data-k="gmail" tabindex="0" role="button" aria-label="Email tool"><rect x="720" y="84" width="200" height="44" /><text x="736" y="112">Email</text></g>
-        <g class="blk" data-k="canvas" tabindex="0" role="button" aria-label="Canvas sync"><rect x="720" y="138" width="200" height="44" /><text x="736" y="166">Canvas sync</text></g>
-        <g class="blk" data-k="grades" tabindex="0" role="button" aria-label="Grade projection"><rect x="720" y="192" width="200" height="44" /><text x="736" y="220">Grade projection</text></g>
-        <g class="blk" data-k="planner" tabindex="0" role="button" aria-label="Study planner"><rect x="720" y="246" width="200" height="44" /><text x="736" y="274">Study planner</text></g>
-        <g class="blk" data-k="transit" tabindex="0" role="button" aria-label="Campus buses"><rect x="720" y="300" width="200" height="44" /><text x="736" y="328">Campus buses</text></g>
-        <g class="blk" data-k="places" tabindex="0" role="button" aria-label="Campus map"><rect x="720" y="354" width="200" height="44" /><text x="736" y="382">Campus map</text></g>
-      </svg>
-      <figcaption>
-        <p class="cap" data-default="Select a block to see what it does.">Select a block to see what it does.</p>
-        <template data-k="phone">I text it the way I'd text a person, and everything it sends comes back in the same Telegram chat.</template>
-        <template data-k="location">My phone posts its location to the one inbound route the bot has. If the token isn't set up, that route refuses every request.</template>
-        <template data-k="schedule">The bot messages me on its own each morning and evening, plus a longer review on Sundays.</template>
-        <template data-k="agent">Claude Code runs headless on my subscription with the official Telegram channel plugin. When I hit the subscription limit it switches to an API key, and it switches back once the limit resets.</template>
-        <template data-k="calendar">Creates, moves and searches events, and finds free time between classes.</template>
-        <template data-k="gmail">It sorts my inbox and sends digests. It also pulls dates out of emails, so a rescheduled exam or an extension that never made it onto my calendar still shows up.</template>
-        <template data-k="canvas">Every six hours it copies new Canvas assignments onto my calendar, moves any whose deadline changed, and sends me one summary.</template>
-        <template data-k="grades">Works out my grade by category weight, leaving out categories with nothing graded yet, and tells me what I need on the rest of the work.</template>
-        <template data-k="planner">Fits study blocks into the free time on my calendar, up to a daily limit. If something doesn't fit, it tells me.</template>
-        <template data-k="transit">Compares walking, biking and the Shuttle-UM buses, using live bus positions instead of the posted schedule.</template>
-        <template data-k="places">Looks up building codes and coordinates from UMD's facilities map. If a name could mean two buildings, it returns both.</template>
-      </figcaption>
-    </figure>
+    <div class="pluto-parts" aria-label="What Pluto is made of">
+      <div class="pp-col">
+        <h4>Coming in</h4>
+        <dl>
+          <div><dt>Telegram, from my iPhone</dt><dd>I text it the way I'd text a person, and everything it sends comes back in the same Telegram chat.</dd></div>
+          <div><dt>Location</dt><dd>My phone posts its location to the one inbound route the bot has. If the token isn't set up, that route refuses every request.</dd></div>
+          <div><dt>Schedule</dt><dd>The bot messages me on its own each morning and evening, plus a longer review on Sundays.</dd></div>
+        </dl>
+      </div>
+      <div class="pp-col">
+        <h4>Pluto</h4>
+        <dl>
+          <div><dt>Claude Code, headless, on Fly.io</dt><dd>Claude Code runs headless on my subscription with the official Telegram channel plugin. When I hit the subscription limit it switches to an API key, and it switches back once the limit resets.</dd></div>
+        </dl>
+      </div>
+      <div class="pp-col pp-tools">
+        <h4>Its tools</h4>
+        <dl>
+          <div><dt>Calendar</dt><dd>Creates, moves and searches events, and finds free time between classes.</dd></div>
+          <div><dt>Email</dt><dd>It sorts my inbox and sends digests. It also pulls dates out of emails, so a rescheduled exam or an extension that never made it onto my calendar still shows up.</dd></div>
+          <div><dt>Canvas sync</dt><dd>Every six hours it copies new Canvas assignments onto my calendar, moves any whose deadline changed, and sends me one summary.</dd></div>
+          <div><dt>Grade projection</dt><dd>Works out my grade by category weight, leaving out categories with nothing graded yet, and tells me what I need on the rest of the work.</dd></div>
+          <div><dt>Study planner</dt><dd>Fits study blocks into the free time on my calendar, up to a daily limit. If something doesn't fit, it tells me.</dd></div>
+          <div><dt>Campus buses</dt><dd>Compares walking, biking and the Shuttle-UM buses, using live bus positions instead of the posted schedule.</dd></div>
+          <div><dt>Campus map</dt><dd>Looks up building codes and coordinates from UMD's facilities map. If a name could mean two buildings, it returns both.</dd></div>
+        </dl>
+      </div>
+    </div>
   </article>
 
   <!-- ================= BRIMCAM ================= -->

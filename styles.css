@@ -1269,6 +1269,21 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 
 /* Pluto in 3D (otv3d.js, #pluto-3d): only when it's live; the chats and the 2D diagram stay either way. */
 .o3p { display: none; }
-.o3p.o3-live { display: block; height: calc(var(--o3h) * 8); }
-@media screen and (max-width: 760px) { .o3p.o3-live { height: calc(var(--o3h) * 7); } }
+.o3p.o3-live { display: block; height: calc(var(--o3h) * 7); }
+@media screen and (max-width: 760px) { .o3p.o3-live { height: calc(var(--o3h) * 6); } }
 @media print { .o3p { display: none !important; } }
+
+/* Phones: the pinned 3D stages fill the screen as it is right now (dvh), so there is no empty strip at the
+   bottom when the browser bars slide away. The scroll lengths stay on svh, which does not jump. */
+@supports (height: 100dvh) { .o3-live .o3-stage { height: 100dvh; } }
+
+/* Pluto's parts, as a list: what comes in, Pluto itself, its tools. */
+.pluto-parts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 28px; margin-top: clamp(32px, 6vh, 56px); padding-top: 22px; border-top: 1px solid var(--rule); }
+.pluto-parts h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper); }
+.pluto-parts dl { margin: 0; display: grid; gap: 14px; }
+.pp-tools dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
+.pluto-parts dt { font-weight: 600; font-size: 16px; color: var(--ink); }
+.pluto-parts dd { margin: 3px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+@media screen and (max-width: 900px) { .pluto-parts { grid-template-columns: 1fr 1fr; } .pp-tools { grid-column: 1 / -1; } }
+@media screen and (max-width: 560px) { .pluto-parts { grid-template-columns: 1fr; } .pp-tools dl { grid-template-columns: 1fr; } }
+@media print { .pluto-parts { grid-template-columns: 1fr 1fr 2fr; gap: 10px; margin-top: 8px; padding-top: 6px; } .pluto-parts dd { font-size: 8pt; } .pluto-parts dt { font-size: 9pt; } }
