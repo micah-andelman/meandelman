@@ -550,20 +550,10 @@ html.thermal .heatkey { display: flex; }
 .heatkey i { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgb(22, 11, 54), rgb(96, 18, 110), rgb(190, 55, 82), rgb(240, 120, 32), rgb(250, 222, 92)); }
 .heatkey small { flex-basis: 100%; font-size: 13.5px; }
 
-/* signal probe */
-.hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path d='M2 22 9 15' stroke='%23e0965a' stroke-width='2.2' stroke-linecap='round'/><path d='M9 15 19 5l3 3-10 10z' fill='%23101614' stroke='%23e8ece8' stroke-width='1.5' stroke-linejoin='round'/></svg>") 2 22, crosshair; }
-.tr.probed { stroke: var(--copper); stroke-width: 3; }
-.probe { position: fixed; z-index: 30; width: 250px; padding: 10px 12px 12px; background: #0b100e; color: #cfe3d8; border: 1px solid #2c3833; border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .35); pointer-events: none; font-size: 13.5px; }
-.probe .ph { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.probe .ph b { font-weight: 600; color: #e8ece8; }
-.probe .ph span { color: #7d8a85; text-align: right; }
-.probe svg { display: block; width: 100%; height: 72px; background: #0f1a15; border-radius: 3px; overflow: hidden; }
-.probe .pg line { stroke: #1d2b25; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.probe .pw path { fill: none; stroke: #6ff0b4; stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #6ff0b4); }
-.probe p { margin: 8px 0 0; line-height: 1.35; color: #aab5b0; }
-
 /* code viewer */
-.code-btn, .parts button.code-btn { all: unset; cursor: pointer; display: inline; width: auto; margin-left: 4px; color: var(--copper); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.code-btn, .parts button.code-btn { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 8px; width: max-content; margin: 12px 0 2px; padding: 7px 14px 7px 12px; border: 1.5px solid var(--copper); border-radius: 7px; background: color-mix(in srgb, var(--copper) 12%, transparent); color: var(--copper); font-size: 15px; font-weight: 600; line-height: 1.2; white-space: nowrap; transition: background .15s, color .15s, box-shadow .15s; }
+.code-btn::before { content: "</>"; font: 700 13px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: -.04em; }
+.code-btn:hover, .parts button.code-btn:hover { background: var(--copper); color: var(--paper); box-shadow: 0 0 14px color-mix(in srgb, var(--copper) 45%, transparent); }
 .code-btn:focus-visible, .parts button.code-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .codeview { width: min(820px, calc(100vw - 32px)); max-height: min(80vh, 760px); padding: 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
 .codeview::backdrop { background: rgba(8, 12, 10, .55); }
@@ -598,9 +588,6 @@ html.thermal .heatkey { display: flex; }
 .serial input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #e8ece8; font: inherit; }
 
 /* logic analyzer under the route replay */
-.la { margin-top: 14px; }
-.la canvas { display: block; width: 100%; }
-.lanote { max-width: 70ch; margin: 8px 0 0; font-size: 14px; color: var(--ink-3); }
 
 /* Pluto status light */
 .led { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--ink-3); vertical-align: 1px; }
@@ -610,9 +597,8 @@ html.thermal .heatkey { display: flex; }
 @media (prefers-reduced-motion: reduce) { .led.on { animation: none; } }
 
 @media print {
-  .la, .probe, .serial, .eggs, .codeview, .code-btn, .tools, .heatkey, .status { display: none !important; }
+  .serial, .eggs, .codeview, .code-btn, .tools, .heatkey, .status { display: none !important; }
 }
-@media screen and (max-width: 760px) { .la { padding: 0 16px; } }
 
 /* ---------- audit fixes ---------- */
 /* Hash links (meandelman.com/#otv-route) land below the sticky header. */
@@ -639,23 +625,21 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
 @media (min-width: 1000px) {
   .arena {
     display: grid; align-items: start;
-    /* The map is sized so map + analyzer fit under the header on one screen (880 x 476 viewBox). */
-    grid-template-columns: min(max(540px, calc((100svh - 340px) * 1.849)), 70%) minmax(0, 1fr);
-    grid-template-areas: "map side" "la la";
+    /* The map is sized to fit under the header on one screen (880 x 476 viewBox). */
+    grid-template-columns: min(max(540px, calc((100svh - 200px) * 1.849)), 70%) minmax(0, 1fr);
+    grid-template-areas: "map side";
     column-gap: clamp(24px, 3vw, 40px);
   }
   .arena > svg { grid-area: map; }
   .arena figcaption { grid-area: side; flex-direction: column; justify-content: flex-start; gap: 18px; margin-top: 0; }
   .arena figcaption p { font-size: 16px; }
-  .arena .la { grid-area: la; margin-top: 16px; }
 }
 @media (max-width: 999px) {
-  /* Stacked: map, live status, analyzer, then the description and Replay. */
+  /* Stacked: map, live status, then the description and Replay. */
   .arena { display: grid; grid-template-columns: minmax(0, 1fr); }
   .arena figcaption { display: contents; }
   .arena > svg { order: 1; }
   .arena figcaption .runstat { order: 2; margin-top: 12px; }
-  .arena .la { order: 3; }
   .arena figcaption > p { order: 4; margin-top: 16px; }
   .arena .replay { order: 5; justify-self: start; margin-top: 12px; }
 }
@@ -784,54 +768,9 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 @keyframes typing { 50% { opacity: .35; } }
 .brief .brief-note { margin-top: 2px; font-size: 13.5px; color: var(--ink-3); }
 
-/* ---------- 3 + 4. Brimcam: side-view drawing and viewfinder ---------- */
-.brimviz { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; margin-top: clamp(36px, 6vh, 64px); }
-.brimviz figure { margin: 0; }
-.brimviz figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
-.capdraw svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
-.capdraw .cap-crown, .capdraw .cap-brim { fill: color-mix(in srgb, var(--ink) 6%, var(--board)); stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; }
-.capdraw .cap-seam { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; }
-.capdraw .cap-button { fill: var(--ink-3); }
-.capdraw .cap-band { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
-.capdraw .cap-hidden { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
-.capdraw .cap-cell { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
-.capdraw .cap-wire { fill: none; stroke: var(--copper); stroke-width: 1.6; }
-.capdraw .cap-wire.two { stroke: var(--ink-3); }
-.capdraw .cap-board { fill: var(--mask); stroke: color-mix(in srgb, var(--mask) 70%, #000); stroke-width: 1; }
-.capdraw .cap-lens { fill: #11161a; stroke: var(--ink-3); stroke-width: 1.5; }
-.capdraw .cap-led { fill: #ff5a4f; filter: drop-shadow(0 0 4px #ff5a4f); }
-.capdraw .cap-ctl { fill: var(--ink-3); }
-.capdraw .cap-fov { fill: none; stroke: var(--copper); stroke-width: 1.2; stroke-dasharray: 2 5; }
-.capdraw .cap-tray { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
-.capdraw .cap-plate { fill: none; stroke: var(--ink-3); stroke-width: 1.6; }
-.capdraw .cap-call path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
-.capdraw .cap-call circle { fill: var(--ink-2); }
-.capdraw .cap-call text { font-size: 13.5px; fill: var(--ink-2); }
-.capdraw .cap-call .cap-note { font-size: 12.5px; fill: var(--ink-3); }
+/* ---------- Brimcam: cap drawing ---------- */
 
-.finder svg { display: block; width: 100%; height: auto; border-radius: 6px; font-family: var(--text); }
-.finder .f-bg { fill: #1b1f1d; }
-.finder .f-tray { fill: #3b4a5c; }
-.finder .f-well { fill: #33414f; }
-.finder .f-chicken { fill: #b98a52; }
-.finder .f-grill { fill: none; stroke: #7a5530; stroke-width: 4; stroke-linecap: round; opacity: .7; }
-.finder .f-rice { fill: #e9e3d2; }
-.finder .f-rice.dots { fill: url(#rice); }
-.finder #rice ellipse { fill: #cfc6ae; }
-.finder .f-broc circle { fill: #3f8a3b; stroke: #2c6a2a; stroke-width: 2; }
-.finder .f-cup { fill: #2a3440; stroke: #5b6b7d; stroke-width: 3; }
-.finder .f-cup.in { fill: #6b3d1f; stroke: none; }
-.finder .f-box { fill: none; stroke: #ffd257; stroke-width: 2.5; stroke-linecap: round; }
-.finder .f-tag rect, .finder .f-total rect { fill: rgb(10 14 12 / .82); stroke: #ffd257; stroke-width: 1; }
-.finder .f-tag text, .finder .f-total text { font-size: 12.5px; font-weight: 600; fill: #ffe9a8; }
-.finder .f-lock, .finder .f-total { opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity .25s, transform .35s cubic-bezier(.2, 1.4, .4, 1); transform: scale(1.12); }
-.finder .f-lock.on, .finder .f-total.on { opacity: 1; transform: none; }
-.finder .f-crop { fill: none; stroke: rgb(255 255 255 / .8); stroke-width: 2; }
-.finder .f-rec { fill: #ff4b42; animation: rec 1.4s steps(1) infinite; }
 @keyframes rec { 50% { opacity: .2; } }
-.finder .f-hud { font-size: 11.5px; font-weight: 600; fill: rgb(255 255 255 / .85); letter-spacing: .04em; }
-@media screen and (max-width: 760px) { .brimviz { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .finder .f-rec { animation: none; } .finder .f-lock, .finder .f-total { transition: none; } }
 
 /* ---------- 5. Stats on 7-segment displays ---------- */
 .specs dt.lcd { display: inline-block; padding: 9px 12px 7px; border-radius: 6px; background: #0b100e; box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), inset 0 0 0 1px rgb(255 255 255 / .06), 0 1px 0 var(--rule); line-height: 0; }
@@ -846,13 +785,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 :root[data-theme="light"] .seg7 .off { fill: rgb(0 0 0 / .06); }
 .specs dd { margin-top: 8px; }
 
-/* ---------- 6. Panel edges: routed slots and mouse bites between sections ---------- */
-.project, .experience, .contact { border-top: 0; position: relative; }
-.project::before, .experience::before, .contact::before {
-  content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 12px; background: var(--cut); pointer-events: none;
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='12'><rect x='0' y='4' width='196' height='4' rx='2'/><circle cx='208' cy='6' r='2.3'/><circle cx='217' cy='6' r='2.3'/><circle cx='226' cy='6' r='2.3'/><circle cx='235' cy='6' r='2.3'/><circle cx='244' cy='6' r='2.3'/></svg>") repeat-x left center / 260px 12px;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='12'><rect x='0' y='4' width='196' height='4' rx='2'/><circle cx='208' cy='6' r='2.3'/><circle cx='217' cy='6' r='2.3'/><circle cx='226' cy='6' r='2.3'/><circle cx='235' cy='6' r='2.3'/><circle cx='244' cy='6' r='2.3'/></svg>") repeat-x left center / 260px 12px;
-}
+.project, .experience, .contact { position: relative; }
 
 /* ---------- 6. Experience as a parts list ---------- */
 .experience thead th { padding: 0 24px 8px 0; border-top: 0; font-size: 13.5px; font-weight: 600; color: var(--ink-3); letter-spacing: .02em; }
@@ -890,8 +823,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 @keyframes via-shimmer { 0% { filter: drop-shadow(0 0 0 var(--copper)); } 35% { filter: drop-shadow(0 0 7px var(--copper)) drop-shadow(0 0 14px var(--copper)); } 100% { filter: drop-shadow(0 0 0 transparent); } }
 
 @media print {
-  .silk, .hero-nets, .brimviz .finder, .brief { display: none !important; }
-  .project::before, .experience::before, .contact::before { display: none; }
+  .silk, .hero-nets, .brief { display: none !important; }
   .specs dt.lcd { background: none; box-shadow: none; padding: 0; }
   .seg7 .on { fill: #111; filter: none; } .seg7 .off { fill: none; }
   .conn { border: 0; padding: 0; background: none; } .conn .pin, .conn .conn-ref { display: none; }
@@ -937,21 +869,6 @@ html.explode .hero .silk, html.explode .hero .hero-foot { transform: translateZ(
 html:not(.explode) .ly, html:not(.explode) .ly-tag { display: none; }
 @media print { .hero-scene { height: auto !important; } .hero { transform: none !important; position: static !important; } .ly, .ly-tag { display: none !important; } }
 
-/* ---------- Current in the name ---------- */
-.hero h1::after {
-  content: "Micah\A Andelman"; white-space: pre; position: absolute; inset: 0; pointer-events: none;
-  color: transparent;
-  background: repeating-linear-gradient(112deg, transparent 0 70px, rgb(255 238 205 / 0) 70px, rgb(255 240 214 / .55) 78px, rgb(255 238 205 / 0) 86px, transparent 86px 150px);
-  background-size: 300px 100%;
-  -webkit-background-clip: text; background-clip: text;
-  animation: current 6s linear infinite;
-  opacity: .55;
-}
-.hero.hot h1::after { animation-duration: 1.6s; opacity: .9; }
-@keyframes current { from { background-position: 0 0; } to { background-position: 300px 0; } }
-html.scope-pending .hero h1::after { display: none; }
-@media (prefers-reduced-motion: reduce) { .hero h1::after { display: none; } }
-@media print { .hero h1::after { display: none; } }
 
 /* ---------- Schematic view ---------- */
 .figbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 14px; }
@@ -1038,21 +955,8 @@ html.thermal .diagram.schem .pad { fill: #ffe9a8; stroke: #ffe9a8; }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .lit-host > .glint { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / .45), transparent 60%); mix-blend-mode: soft-light; } }
 @media print { .lit-host { transform: none !important; } .glint { display: none; } }
 
-/* ---------- Panel rails ---------- */
-.rails { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.rail { position: absolute; top: 0; bottom: 0; width: 14px; background:
-    radial-gradient(circle at 7px 7px, var(--paper) 3.2px, color-mix(in srgb, var(--ink) 30%, transparent) 4px, transparent 4.6px) 0 40px / 14px 160px repeat-y,
-    radial-gradient(circle at 7px 7px, color-mix(in srgb, var(--copper) 80%, transparent) 2.4px, transparent 3px) 0 120px / 14px 480px repeat-y,
-    linear-gradient(90deg, color-mix(in srgb, var(--fr4) 55%, var(--paper)), color-mix(in srgb, var(--fr4) 40%, var(--paper))); }
-.rail.l { left: 0; box-shadow: inset -1px 0 0 var(--rule); }
-.rail.r { right: 0; box-shadow: inset 1px 0 0 var(--rule); }
-.rail.l b { position: absolute; top: 90px; left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 10px var(--text); color: color-mix(in srgb, var(--ink) 50%, transparent); letter-spacing: .06em; white-space: nowrap; }
-@media screen and (max-width: 760px) { .rails { display: none; } }
-@media print { .rails { display: none; } }
 html.explode .hero { isolation: auto; }
 html.explode .hero::before, html.explode .hero::after { transform: translateZ(calc(var(--e) * -80px)); }
-.hero h1::after { opacity: .32; }
-.hero.hot h1::after { opacity: .8; }
 /* Exploded hero: make the layers read as distinct plates. */
 .ly { inset: 10px 6px 6px; border-radius: 16px; }
 .ly-core { background: repeating-linear-gradient(45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--fr4-weave) 0 2px, transparent 2px 7px), linear-gradient(160deg, color-mix(in srgb, var(--fr4) 100%, #fff 12%), var(--fr4)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--fr4) 70%, #fff), 0 40px 80px rgb(0 0 0 / calc(var(--e) * .45)); transform: translateZ(calc(var(--e) * -300px)); }
@@ -1097,12 +1001,6 @@ html .hero > .ly.ly, html .hero > .ly-tag.ly-tag { position: absolute; z-index: 
   html.explode .hero-scene .hero { top: var(--hh, 52px); }
   .hero { --zs: .55; }
   .ly-tag { font-size: 14px; padding: 4px 9px; }
-  /* slim panel rails */
-  .rails { display: block; }
-  .rail { width: 6px; background:
-      radial-gradient(circle at 3px 3px, var(--paper) 1.4px, color-mix(in srgb, var(--ink) 30%, transparent) 2px, transparent 2.4px) 0 40px / 6px 90px repeat-y,
-      linear-gradient(90deg, color-mix(in srgb, var(--fr4) 55%, var(--paper)), color-mix(in srgb, var(--fr4) 40%, var(--paper))); }
-  .rail.l b { display: none; }
 }
 .swipe-hint { display: none; }
 /* Exploded layer depths scale with --zs (smaller on phones). */
@@ -1143,9 +1041,8 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
 
 /* Animations wait for their section: each one stays paused until its section is on screen
    (visuals.js adds .inview), so nothing plays out of sight or on a page-load timer. */
-:is(.hero, .project, .arena, .finder, .brief):not(.inview) :is(.hero-trace .line, .hero-trace .via, .led.on, .f-rec, .site .ring, .site.sampling .rip, .runstat.live .rs-top i, .msg.typing) { animation-play-state: paused; }
-:is(.hero, .project, .arena, .finder, .brief):not(.inview) .msg.typing::after { animation-play-state: paused; }
-.hero:not(.inview) h1::after { animation-play-state: paused; }
+:is(.hero, .project, .arena, .brief):not(.inview) :is(.hero-trace .line, .hero-trace .via, .led.on, .site .ring, .site.sampling .rip, .runstat.live .rs-top i, .msg.typing) { animation-play-state: paused; }
+:is(.hero, .project, .arena, .brief):not(.inview) .msg.typing::after { animation-play-state: paused; }
 /* No 3D tilt: rotating the board rasterized its text and blurred it on hover.
    The moving highlight stays; it's a plain overlay, so text stays sharp. */
 .lit-host, .lit-host.lamp { transform: none !important; transition: none; }
@@ -1164,3 +1061,88 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
   .project .specs { grid-column: 2; grid-row: 3; margin-top: 10px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; }
   .experience thead { display: none; }
 }
+
+/* ---------- Brimcam: exploded cap ----------
+   The scene pins while you scroll; visuals.js sets --e (how far apart the parts are),
+   --lab (labels), --fov (the camera's view) and moves each .cl layer by its data-dx/dy. */
+.brimviz { margin-top: clamp(36px, 6vh, 64px); }
+.brimviz figure { margin: 0; }
+.capdraw figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
+.capdraw svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 150px); background: var(--board); border-radius: 8px; font-family: var(--text); overflow: hidden; }
+html.capx-on .capscene { height: calc(100svh + 190vh); }
+html.capx-on .capscene > .capdraw { position: sticky; top: calc(var(--hh, 56px) + 16px); }
+.capdraw .cl { transform: translate(calc(var(--dx, 0) * var(--e, 0) * 1px), calc(var(--dy, 0) * var(--e, 0) * 1px)); }
+.capdraw .c-crown, .capdraw .c-brim { fill: color-mix(in srgb, var(--ink) 9%, var(--board)); stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; }
+.capdraw .c-seam { fill: none; stroke: color-mix(in srgb, var(--ink) 35%, transparent); stroke-width: 1.2; }
+.capdraw .c-stitch { fill: none; stroke: color-mix(in srgb, var(--ink) 40%, transparent); stroke-width: 1; stroke-dasharray: 3 3; }
+.capdraw .c-eye { fill: var(--board); stroke: var(--ink-3); stroke-width: 1.4; }
+.capdraw .c-button { fill: var(--ink-2); }
+.capdraw .c-band { stroke: var(--ink-2); stroke-width: 4; stroke-linecap: round; }
+.capdraw .c-pouch { fill: #c9cdd0; stroke: #8b9196; stroke-width: 1.2; }
+.capdraw .c-pouchseam { stroke: #9aa0a5; stroke-width: 1; fill: none; }
+.capdraw .c-pcm { fill: #1f6b46; stroke: #164d33; stroke-width: 1; }
+.capdraw .c-print { font-size: 11px; font-weight: 600; fill: #4a5156; }
+.capdraw .c-xiao { fill: var(--mask); stroke: color-mix(in srgb, var(--mask) 60%, #000); stroke-width: 1; }
+.capdraw .c-sense { fill: color-mix(in srgb, var(--mask) 80%, #000); stroke: color-mix(in srgb, var(--mask) 50%, #000); stroke-width: 1; }
+.capdraw .c-can { fill: #b9bec2; stroke: #80868b; stroke-width: 1; }
+.capdraw .c-usb { fill: #9aa0a5; stroke: #6d7378; stroke-width: 1; }
+.capdraw .c-fpc { fill: none; stroke: #d08a2e; stroke-width: 4; stroke-linecap: round; }
+.capdraw .c-cam { fill: #20262b; }
+.capdraw .c-lens { fill: #11161a; stroke: #5d666d; stroke-width: 1.5; }
+.capdraw .c-lens-in { fill: #3b5d8a; }
+.capdraw .c-ant { fill: #d08a2e; stroke: #9c6420; stroke-width: 1; }
+.capdraw .c-antp { fill: none; stroke: #6b4314; stroke-width: 1.2; }
+.capdraw .c-led { fill: #ff5a4f; filter: drop-shadow(0 0 5px #ff5a4f); }
+.capdraw .c-ledlegs { stroke: #9aa0a5; stroke-width: 1.4; }
+.capdraw .c-tpad { fill: var(--mask); stroke: color-mix(in srgb, var(--mask) 60%, #000); stroke-width: 1; }
+.capdraw .c-tpad-in { fill: none; stroke: #e0b25a; stroke-width: 2.5; }
+.capdraw .c-sw { fill: #2a3035; stroke: #11161a; stroke-width: 1; }
+.capdraw .c-swk { fill: #c9cdd0; }
+.capdraw .cw path { fill: none; stroke-width: 1.8; stroke-linecap: round; }
+.capdraw .cw-p { stroke: #d9483b; }
+.capdraw .cw-g { stroke: var(--ink-2); }
+.capdraw .cw-s { stroke: var(--copper); }
+.capdraw .cw-c { stroke: var(--ink-3); stroke-dasharray: 1 3; }
+.capdraw .lab { opacity: var(--lab, 0); }
+.capdraw .lab path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.capdraw .lab > circle { fill: var(--copper); }
+.capdraw .lab .lt { font-size: 16px; font-weight: 600; fill: var(--ink); }
+.capdraw .lab .lt.s { font-size: 13.5px; font-weight: 500; fill: var(--ink-3); }
+.capdraw .lab .ln { display: none; }
+.capdraw .lab .ln circle { fill: var(--copper); }
+.capdraw .lab .ln text { font-size: 17px; font-weight: 700; fill: var(--paper); text-anchor: middle; }
+.capdraw .fov { opacity: var(--fov, 0); }
+.capdraw .fov-cone { fill: color-mix(in srgb, var(--copper) 10%, transparent); }
+.capdraw .fov-edge { fill: none; stroke: var(--copper); stroke-width: 1.4; stroke-dasharray: 3 5; }
+.capdraw .fov-tray { stroke: var(--ink-2); stroke-width: 4; stroke-linecap: round; }
+.capdraw .fov-plate { fill: none; stroke: var(--ink-3); stroke-width: 1.8; }
+.capdraw .flash { fill: #fff; opacity: 0; pointer-events: none; }
+.capdraw .flash.go { animation: capflash .5s ease-out; }
+@keyframes capflash { 0% { opacity: .75; } 100% { opacity: 0; } }
+.capkey { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media screen and (max-width: 760px) {
+  /* Phone: numbered parts on the drawing, with the key underneath. */
+  .capdraw .lab .lt { display: none; }
+  .capdraw .lab .ln { display: inline; }
+  .capdraw .lab .ln circle { r: 22px; }
+  .capdraw .lab .ln text { font-size: 26px; transform: translateY(3px); }
+  html.capx-on .capscene { height: calc(100svh + 150vh); }
+  .capdraw svg { max-height: none; }
+  .capkey { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; margin: 16px 0 0; padding-left: 24px; font-size: 15px; color: var(--ink-2); display: grid; gap: 6px; }
+  .capkey b { color: var(--ink); font-weight: 600; }
+  .capkey li::marker { color: var(--copper); font-weight: 700; }
+}
+@media (prefers-reduced-motion: reduce) { .capdraw .flash { display: none; } }
+/* The exploded name plate reaches below its scene, so the next section starts lower. */
+html.explode .hero-scene { margin-bottom: 38vh; }
+@media screen and (max-width: 760px) { html.explode .hero-scene { margin-bottom: 18vh; } }
+@media print { html.explode .hero-scene { margin-bottom: 0; } }
+.capdraw .ghost path { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 6; opacity: calc(var(--e, 0) * .7); }
+.capdraw .c-pcmic { stroke: #0e3a24; stroke-width: 1.4; fill: none; }
+.capdraw .c-sd { fill: #9aa0a5; }
+.capdraw .c-pads { stroke: #e0b25a; stroke-width: 1.4; }
+.capdraw .c-ufl { fill: #c9cdd0; stroke: #80868b; stroke-width: .6; }
+.capdraw .c-swlegs { stroke: #9aa0a5; stroke-width: 1.4; }
+.capdraw .cw path { opacity: min(calc(var(--e, 0) * 3), .85); }
+/* Phone: the cap pins near the middle of the screen, not under the header with empty space below. */
+@media screen and (max-width: 760px) { html.capx-on .capscene > .capdraw { top: max(calc(var(--hh, 52px) + 12px), calc(50svh - 170px)); } }

@@ -1,5 +1,5 @@
 // Visual layer: the hero board, component artwork on the diagram blocks, 7-segment stat
-// displays, Pluto's typed brief and the Brimcam viewfinder. Loaded after main.js and extras.js.
+// displays and Pluto's typed brief. Loaded after main.js and extras.js.
 (() => {
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const NS = "http://www.w3.org/2000/svg";
@@ -23,7 +23,7 @@
     e.target.classList.toggle("inview", e.isIntersecting);
     if (e.isIntersecting) e.target.dispatchEvent(new CustomEvent("inview"));
   }), { threshold: 0.15 });
-  $$(".hero, .project, .arena, .experience, .contact, .finder, .brief, .capdraw, .otvdraw").forEach((el) => inview.observe(el));
+  $$(".hero, .project, .arena, .experience, .contact, .brief, .capdraw, .otvdraw").forEach((el) => inview.observe(el));
 
   // ------------------------------------------------------------ Component artwork
   // Each block keeps its layout but gains the outline of the real part: pins on chips,
@@ -215,29 +215,11 @@
     });
   }
 
-  // ------------------------------------------------------------ Brimcam viewfinder
-  const finder = $(".finder");
-  if (finder) {
-    const locks = $$(".f-lock", finder), total = $(".f-total", finder);
-    if (REDUCED) { locks.forEach((l) => l.classList.add("on")); total?.classList.add("on"); }
-    else {
-      let timers = [];
-      const stop = () => { timers.forEach(clearTimeout); timers = []; };
-      const play = () => {
-        stop();
-        locks.forEach((l) => l.classList.remove("on"));
-        total?.classList.remove("on");
-        locks.forEach((l, i) => timers.push(setTimeout(() => l.classList.add("on"), 500 + i * 900)));
-        timers.push(setTimeout(() => total?.classList.add("on"), 500 + locks.length * 900));
-      };
-      new IntersectionObserver((es) => { if (es[0].isIntersecting) play(); else stop(); }, { threshold: 0.45 }).observe(finder);
-    }
-  }
 })();
 
 // ===================================================================== Round two
 // Exploded hero layers, schematic view, camera's-eye arena, linked animations,
-// cursor lighting, current in the name and panel rails.
+// cursor lighting and the exploded Brimcam cap.
 (() => {
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const FINE = matchMedia("(hover: hover) and (pointer: fine) and (min-width: 761px)");
@@ -454,16 +436,6 @@
       }
     }).observe(m, { attributes: true, attributeFilter: ["class"] });
   });
-  // Brimcam: when the viewfinder totals up, the photo travels camera to Herald to Gemini to macros.
-  const flowFig = $("#brimcam [data-diagram]");
-  const total = $(".finder .f-total");
-  if (total && flowFig) {
-    new MutationObserver(() => {
-      if (!total.classList.contains("on")) return;
-      ["herald", "gemini", "macros"].forEach((k, i) => setTimeout(() => flash(flowFig, k, 1800), i * 500));
-    }).observe(total, { attributes: true, attributeFilter: ["class"] });
-  }
-
   // ------------------------------------------------------------ Phone boards
   $$("[data-diagram]").forEach((fig) => {
     const sc = fig.querySelector(".scroll");
@@ -517,7 +489,7 @@
       });
     });
   } else if (!REDUCED) {
-    const hosts = $$(".diagram .scroll, .capdraw, .otvdraw, .finder").map((host) => {
+    const hosts = $$(".diagram .scroll, .capdraw, .otvdraw").map((host) => {
       host.classList.add("lit-host", "sweep");
       const glint = document.createElement("i");
       glint.className = "glint";
@@ -540,20 +512,85 @@
     sweep();
   }
 
-  // ------------------------------------------------------------ Current in the name
-  // A faint flow of current runs through the copper letters; pointing at a project net speeds it up.
-  if (hero) {
-    $$(".index a").forEach((a) => {
-      a.addEventListener("mouseenter", () => hero.classList.add("hot"));
-      a.addEventListener("mouseleave", () => hero.classList.remove("hot"));
+  // ------------------------------------------------------------ Exploded Brimcam cap
+  // The cap pins while you scroll: it comes apart into its parts, holds with every part
+  // labeled, goes back together, then the camera looks down at a tray and takes the shot,
+  // which runs through the flow diagram below (camera, Herald, Gemini, macros).
+  const cap = $(".capx");
+  if (cap) {
+    const svg = cap.querySelector("svg");
+    const scene = cap.closest(".capscene");
+    // Each part moves by (dx, dy) and, for the small ones, grows by up to s about its centre c.
+    const layers = $$(".cl", svg).map((g) => {
+      const dx = +g.dataset.dx || 0, dy = +g.dataset.dy || 0, s = +g.dataset.s || 1;
+      const [cx, cy] = (g.dataset.c || "0,0").split(",").map(Number);
+      g.style.setProperty("--dx", dx);
+      g.style.setProperty("--dy", dy);
+      const part = g.querySelector(":scope > .part");
+      part?.removeAttribute("style");
+      const pins = {};
+      (g.dataset.pins || "").split(" ").filter(Boolean).forEach((p) => {
+        const [k, xy] = p.split(":");
+        const [x, y] = xy.split(",").map(Number);
+        pins[k] = { x, y };
+      });
+      return { dx, dy, s, cx, cy, part, pins };
     });
+    const grow = (l, e) => 1 + (l.s - 1) * e;
+    const pinAt = (k, e) => {
+      for (const l of layers) {
+        const p = l.pins[k];
+        if (!p) continue;
+        const g = grow(l, e);
+        return { x: l.cx + (p.x - l.cx) * g + l.dx * e, y: l.cy + (p.y - l.cy) * g + l.dy * e };
+      }
+      return null;
+    };
+    const wires = $$(".cw path", svg);
+    const drawWires = (e) => wires.forEach((w) => {
+      const a = pinAt(w.dataset.a, e), b = pinAt(w.dataset.b, e);
+      if (!a || !b) return;
+      const mx = (a.x + b.x) / 2;
+      w.setAttribute("d", `M${a.x.toFixed(1)},${a.y.toFixed(1)} C${mx.toFixed(1)},${a.y.toFixed(1)} ${mx.toFixed(1)},${b.y.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}`);
+    });
+    const set = (e, lab, fov) => {
+      svg.style.setProperty("--e", e.toFixed(4));
+      svg.style.setProperty("--lab", lab.toFixed(3));
+      svg.style.setProperty("--fov", fov.toFixed(3));
+      layers.forEach((l) => l.part && l.part.setAttribute("transform", `translate(${l.cx} ${l.cy}) scale(${grow(l, e).toFixed(4)}) translate(${-l.cx} ${-l.cy})`));
+      drawWires(e);
+    };
+    if (REDUCED) {
+      // A still exploded view with every part labeled.
+      set(1, 1, 0);
+    } else {
+      document.documentElement.classList.add("capx-on");
+      const flashEl = $(".flash", svg);
+      const flowFig = $("#brimcam [data-diagram]");
+      let shot = false, last = -1;
+      const run = () => {
+        const r = scene.getBoundingClientRect();
+        const travel = scene.offsetHeight - cap.offsetHeight;
+        const top = parseFloat(getComputedStyle(cap).top) || 0;
+        const p = travel > 0 ? clamp((top - r.top) / travel) : 0;
+        if (Math.abs(p - last) < 0.0005) return;
+        last = p;
+        // 0-0.3 apart, 0.3-0.6 hold, 0.6-0.8 back together, 0.82-0.92 the camera's view.
+        const e = p < 0.6 ? ease(clamp(p / 0.3)) : 1 - ease(clamp((p - 0.6) / 0.2));
+        const lab = clamp((e - 0.75) / 0.25);
+        const fov = clamp((p - 0.82) / 0.1);
+        set(e, lab, fov);
+        if (p > 0.93 && !shot) {
+          shot = true;
+          flashEl.classList.remove("go");
+          void flashEl.getBBox();
+          flashEl.classList.add("go");
+          ["cap", "herald", "gemini", "macros"].forEach((k, i) => setTimeout(() => flash(flowFig, k, 1600), 300 + i * 450));
+        } else if (p < 0.8) shot = false;
+      };
+      addEventListener("scroll", run, { passive: true });
+      addEventListener("resize", () => { last = -1; run(); });
+      run();
+    }
   }
-
-  // ------------------------------------------------------------ Panel rails
-  // The page sits in a manufacturing panel: tooling rails down both edges with holes and fiducials.
-  const rails = document.createElement("div");
-  rails.className = "rails";
-  rails.setAttribute("aria-hidden", "true");
-  rails.innerHTML = '<i class="rail l"><b>Panel MA-01</b></i><i class="rail r"></i>';
-  document.body.appendChild(rails);
 })();

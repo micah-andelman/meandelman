@@ -270,7 +270,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       heading += Math.sign(step) * Math.min(Math.abs(step), dt * 0.35);
       const pt = place(route, d, heading);
       trail.style.strokeDashoffset = glow.style.strokeDashoffset = len - d;
-      // State for the logic analyzer (extras.js).
+      // State for the status readout and camera overlay (extras.js, visuals.js).
       fig.dispatchEvent(new CustomEvent("otvtick", { detail: {
         t: now, d, held, turn: dt ? step / dt : 0, done: d >= len, x: pt.x, y: pt.y, h: heading,
         sampling: d >= SAMPLE_AT && held > 0 && held < SAMPLE_MS,

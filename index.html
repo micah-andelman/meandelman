@@ -195,7 +195,7 @@
           <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Main power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
       </svg>
       <figcaption>
-        <p class="cap" data-default="Select a block to see what it does and how it's wired.">Select a block to see what it does and how it's wired.</p>
+        <p class="cap" data-default="Select a part to see what it does, how it's wired and the code that runs it.">Select a part to see what it does, how it's wired and the code that runs it.</p>
         <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and sends its position and heading over Wi-Fi. Every navigation decision uses that position.</template>
         <template data-k="front">Watches for obstacles ahead so the robot can steer around them. Each reading is the median of several pings, so a single bad echo won't stop the robot.</template>
         <template data-k="depth">Points down at the water from a known height. The depth is that height minus the distance to the surface.</template>
@@ -521,87 +521,97 @@ const int  MAX_PWM      = 153;</code></template>
       <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The cap does the seeing and the bot does the thinking: the hardware only has to take a good photo of the tray, and everything else happens on the Telegram side.</p>
     </div>
     <div class="brimviz">
-      <figure class="capdraw">
-        <svg viewBox="0 0 560 330" role="img" aria-labelledby="capdraw-t">
-          <title id="capdraw-t">Side view of the cap: the camera board sits under the front of the brim and looks down at the tray, the battery is hidden under the crown, and the switch, touch pad and LED sit on the side.</title>
-          <!-- crown -->
-          <path class="cap-crown" d="M96,190 C92,118 142,70 222,66 C300,62 352,108 362,184 L96,190 Z" />
-          <path class="cap-seam" d="M226,66 C214,106 208,150 210,188 M226,66 C262,104 290,146 300,186" />
-          <ellipse class="cap-button" cx="224" cy="64" rx="13" ry="4" />
-          <path class="cap-band" d="M96,190 L362,184" />
-          <!-- brim -->
-          <path class="cap-brim" d="M340,183 C392,178 452,184 508,204 C470,214 410,210 346,198 Z" />
-          <!-- battery, hidden under the crown -->
-          <rect class="cap-hidden" x="150" y="150" width="96" height="26" rx="4" />
-          <path class="cap-cell" d="M246,158 v10" />
-          <!-- power wires from the battery along the band to the board -->
-          <path class="cap-wire" d="M246,160 C300,160 340,176 400,196 L430,206" />
-          <path class="cap-wire two" d="M246,166 C298,166 338,182 398,201 L428,211" />
-          <!-- camera board under the brim, angled down at the tray -->
-          <g transform="rotate(16 452 214)">
-            <rect class="cap-board" x="430" y="204" width="44" height="22" rx="3" />
-            <circle class="cap-lens" cx="452" cy="228" r="6" />
+      <div class="capscene">
+      <figure class="capdraw capx">
+        <svg viewBox="0 -90 960 720" role="img" aria-labelledby="capdraw-t">
+          <title id="capdraw-t">Exploded side view of the cap. The crown lifts off to show the 500 mAh LiPo underneath, and the touch pad, slide switch, brim, XIAO ESP32S3 Sense camera board, Wi-Fi antenna and recording LED separate out, joined by their wires. Then it goes back together and the camera looks down at a tray.</title>
+          <!-- a faint outline of the assembled cap, shown while it's apart -->
+          <g class="ghost" aria-hidden="true"><path d="M228,332 C222,236 300,160 400,156 C500,152 568,228 574,326 Z M556,320 C622,312 702,320 776,344 C738,358 652,354 560,338" /></g>
+          <!-- wires: visuals.js redraws them every frame so they stretch as the parts separate -->
+          <g class="cw" aria-hidden="true">
+            <path class="cw-p" data-a="bat+" data-b="sw" /><path class="cw-p" data-a="sw" data-b="bd+" />
+            <path class="cw-g" data-a="bat-" data-b="bd-" /><path class="cw-s" data-a="tp" data-b="bdt" />
+            <path class="cw-s" data-a="led" data-b="bdl" /><path class="cw-c" data-a="ant" data-b="bda" />
           </g>
-          <circle class="cap-led" cx="496" cy="212" r="3.5" />
-          <!-- side controls -->
-          <rect class="cap-ctl" x="118" y="172" width="18" height="8" rx="2" />
-          <circle class="cap-ctl" cx="152" cy="118" r="7" />
-          <!-- field of view down to the tray -->
-          <path class="cap-fov" d="M449,234 L338,306 M449,234 L548,306" />
-          <path class="cap-tray" d="M330,306 H556" />
-          <path class="cap-plate" d="M370,306 C376,296 420,296 426,306 M458,306 C462,298 500,298 506,306" />
-          <!-- callouts -->
-          <g class="cap-call">
-            <path d="M446,210 V74 H556" /><circle cx="446" cy="210" r="2.5" />
-            <text x="556" y="50" text-anchor="end">XIAO ESP32S3</text><text x="556" y="66" text-anchor="end">Camera and Wi-Fi</text>
-            <path d="M198,163 L170,236 H40" /><circle cx="198" cy="163" r="2.5" />
-            <text x="40" y="229">500 mAh LiPo, under the crown</text>
-            <path d="M127,176 L84,266 H40" /><circle cx="127" cy="176" r="2.5" />
-            <text x="40" y="259">Slide switch</text>
-            <path d="M152,118 L92,40 H40" /><circle cx="152" cy="118" r="2.5" />
-            <text x="40" y="33">Touch pad</text>
-            <path d="M496,212 L520,178 H556" /><circle cx="496" cy="212" r="2.5" />
-            <text x="556" y="171" text-anchor="end">Recording LED</text>
-            <text class="cap-note" x="40" y="296">Onboard mic off: Maryland requires</text>
-            <text class="cap-note" x="40" y="313">everyone on a recording to consent.</text>
+          <g class="cl" data-dx="0" data-dy="-4" data-pins="bat+:366,236 bat-:366,246" data-s="1.3" data-c="314,239">
+            <g class="part" style="transform-origin: 314px 239px"><g transform="rotate(-8 314 239)">
+              <rect class="c-pouch" x="262" y="222" width="96" height="34" rx="4" />
+              <path class="c-pouchseam" d="M268,227 H352 M268,251 H352" />
+              <rect class="c-pcm" x="352" y="226" width="14" height="26" rx="1.5" /><path class="c-pcmic" d="M355,231 h8 M355,236 h5 M355,247 h8" />
+              <text class="c-print" x="272" y="237">LiPo 3.7 V</text><text class="c-print" x="272" y="250">500 mAh</text>
+            </g></g>
+            <g class="lab"><path d="M264.6,253.3 L232,306 L160,306" /><circle cx="264.6" cy="253.3" r="2.5" /><text class="lt" x="152" y="302" text-anchor="end">500 mAh LiPo</text><text class="lt s" x="152" y="320" text-anchor="end">protected, under the crown</text><g class="ln" transform="translate(160 306)"><circle r="15" /><text y="6">2</text></g></g>
           </g>
+          <g class="cl" data-dx="-10" data-dy="128" data-pins="bd+:610,346 bd-:612,356 bdt:626,334 bdl:668,356 bda:662,336" data-s="2.1" data-c="640,358">
+            <g class="part" style="transform-origin: 640px 358px"><g transform="rotate(16 640 358)">
+              <rect class="c-sense" x="612" y="352" width="56" height="16" rx="2" />
+              <path class="c-sd" d="M618,368 h18 v3 h-18 Z" />
+              <rect class="c-xiao" x="612" y="338" width="56" height="15" rx="2" />
+              <path class="c-pads" d="M616,353 v-2 M622,353 v-2 M628,353 v-2 M634,353 v-2 M640,353 v-2 M646,353 v-2 M652,353 v-2 M658,353 v-2 M664,353 v-2" />
+              <rect class="c-can" x="622" y="331" width="30" height="8" rx="1" />
+              <rect class="c-usb" x="605" y="341" width="9" height="9" rx="1.5" />
+              <rect class="c-ufl" x="660" y="334" width="5" height="5" rx="1" />
+              <path class="c-fpc" d="M662,368 C666,378 656,382 646,381" />
+              <rect class="c-cam" x="628" y="377" width="20" height="10" rx="1.5" />
+              <circle class="c-lens" cx="638" cy="390" r="6" /><circle class="c-lens-in" cx="638" cy="390" r="2.6" />
+            </g></g>
+            <g class="lab"><path d="M585.4,362.2 L570,392 L502,392" /><circle cx="585.4" cy="362.2" r="2.5" /><text class="lt" x="494" y="388" text-anchor="end">XIAO ESP32S3 Sense</text><text class="lt s" x="494" y="406" text-anchor="end">camera and Wi-Fi, mic off</text><g class="ln" transform="translate(502 392)"><circle r="15" /><text y="6">6</text></g></g>
+          </g>
+          <g class="cl" data-dx="112" data-dy="66" data-pins="ant:682,346" data-s="1.7" data-c="711,346">
+            <g class="part" style="transform-origin: 711px 346px"><rect class="c-ant" x="680" y="342" width="62" height="9" rx="2" />
+            <path class="c-antp" d="M686,346.5 h8 v-2 h6 v4 h6 v-4 h6 v4 h6 v-2 h14" /></g>
+            <g class="lab"><path d="M675.3,339.2 L666,314 L648,314" /><circle cx="675.3" cy="339.2" r="2.5" /><text class="lt" x="640" y="310" text-anchor="end">Wi-Fi antenna</text><text class="lt s" x="640" y="328" text-anchor="end">faces away from my head</text><g class="ln" transform="translate(648 314)"><circle r="15" /><text y="6">7</text></g></g>
+          </g>
+          <g class="cl" data-dx="96" data-dy="168" data-pins="led:754,336" data-s="2.2" data-c="754,344">
+            <g class="part" style="transform-origin: 754px 344px"><path class="c-ledlegs" d="M752,346 v-10 M757,346 v-12" />
+            <path class="c-led" d="M749,346 h11 v7 a5.5,5.5 0 0 1 -11,0 Z" /></g>
+            <g class="lab"><path d="M754.0,370.4 L754.0,398" /><circle cx="754.0" cy="370.4" r="2.5" /><text class="lt" x="754.0" y="418" text-anchor="middle">Recording LED</text><g class="ln" transform="translate(754.0 398)"><circle r="15" /><text y="6">8</text></g></g>
+          </g>
+          <g class="cl" data-dx="0" data-dy="-150">
+            <path class="c-crown" d="M228,332 C222,236 300,160 400,156 C500,152 568,228 574,326 Z" />
+            <path class="c-seam" d="M400,156 C364,206 338,266 330,330 M400,156 C436,206 462,266 470,328 M400,156 C318,186 262,250 250,331 M400,156 C482,184 540,246 552,326" />
+            <path class="c-stitch" d="M240,312 C300,306 480,302 562,306 M236,322 C300,316 480,312 566,316" />
+            <circle class="c-eye" cx="318" cy="212" r="3.5" /><circle class="c-eye" cx="482" cy="208" r="3.5" />
+            <ellipse class="c-button" cx="400" cy="154" rx="15" ry="5" />
+            <path class="c-band" d="M228,332 L574,326" />
+            <g class="lab"><path d="M466,176 L520,120 L600,120" /><circle cx="466" cy="176" r="2.5" /><text class="lt" x="606" y="125">Crown</text><g class="ln" transform="translate(600 120)"><circle r="15" /><text y="6">1</text></g></g>
+          </g>
+          <g class="cl" data-dx="-136" data-dy="-96" data-pins="tp:300,222" data-s="1.9" data-c="292,214">
+            <g class="part" style="transform-origin: 292px 214px"><circle class="c-tpad" cx="292" cy="214" r="11" /><circle class="c-tpad-in" cx="292" cy="214" r="5.5" /></g>
+            <g class="lab"><path d="M271.1,206.4 L260,196 L246,196" /><circle cx="271.1" cy="206.4" r="2.5" /><text class="lt" x="238" y="201" text-anchor="end">Touch pad</text><g class="ln" transform="translate(246 196)"><circle r="15" /><text y="6">3</text></g></g>
+          </g>
+          <g class="cl" data-dx="-44" data-dy="108" data-pins="sw:262,324" data-s="1.9" data-c="249,322">
+            <g class="part" style="transform-origin: 249px 322px"><rect class="c-sw" x="236" y="318" width="26" height="12" rx="2" /><rect class="c-swk" x="240" y="314" width="8" height="6" rx="1" />
+            <path class="c-swlegs" d="M241,330 v4 M249,330 v4 M257,330 v4" /></g>
+            <g class="lab"><path d="M231.9,337.2 L222,362 L174,362" /><circle cx="231.9" cy="337.2" r="2.5" /><text class="lt" x="166" y="367" text-anchor="end">Slide switch</text><g class="ln" transform="translate(174 362)"><circle r="15" /><text y="6">4</text></g></g>
+          </g>
+          <g class="cl" data-dx="100" data-dy="-34">
+            <path class="c-brim" d="M556,320 C622,312 702,320 776,344 C738,358 652,354 560,338 Z" />
+            <path class="c-stitch" d="M572,325 C640,320 704,328 752,344 M576,332 C640,330 700,338 740,348" />
+            <g class="lab"><path d="M700,326 L726,292 L750,292" /><circle cx="700" cy="326" r="2.5" /><text class="lt" x="756" y="297">Brim</text><g class="ln" transform="translate(750 292)"><circle r="15" /><text y="6">5</text></g></g>
+          </g>
+          <!-- the shot: the camera looks down at a tray -->
+          <g class="fov" aria-hidden="true">
+            <path class="fov-cone" d="M636,398 L500,600 H780 Z" />
+            <path class="fov-edge" d="M636,398 L500,600 M636,398 L780,600" />
+            <path class="fov-tray" d="M470,600 H810" />
+            <path class="fov-plate" d="M524,600 C530,586 586,586 592,600 M624,600 C630,588 684,588 690,600 M708,600 C712,592 740,592 744,600" />
+          </g>
+          <rect class="flash" x="-20" y="-90" width="1000" height="720" />
         </svg>
-        <figcaption>Side view, not to scale.</figcaption>
+        <figcaption>Exploded view, not to scale: the small parts are drawn larger as they come out. Placement follows the build; sizes are approximate.</figcaption>
       </figure>
-      <figure class="finder">
-        <svg viewBox="0 0 400 300" role="img" aria-labelledby="finder-t">
-          <title id="finder-t">Illustration of the camera's view: a dining-hall tray with chicken, rice and broccoli, each boxed and labeled with a portion estimate.</title>
-          <defs>
-            <pattern id="rice" width="9" height="7" patternUnits="userSpaceOnUse"><ellipse cx="3" cy="3" rx="2.4" ry="1.2" /></pattern>
-            <radialGradient id="vign" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0" /><stop offset="1" stop-color="#000" stop-opacity=".55" /></radialGradient>
-          </defs>
-          <rect class="f-bg" width="400" height="300" />
-          <rect class="f-tray" x="34" y="38" width="332" height="224" rx="18" />
-          <rect class="f-well" x="50" y="54" width="170" height="192" rx="12" />
-          <rect class="f-well" x="232" y="54" width="118" height="92" rx="12" />
-          <rect class="f-well" x="232" y="156" width="118" height="90" rx="12" />
-          <path class="f-chicken" d="M76,92 C96,70 150,72 176,90 C198,106 196,140 172,152 C140,168 92,160 78,140 C66,124 64,106 76,92 Z" />
-          <path class="f-grill" d="M92,96 L168,128 M88,112 L160,146 M104,86 L176,112" />
-          <ellipse class="f-rice" cx="135" cy="205" rx="64" ry="28" />
-          <ellipse class="f-rice dots" cx="135" cy="205" rx="64" ry="28" fill="url(#rice)" />
-          <g class="f-broc">
-            <circle cx="268" cy="88" r="15" /><circle cx="292" cy="80" r="14" /><circle cx="314" cy="94" r="15" /><circle cx="282" cy="108" r="14" /><circle cx="306" cy="116" r="13" />
-          </g>
-          <circle class="f-cup" cx="291" cy="201" r="30" />
-          <circle class="f-cup in" cx="291" cy="201" r="22" />
-          <rect width="400" height="300" fill="url(#vign)" />
-          <!-- lock-on boxes, labels and total, revealed in sequence by visuals.js -->
-          <g class="f-lock" data-i="0"><path class="f-box" d="M64,64 h14 M64,64 v14 M204,64 h-14 M204,64 v14 M64,166 h14 M64,166 v-14 M204,166 h-14 M204,166 v-14" /><g class="f-tag" transform="translate(64 50)"><rect width="128" height="18" rx="3" /><text x="6" y="13">Chicken, 4 oz</text></g></g>
-          <g class="f-lock" data-i="1"><path class="f-box" d="M62,170 h14 M62,170 v14 M208,170 h-14 M208,170 v14 M62,240 h14 M62,240 v-14 M208,240 h-14 M208,240 v-14" /><g class="f-tag" transform="translate(62 242)"><rect width="112" height="18" rx="3" /><text x="6" y="13">Rice, 1 scoop</text></g></g>
-          <g class="f-lock" data-i="2"><path class="f-box" d="M244,62 h14 M244,62 v14 M338,62 h-14 M338,62 v14 M244,138 h14 M244,138 v-14 M338,138 h-14 M338,138 v-14" /><g class="f-tag" transform="translate(220 140)"><rect width="130" height="18" rx="3" /><text x="6" y="13">Broccoli, 1 scoop</text></g></g>
-          <g class="f-total"><rect x="160" y="266" width="196" height="24" rx="4" /><text x="170" y="283">About 420 kcal, 42 g protein</text></g>
-          <!-- viewfinder chrome -->
-          <path class="f-crop" d="M14,34 V14 H34 M366,14 H386 V34 M386,266 V286 H366 M34,286 H14 V266" />
-          <circle class="f-rec" cx="26" cy="272" r="4.5" /><text class="f-hud" x="36" y="276">REC</text>
-          <text class="f-hud" x="362" y="28" text-anchor="end">Brim camera, live</text>
-        </svg>
-        <figcaption>What the camera sees, as an illustration. The labels and numbers are an example, not real output.</figcaption>
-      </figure>
+      </div>
+      <ol class="capkey">
+        <li><b>Crown.</b> The battery hides underneath it.</li>
+        <li><b>500 mAh LiPo.</b> A protected cell, tucked under the crown where it can't get crushed.</li>
+        <li><b>Touch pad.</b> On the side of the crown.</li>
+        <li><b>Slide switch.</b> On the band.</li>
+        <li><b>Brim.</b> The camera board sits under its front edge.</li>
+        <li><b>XIAO ESP32S3 Sense.</b> Camera and Wi-Fi, angled down at the tray. The onboard mic stays off, because Maryland requires everyone on an audio recording to consent.</li>
+        <li><b>Wi-Fi antenna.</b> Along the brim, facing away from my head.</li>
+        <li><b>Recording LED.</b> Under the brim tip.</li>
+      </ol>
     </div>
     <figure class="diagram flow" data-diagram>
       <svg viewBox="0 0 960 150" role="group" aria-label="Flow: the brim camera photographs the tray, Herald receives it on Telegram, the Gemini API names each item and its portion, and the macros come from UMD Dining's nutrition facts">
