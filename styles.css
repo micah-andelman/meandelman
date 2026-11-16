@@ -1106,3 +1106,11 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
 /* Touch screens: the lamp highlight sweeps with scrolling instead of following a cursor. */
 .lit-host.sweep > .glint { opacity: 1; transition: none; }
 @media (max-width: 760px) { .swipe-hint { display: flex; } }
+/* Phone: vertical boards fit the page width; no sideways swiping. */
+@media (max-width: 760px) {
+  html.vlayout .diagram .scroll { overflow: visible; margin: 0; padding: 0 0 4px; }
+  html.vlayout .diagram .scroll svg, html.vlayout .diagram.flow .scroll svg { width: 100%; height: auto; }
+  html.vlayout #pluto .diagram .scroll { padding: 0 14px; }
+  html.vlayout #pluto .diagram .scroll::before, html.vlayout #pluto .diagram .scroll::after { width: 14px; }
+  html.vlayout .diagram.flow .scroll svg { max-width: 420px; margin: 0 auto; }
+}

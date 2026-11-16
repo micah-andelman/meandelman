@@ -415,9 +415,9 @@
     if (!sc) return;
     const hint = document.createElement("p");
     hint.className = "swipe-hint";
-    hint.textContent = fig.classList.contains("flow")
-      ? "Swipe to follow the steps. Tap one for details below."
-      : "Swipe to see the whole board. Tap a part for details below.";
+    hint.textContent = document.documentElement.classList.contains("vlayout")
+      ? (fig.classList.contains("flow") ? "Tap a step for details below." : "Tap a part for details below.")
+      : (fig.classList.contains("flow") ? "Swipe to follow the steps. Tap one for details below." : "Swipe to see the whole board. Tap a part for details below.");
     (fig.querySelector(".figbar") || sc).after(hint);
     sc.addEventListener("click", (e) => {
       if (WIDE.matches) return;

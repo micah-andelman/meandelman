@@ -524,7 +524,7 @@ const lenis = (() => {
       tr.after(s);
       return {
         tr, s, len, x0, f: -1,
-        stage: groups && x0 >= mid ? 1 : 0,
+        stage: tr.dataset.stage != null ? +tr.dataset.stage : groups && x0 >= mid ? 1 : 0,
         lead: circle(dots, "lead", 4.5),
         flow: [circle(dots, "drop", 3), circle(dots, "drop", 3)],
       };
