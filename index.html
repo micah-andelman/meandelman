@@ -404,6 +404,13 @@ const int  MAX_PWM      = 153;</code></template>
     <div class="p-body">
       <p class="lede">A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.</p>
       <p>Most of my time went into the tools. Each one does one job and is careful about what it doesn't know. If it guessed an exam date, it says so. If it can't find a room, it says that too. It only suggests a bus when the bus beats walking by at least five minutes.</p>
+      <div class="brief" role="group" aria-label="Example of a morning brief">
+        <p class="brief-head"><i aria-hidden="true"></i>Pluto <span>7:02 AM</span></p>
+        <p class="msg">Morning. Two classes today: ENES100 at 10:00 and Calc III at 2:00.</p>
+        <p class="msg">Your physics problem set is due at 11:59 PM and isn't on your calendar, so I blocked 4:00 to 5:30.</p>
+        <p class="msg">Bus 104 leaves in 6 minutes, but walking to class is faster today.</p>
+        <p class="brief-note">An example of a morning brief.</p>
+      </div>
       <dl class="specs">
         <div><dt>36</dt><dd>tool modules</dd></div>
         <div><dt>24</dt><dd>offline test suites, run on every push</dd></div>
@@ -476,6 +483,89 @@ const int  MAX_PWM      = 153;</code></template>
       <p class="lede">A camera in the brim of a baseball cap that estimates the calories and macros in my dining-hall meals. It photographs the tray, a Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p>
       <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The cap does the seeing and the bot does the thinking: the hardware only has to take a good photo of the tray, and everything else happens on the Telegram side.</p>
     </div>
+    <div class="brimviz">
+      <figure class="capdraw">
+        <svg viewBox="0 0 560 330" role="img" aria-labelledby="capdraw-t">
+          <title id="capdraw-t">Side view of the cap: the camera board sits under the front of the brim and looks down at the tray, the battery is hidden under the crown, and the switch, touch pad and LED sit on the side.</title>
+          <!-- crown -->
+          <path class="cap-crown" d="M96,190 C92,118 142,70 222,66 C300,62 352,108 362,184 L96,190 Z" />
+          <path class="cap-seam" d="M226,66 C214,106 208,150 210,188 M226,66 C262,104 290,146 300,186" />
+          <ellipse class="cap-button" cx="224" cy="64" rx="13" ry="4" />
+          <path class="cap-band" d="M96,190 L362,184" />
+          <!-- brim -->
+          <path class="cap-brim" d="M340,183 C392,178 452,184 508,204 C470,214 410,210 346,198 Z" />
+          <!-- battery, hidden under the crown -->
+          <rect class="cap-hidden" x="150" y="150" width="96" height="26" rx="4" />
+          <path class="cap-cell" d="M246,158 v10" />
+          <!-- power wires from the battery along the band to the board -->
+          <path class="cap-wire" d="M246,160 C300,160 340,176 400,196 L430,206" />
+          <path class="cap-wire two" d="M246,166 C298,166 338,182 398,201 L428,211" />
+          <!-- camera board under the brim, angled down at the tray -->
+          <g transform="rotate(16 452 214)">
+            <rect class="cap-board" x="430" y="204" width="44" height="22" rx="3" />
+            <circle class="cap-lens" cx="452" cy="228" r="6" />
+          </g>
+          <circle class="cap-led" cx="496" cy="212" r="3.5" />
+          <!-- side controls -->
+          <rect class="cap-ctl" x="118" y="172" width="18" height="8" rx="2" />
+          <circle class="cap-ctl" cx="152" cy="118" r="7" />
+          <!-- field of view down to the tray -->
+          <path class="cap-fov" d="M449,234 L338,306 M449,234 L548,306" />
+          <path class="cap-tray" d="M330,306 H556" />
+          <path class="cap-plate" d="M370,306 C376,296 420,296 426,306 M458,306 C462,298 500,298 506,306" />
+          <!-- callouts -->
+          <g class="cap-call">
+            <path d="M446,210 V74 H556" /><circle cx="446" cy="210" r="2.5" />
+            <text x="556" y="50" text-anchor="end">XIAO ESP32S3</text><text x="556" y="66" text-anchor="end">Camera and Wi-Fi</text>
+            <path d="M198,163 L170,236 H40" /><circle cx="198" cy="163" r="2.5" />
+            <text x="40" y="229">500 mAh LiPo, under the crown</text>
+            <path d="M127,176 L84,266 H40" /><circle cx="127" cy="176" r="2.5" />
+            <text x="40" y="259">Slide switch</text>
+            <path d="M152,118 L92,40 H40" /><circle cx="152" cy="118" r="2.5" />
+            <text x="40" y="33">Touch pad</text>
+            <path d="M496,212 L520,178 H556" /><circle cx="496" cy="212" r="2.5" />
+            <text x="556" y="171" text-anchor="end">Recording LED</text>
+            <text class="cap-note" x="40" y="296">Onboard mic off: Maryland requires</text>
+            <text class="cap-note" x="40" y="313">everyone on a recording to consent.</text>
+          </g>
+        </svg>
+        <figcaption>Side view, not to scale.</figcaption>
+      </figure>
+      <figure class="finder">
+        <svg viewBox="0 0 400 300" role="img" aria-labelledby="finder-t">
+          <title id="finder-t">Illustration of the camera's view: a dining-hall tray with chicken, rice and broccoli, each boxed and labeled with a portion estimate.</title>
+          <defs>
+            <pattern id="rice" width="9" height="7" patternUnits="userSpaceOnUse"><ellipse cx="3" cy="3" rx="2.4" ry="1.2" /></pattern>
+            <radialGradient id="vign" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0" /><stop offset="1" stop-color="#000" stop-opacity=".55" /></radialGradient>
+          </defs>
+          <rect class="f-bg" width="400" height="300" />
+          <rect class="f-tray" x="34" y="38" width="332" height="224" rx="18" />
+          <rect class="f-well" x="50" y="54" width="170" height="192" rx="12" />
+          <rect class="f-well" x="232" y="54" width="118" height="92" rx="12" />
+          <rect class="f-well" x="232" y="156" width="118" height="90" rx="12" />
+          <path class="f-chicken" d="M76,92 C96,70 150,72 176,90 C198,106 196,140 172,152 C140,168 92,160 78,140 C66,124 64,106 76,92 Z" />
+          <path class="f-grill" d="M92,96 L168,128 M88,112 L160,146 M104,86 L176,112" />
+          <ellipse class="f-rice" cx="135" cy="205" rx="64" ry="28" />
+          <ellipse class="f-rice dots" cx="135" cy="205" rx="64" ry="28" fill="url(#rice)" />
+          <g class="f-broc">
+            <circle cx="268" cy="88" r="15" /><circle cx="292" cy="80" r="14" /><circle cx="314" cy="94" r="15" /><circle cx="282" cy="108" r="14" /><circle cx="306" cy="116" r="13" />
+          </g>
+          <circle class="f-cup" cx="291" cy="201" r="30" />
+          <circle class="f-cup in" cx="291" cy="201" r="22" />
+          <rect width="400" height="300" fill="url(#vign)" />
+          <!-- lock-on boxes, labels and total, revealed in sequence by visuals.js -->
+          <g class="f-lock" data-i="0"><path class="f-box" d="M64,64 h14 M64,64 v14 M204,64 h-14 M204,64 v14 M64,166 h14 M64,166 v-14 M204,166 h-14 M204,166 v-14" /><g class="f-tag" transform="translate(64 50)"><rect width="128" height="18" rx="3" /><text x="6" y="13">Chicken, 4 oz</text></g></g>
+          <g class="f-lock" data-i="1"><path class="f-box" d="M62,170 h14 M62,170 v14 M208,170 h-14 M208,170 v14 M62,240 h14 M62,240 v-14 M208,240 h-14 M208,240 v-14" /><g class="f-tag" transform="translate(62 242)"><rect width="112" height="18" rx="3" /><text x="6" y="13">Rice, 1 scoop</text></g></g>
+          <g class="f-lock" data-i="2"><path class="f-box" d="M244,62 h14 M244,62 v14 M338,62 h-14 M338,62 v14 M244,138 h14 M244,138 v-14 M338,138 h-14 M338,138 v-14" /><g class="f-tag" transform="translate(220 140)"><rect width="130" height="18" rx="3" /><text x="6" y="13">Broccoli, 1 scoop</text></g></g>
+          <g class="f-total"><rect x="160" y="266" width="196" height="24" rx="4" /><text x="170" y="283">About 420 kcal, 42 g protein</text></g>
+          <!-- viewfinder chrome -->
+          <path class="f-crop" d="M14,34 V14 H34 M366,14 H386 V34 M386,266 V286 H366 M34,286 H14 V266" />
+          <circle class="f-rec" cx="26" cy="272" r="4.5" /><text class="f-hud" x="36" y="276">REC</text>
+          <text class="f-hud" x="362" y="28" text-anchor="end">Brim camera, live</text>
+        </svg>
+        <figcaption>What the camera sees, as an illustration. The labels and numbers are an example, not real output.</figcaption>
+      </figure>
+    </div>
     <figure class="diagram flow" data-diagram>
       <svg viewBox="0 0 960 150" role="group" aria-label="Flow: the brim camera photographs the tray, Herald receives it on Telegram, the Gemini API names each item and its portion, and the macros come from UMD Dining's nutrition facts">
         <path class="tr" data-k="herald" d="M200,75 H270" />
@@ -503,13 +593,14 @@ const int  MAX_PWM      = 153;</code></template>
     <h2 id="exp-t">Experience</h2>
     <table>
       <caption class="sr">Work experience and activities</caption>
+      <thead><tr><th scope="col" class="ref">Ref</th><th scope="col">Part</th><th scope="col">Value</th><th scope="col" class="when">Footprint</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Terps Racing EV</th><td>Autonomous subteam</td><td class="when">Oct 2026 to now</td></tr>
-        <tr><th scope="row">BuildFest hackathon</th><td>Finalist, top 5 of 44 teams, with a data dashboard for a Maryland mental health nonprofit.</td><td class="when">Fall 2026</td></tr>
-        <tr><th scope="row">CISteks Technology Group</th><td>SDR/BDR Automation Intern. I replaced manual cold calling with automated email outreach and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
-        <tr><th scope="row">Independent math tutor</th><td>I tutor 7th-grade math up through calculus and SAT Math, with my own clients and lesson plans.</td><td class="when">2025 to now</td></tr>
-        <tr><th scope="row">B2Q Associates</th><td>Engineering support intern. I helped with energy-efficiency assessments of commercial HVAC systems.</td><td class="when">Summer 2024</td></tr>
-        <tr><th scope="row">Bedford High School</th><td>Captain of the varsity soccer team and president of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
+        <tr><td class="ref">J1</td><th scope="row">Terps Racing EV</th><td>Autonomous subteam</td><td class="when">Oct 2026 to now</td></tr>
+        <tr><td class="ref">J2</td><th scope="row">BuildFest hackathon</th><td>Finalist, top 5 of 44 teams, with a data dashboard for a Maryland mental health nonprofit.</td><td class="when">Fall 2026</td></tr>
+        <tr><td class="ref">J3</td><th scope="row">CISteks Technology Group</th><td>SDR/BDR Automation Intern. I replaced manual cold calling with automated email outreach and briefed leadership on TCPA and FCC rules for AI voice calling.</td><td class="when">Summer 2026</td></tr>
+        <tr><td class="ref">J4</td><th scope="row">Independent math tutor</th><td>I tutor 7th-grade math up through calculus and SAT Math, with my own clients and lesson plans.</td><td class="when">2025 to now</td></tr>
+        <tr><td class="ref">J5</td><th scope="row">B2Q Associates</th><td>Engineering support intern. I helped with energy-efficiency assessments of commercial HVAC systems.</td><td class="when">Summer 2024</td></tr>
+        <tr><td class="ref">J6</td><th scope="row">Bedford High School</th><td>Captain of the varsity soccer team and president of the Jewish Student Union.</td><td class="when">2025 to 2026</td></tr>
       </tbody>
     </table>
   </section>
@@ -518,21 +609,31 @@ const int  MAX_PWM      = 153;</code></template>
   <section class="contact" id="contact" aria-labelledby="contact-t">
     <h2 id="contact-t">Get in touch</h2>
     <p>I'm looking for a summer 2027 internship in electrical engineering, embedded systems or robotics. Email is the fastest way to reach me.</p>
-    <ul>
-      <li><a href="mailto:micah@meandelman.com">micah@meandelman.com</a></li>
-      <li><a href="https://www.linkedin.com/in/micah-andelman">LinkedIn</a></li>
-      <li><a href="resume.pdf">Résumé (PDF)</a></li>
-    </ul>
+    <div class="conn">
+      <span class="conn-ref" aria-hidden="true">J7</span>
+      <ul>
+        <li><a href="mailto:micah@meandelman.com"><i class="pin" aria-hidden="true"></i><span>micah@meandelman.com</span></a></li>
+        <li><a href="https://www.linkedin.com/in/micah-andelman"><i class="pin" aria-hidden="true"></i><span>LinkedIn</span></a></li>
+        <li><a href="resume.pdf"><i class="pin" aria-hidden="true"></i><span>Résumé (PDF)</span></a></li>
+      </ul>
+    </div>
   </section>
 </main>
 
 <footer class="foot">
   <p>Micah Andelman, College Park and Bedford.</p>
-  <p class="rev">Rev C, November 2026</p>
+  <dl class="titleblock">
+    <div class="tb-title"><dt>Title</dt><dd>Micah Andelman, portfolio</dd></div>
+    <div><dt>Drawn by</dt><dd>M. Andelman</dd></div>
+    <div><dt>Rev</dt><dd class="rev">C</dd></div>
+    <div><dt>Date</dt><dd>Nov 2026</dd></div>
+    <div><dt>Sheet</dt><dd>1 of 1</dd></div>
+  </dl>
 </footer>
 
 <script src="vendor/lenis-1.1.20.min.js" defer></script>
 <script src="main.js" defer></script>
 <script src="extras.js" defer></script>
+<script src="visuals.js" defer></script>
 </body>
 </html>

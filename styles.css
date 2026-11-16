@@ -667,3 +667,248 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
 /* Theme switch sits left of the nav, apart from the thermal and egg buttons on the far right. */
 .top > button.power { margin-left: auto; }
 .top > button.power + nav { margin-left: 0; }
+
+/* =====================================================================
+   Visual layer (visuals.js): hero board, component art, 7-segment stats,
+   Pluto rack and brief, Brimcam drawing and viewfinder, panel edges,
+   parts list, connector and title block.
+   ===================================================================== */
+:root { --cut: rgb(0 0 0 / .14); --mask-tex: .05; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cut: rgb(0 0 0 / .55); --mask-tex: .09; } }
+:root[data-theme="dark"] { --cut: rgb(0 0 0 / .55); --mask-tex: .09; }
+
+/* ---------- 1. Hero as a board ---------- */
+.hero { position: relative; isolation: isolate; }
+.hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 70% 55% at 22% 30%, color-mix(in srgb, var(--mask) 9%, transparent), transparent 70%);
+}
+.hero::after {
+  /* solder-mask grain, kept very faint */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  opacity: var(--mask-tex);
+}
+
+/* The name is a copper pour. */
+.hero h1 {
+  color: transparent;
+  background: linear-gradient(100deg,
+    color-mix(in srgb, var(--copper) 78%, #000) 0%, var(--copper) 30%,
+    color-mix(in srgb, var(--copper) 55%, #fff) 46%, var(--copper) 54%,
+    color-mix(in srgb, var(--copper) 82%, #000) 100%);
+  background-size: 260% 100%; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text;
+}
+.hero h1.sheen { animation: pour-sheen 2.4s cubic-bezier(.4, 0, .2, 1) 1 both; }
+.hero:hover h1.sheen { animation: pour-sheen 2.4s cubic-bezier(.4, 0, .2, 1) 1 both; }
+@keyframes pour-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+html.scope-pending .hero h1 { background: none; }
+
+/* Silkscreen and hardware in the empty top of the board. */
+.silk { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.silk .mh { position: absolute; top: clamp(20px, 4vh, 36px); width: 22px; height: 22px; border-radius: 50%; border: 5px solid color-mix(in srgb, var(--copper) 55%, transparent); box-shadow: inset 0 0 0 4px var(--paper); }
+.silk .mh.tl { left: var(--gutter); }
+.silk .mh.tr { right: var(--gutter); }
+.silk .fid { position: absolute; top: clamp(26px, 4.6vh, 42px); right: calc(var(--gutter) + 48px); width: 10px; height: 10px; border-radius: 50%; background: color-mix(in srgb, var(--copper) 70%, transparent); box-shadow: 0 0 0 6px var(--paper), 0 0 0 7px color-mix(in srgb, var(--ink-3) 40%, transparent); }
+.silk span { position: absolute; color: color-mix(in srgb, var(--ink) 34%, transparent); font-size: 13px; letter-spacing: .04em; }
+.silk .silk-id { top: clamp(22px, 4.2vh, 40px); left: calc(var(--gutter) + 38px); font-weight: 600; }
+.silk .silk-rev { top: clamp(40px, 6.6vh, 58px); left: calc(var(--gutter) + 38px); }
+.hero > *:not(.silk):not(.hero-nets) { position: relative; z-index: 1; }
+
+/* Nets from the project list up to the bus. */
+.hero-nets { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; overflow: visible; }
+.hero-nets .net-tr { fill: none; stroke: var(--rule); stroke-width: 2.5; stroke-linecap: round; transition: stroke .25s; }
+.hero-nets .net-pad { fill: var(--paper); stroke: var(--rule); stroke-width: 2.5; transition: fill .25s, stroke .25s; }
+.hero-nets .net-via { fill: var(--paper); stroke: var(--copper); stroke-width: 2.5; }
+.hero-nets .net-ref { font: 600 12px var(--text); fill: var(--ink-3); }
+.hero-nets .on .net-tr { stroke: var(--copper); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--copper) 60%, transparent)); }
+.hero-nets .on .net-pad { fill: var(--copper); stroke: var(--copper); }
+.hero-nets .on .net-via { fill: var(--copper); }
+html.nets .hero-trace .drop { display: none; }
+@media (max-width: 760px) { .hero-nets, .silk .fid, .silk .silk-rev { display: none; } .silk .mh { width: 16px; height: 16px; border-width: 4px; } }
+
+/* ---------- 2. Component artwork on diagram blocks ---------- */
+.blk .deco .pin { fill: color-mix(in srgb, var(--ink-3) 75%, var(--paper)); }
+.blk .deco .hdr { fill: none; stroke: color-mix(in srgb, var(--ink-3) 60%, transparent); stroke-width: 1; }
+.blk .deco .fin { fill: color-mix(in srgb, var(--ink-3) 55%, var(--paper)); }
+.blk .deco .ant, .blk .deco .horn { fill: none; stroke: color-mix(in srgb, var(--ink-3) 85%, var(--paper)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.blk .deco .hub { fill: color-mix(in srgb, var(--ink-3) 75%, var(--paper)); }
+.blk .deco .hub.ring { fill: none; stroke: color-mix(in srgb, var(--ink-3) 85%, var(--paper)); stroke-width: 2; }
+.blk .deco .term { fill: color-mix(in srgb, var(--ink-3) 75%, var(--paper)); }
+.blk .sign { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linecap: round; }
+.blk .pin1 { fill: color-mix(in srgb, var(--paper) 55%, transparent); }
+.blk.on .deco .pin, .blk.on .deco .fin, .blk.on .deco .hub, .blk.on .deco .term { fill: var(--copper); }
+.blk.on .deco .ant, .blk.on .deco .horn, .blk.on .deco .hub.ring { stroke: var(--copper); }
+html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle { fill: var(--h); filter: none; stroke: none; }
+
+/* ---------- 4. Pluto on a rack panel ---------- */
+#pluto .diagram .scroll {
+  position: relative; padding: 0 30px; border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / .018) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, color-mix(in srgb, var(--board) 80%, #fff 6%), var(--board));
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+#pluto .diagram .scroll::before, #pluto .diagram .scroll::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 30px;
+  background:
+    radial-gradient(circle at 15px 24px, var(--paper) 4px, color-mix(in srgb, var(--ink) 45%, transparent) 5px, transparent 6px),
+    radial-gradient(circle at 15px calc(100% - 24px), var(--paper) 4px, color-mix(in srgb, var(--ink) 45%, transparent) 5px, transparent 6px),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / .03) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 16%, var(--board)), color-mix(in srgb, var(--ink) 9%, var(--board)));
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--ink) 22%, transparent);
+}
+#pluto .diagram .scroll::before {
+  background:
+    radial-gradient(circle at 15px calc(50% - 10px), #3fd68f 3px, rgb(63 214 143 / .35) 5px, transparent 7px),
+    radial-gradient(circle at 15px calc(50% + 10px), #f0b14a 3px, rgb(240 177 74 / .3) 5px, transparent 7px),
+    radial-gradient(circle at 15px 24px, var(--paper) 4px, color-mix(in srgb, var(--ink) 45%, transparent) 5px, transparent 6px),
+    radial-gradient(circle at 15px calc(100% - 24px), var(--paper) 4px, color-mix(in srgb, var(--ink) 45%, transparent) 5px, transparent 6px),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / .03) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 16%, var(--board)), color-mix(in srgb, var(--ink) 9%, var(--board)));
+}
+#pluto .diagram .scroll::before { left: 0; border-radius: 8px 0 0 8px; }
+#pluto .diagram .scroll::after { right: 0; border-radius: 0 8px 8px 0; transform: scaleX(-1); }
+#pluto .diagram svg { background: transparent; }
+
+.brief { grid-column: 1; margin: 10px 0 0; max-width: 46ch; padding: 14px 16px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--board); }
+.brief p { margin: 0; }
+.brief .brief-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 600; font-size: 15px; }
+.brief .brief-head i { width: 8px; height: 8px; border-radius: 50%; background: #3fd68f; box-shadow: 0 0 6px #3fd68f; }
+.brief .brief-head span { margin-left: auto; font-weight: 400; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.brief .msg { position: relative; width: fit-content; max-width: 100%; margin: 0 0 8px; padding: 8px 12px; border-radius: 4px 14px 14px 14px; background: color-mix(in srgb, var(--mask) 14%, var(--paper)); color: var(--ink); font-size: 16px; line-height: 1.45; }
+.brief .msg.wait { display: none; }
+.brief .msg.typing { min-width: 54px; min-height: 1.45em; }
+.brief .msg.typing::after { content: ""; position: absolute; left: 14px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--ink-3); box-shadow: 11px 0 var(--ink-3), 22px 0 var(--ink-3); animation: typing 1s infinite; }
+@keyframes typing { 50% { opacity: .35; } }
+.brief .brief-note { margin-top: 2px; font-size: 13.5px; color: var(--ink-3); }
+
+/* ---------- 3 + 4. Brimcam: side-view drawing and viewfinder ---------- */
+.brimviz { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; margin-top: clamp(36px, 6vh, 64px); }
+.brimviz figure { margin: 0; }
+.brimviz figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
+.capdraw svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
+.capdraw .cap-crown, .capdraw .cap-brim { fill: color-mix(in srgb, var(--ink) 6%, var(--board)); stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; }
+.capdraw .cap-seam { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; }
+.capdraw .cap-button { fill: var(--ink-3); }
+.capdraw .cap-band { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
+.capdraw .cap-hidden { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.capdraw .cap-cell { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
+.capdraw .cap-wire { fill: none; stroke: var(--copper); stroke-width: 1.6; }
+.capdraw .cap-wire.two { stroke: var(--ink-3); }
+.capdraw .cap-board { fill: var(--mask); stroke: color-mix(in srgb, var(--mask) 70%, #000); stroke-width: 1; }
+.capdraw .cap-lens { fill: #11161a; stroke: var(--ink-3); stroke-width: 1.5; }
+.capdraw .cap-led { fill: #ff5a4f; filter: drop-shadow(0 0 4px #ff5a4f); }
+.capdraw .cap-ctl { fill: var(--ink-3); }
+.capdraw .cap-fov { fill: none; stroke: var(--copper); stroke-width: 1.2; stroke-dasharray: 2 5; }
+.capdraw .cap-tray { stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
+.capdraw .cap-plate { fill: none; stroke: var(--ink-3); stroke-width: 1.6; }
+.capdraw .cap-call path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+.capdraw .cap-call circle { fill: var(--ink-2); }
+.capdraw .cap-call text { font-size: 13.5px; fill: var(--ink-2); }
+.capdraw .cap-call .cap-note { font-size: 12.5px; fill: var(--ink-3); }
+
+.finder svg { display: block; width: 100%; height: auto; border-radius: 6px; font-family: var(--text); }
+.finder .f-bg { fill: #1b1f1d; }
+.finder .f-tray { fill: #3b4a5c; }
+.finder .f-well { fill: #33414f; }
+.finder .f-chicken { fill: #b98a52; }
+.finder .f-grill { fill: none; stroke: #7a5530; stroke-width: 4; stroke-linecap: round; opacity: .7; }
+.finder .f-rice { fill: #e9e3d2; }
+.finder .f-rice.dots { fill: url(#rice); }
+.finder #rice ellipse { fill: #cfc6ae; }
+.finder .f-broc circle { fill: #3f8a3b; stroke: #2c6a2a; stroke-width: 2; }
+.finder .f-cup { fill: #2a3440; stroke: #5b6b7d; stroke-width: 3; }
+.finder .f-cup.in { fill: #6b3d1f; stroke: none; }
+.finder .f-box { fill: none; stroke: #ffd257; stroke-width: 2.5; stroke-linecap: round; }
+.finder .f-tag rect, .finder .f-total rect { fill: rgb(10 14 12 / .82); stroke: #ffd257; stroke-width: 1; }
+.finder .f-tag text, .finder .f-total text { font-size: 12.5px; font-weight: 600; fill: #ffe9a8; }
+.finder .f-lock, .finder .f-total { opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity .25s, transform .35s cubic-bezier(.2, 1.4, .4, 1); transform: scale(1.12); }
+.finder .f-lock.on, .finder .f-total.on { opacity: 1; transform: none; }
+.finder .f-crop { fill: none; stroke: rgb(255 255 255 / .8); stroke-width: 2; }
+.finder .f-rec { fill: #ff4b42; animation: rec 1.4s steps(1) infinite; }
+@keyframes rec { 50% { opacity: .2; } }
+.finder .f-hud { font-size: 11.5px; font-weight: 600; fill: rgb(255 255 255 / .85); letter-spacing: .04em; }
+@media (max-width: 760px) { .brimviz { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .finder .f-rec { animation: none; } .finder .f-lock, .finder .f-total { transition: none; } }
+
+/* ---------- 5. Stats on 7-segment displays ---------- */
+.specs dt.lcd { display: inline-block; padding: 9px 12px 7px; border-radius: 6px; background: #0b100e; box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), inset 0 0 0 1px rgb(255 255 255 / .06), 0 1px 0 var(--rule); line-height: 0; }
+.seg7 { height: clamp(34px, 3.4vw, 46px); width: auto; aspect-ratio: var(--w) / 58; overflow: visible; }
+.seg7 .on { fill: #6ff0b4; filter: drop-shadow(0 0 3px rgb(111 240 180 / .55)); }
+.seg7 .off { fill: rgb(111 240 180 / .07); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .specs dt.lcd { background: #c4cfbd; box-shadow: inset 0 2px 4px rgb(0 0 0 / .18), inset 0 0 0 1px rgb(0 0 0 / .08); }
+  :root:not([data-theme="dark"]) .seg7 .on { fill: #18231c; filter: none; }
+  :root:not([data-theme="dark"]) .seg7 .off { fill: rgb(0 0 0 / .06); } }
+:root[data-theme="light"] .specs dt.lcd { background: #c4cfbd; box-shadow: inset 0 2px 4px rgb(0 0 0 / .18), inset 0 0 0 1px rgb(0 0 0 / .08); }
+:root[data-theme="light"] .seg7 .on { fill: #18231c; filter: none; }
+:root[data-theme="light"] .seg7 .off { fill: rgb(0 0 0 / .06); }
+.specs dd { margin-top: 8px; }
+
+/* ---------- 6. Panel edges: routed slots and mouse bites between sections ---------- */
+.project, .experience, .contact { border-top: 0; position: relative; }
+.project::before, .experience::before, .contact::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 12px; background: var(--cut); pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='12'><rect x='0' y='4' width='196' height='4' rx='2'/><circle cx='208' cy='6' r='2.3'/><circle cx='217' cy='6' r='2.3'/><circle cx='226' cy='6' r='2.3'/><circle cx='235' cy='6' r='2.3'/><circle cx='244' cy='6' r='2.3'/></svg>") repeat-x left center / 260px 12px;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='12'><rect x='0' y='4' width='196' height='4' rx='2'/><circle cx='208' cy='6' r='2.3'/><circle cx='217' cy='6' r='2.3'/><circle cx='226' cy='6' r='2.3'/><circle cx='235' cy='6' r='2.3'/><circle cx='244' cy='6' r='2.3'/></svg>") repeat-x left center / 260px 12px;
+}
+
+/* ---------- 6. Experience as a parts list ---------- */
+.experience thead th { padding: 0 24px 8px 0; border-top: 0; font-size: 13.5px; font-weight: 600; color: var(--ink-3); letter-spacing: .02em; }
+.experience thead th.when { text-align: right; padding-right: 0; }
+.experience td.ref, .experience th.ref { width: 3.2em; padding-right: 14px; color: var(--copper); font-weight: 600; font-variant-numeric: tabular-nums; }
+.experience th[scope="row"] { width: 26%; }
+
+/* ---------- 6. Contact as a pin header ---------- */
+.conn { position: relative; display: inline-block; margin-top: 8px; padding: 18px 22px 16px 22px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--board); }
+.conn .conn-ref { position: absolute; top: -10px; left: 14px; padding: 0 6px; background: var(--paper); color: var(--copper); font-weight: 600; font-size: 14px; }
+.conn ul { gap: 14px 40px; }
+.conn a { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+.conn a span { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.conn .pin { position: relative; flex: none; width: 16px; height: 16px; border-radius: 2px; background: color-mix(in srgb, var(--ink-3) 35%, var(--board)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink-3) 70%, transparent); transition: background .2s, box-shadow .2s; }
+.conn .pin::after { content: ""; position: absolute; left: 5px; top: 5px; width: 6px; height: 6px; border-radius: 1px; background: color-mix(in srgb, var(--copper) 70%, var(--ink-3)); transition: background .2s, box-shadow .2s; }
+.conn a:hover .pin, .conn a:focus-visible .pin { background: color-mix(in srgb, var(--copper) 30%, var(--board)); box-shadow: inset 0 0 0 2px var(--copper); }
+.conn a:hover .pin::after, .conn a:focus-visible .pin::after { background: var(--copper); box-shadow: 0 0 8px var(--copper); }
+@media (max-width: 760px) { .conn { display: block; } }
+
+/* ---------- 6. Title block ---------- */
+.foot { align-items: end; }
+.titleblock { display: grid; grid-template-columns: repeat(4, auto); margin: 0; border: 1px solid var(--rule); font-size: 13px; }
+.titleblock div { padding: 5px 10px 6px; border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); }
+.titleblock .tb-title { grid-column: 1 / -1; border-top: 0; border-left: 0; }
+.titleblock div:nth-child(2) { border-left: 0; }
+.titleblock dt { color: var(--ink-3); font-size: 11.5px; }
+.titleblock dd { margin: 1px 0 0; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.titleblock .tb-title dd { color: var(--ink); font-weight: 600; }
+
+/* ---------- 7. Readability and margin-trace shimmer ---------- */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink-2: #b9c3be; } }
+:root[data-theme="dark"] { --ink-2: #b9c3be; }
+.p-body > p:not(.lede) { font-size: 17.5px; line-height: 1.6; }
+.mtrace .lit .via { animation: via-shimmer .9s ease-out; }
+@keyframes via-shimmer { 0% { filter: drop-shadow(0 0 0 var(--copper)); } 35% { filter: drop-shadow(0 0 7px var(--copper)) drop-shadow(0 0 14px var(--copper)); } 100% { filter: drop-shadow(0 0 0 transparent); } }
+
+@media print {
+  .silk, .hero-nets, .brimviz .finder, .brief { display: none !important; }
+  .project::before, .experience::before, .contact::before { display: none; }
+  .specs dt.lcd { background: none; box-shadow: none; padding: 0; }
+  .seg7 .on { fill: #111; filter: none; } .seg7 .off { fill: none; }
+  .conn { border: 0; padding: 0; background: none; } .conn .pin, .conn .conn-ref { display: none; }
+}
+.experience tbody td:not(.ref):not(.when) { width: 56%; max-width: none; }
+@media (max-width: 760px) {
+  .experience thead { display: none; }
+  .experience tbody th[scope="row"], .experience tbody td { width: auto !important; }
+  .experience td.ref { padding: 0 0 2px; }
+  .experience td.ref + th { border-top: 0; padding-top: 2px; }
+}
+@media print {
+  .p-body > p:not(.lede) { font-size: inherit; line-height: inherit; }
+  .brimviz { display: none !important; }
+  .specs dt.lcd { background: none !important; box-shadow: none !important; padding: 0 !important; }
+  .seg7 { height: 26px; }
+  .seg7 .on { fill: #111 !important; filter: none !important; }
+  .seg7 .off { fill: none !important; }
+}
+@media print { .experience .ref { display: none !important; } }
