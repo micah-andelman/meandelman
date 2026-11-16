@@ -1123,3 +1123,8 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
 .scroll.wiping .schem-edge { opacity: 1; }
 @media (max-width: 760px) { html.vlayout .schem-layer.diagram { right: auto; width: 100%; } .schem-edge { bottom: 4px; } }
 @media print { .schem-layer, .schem-edge { display: none !important; } }
+/* Phone: the schematic wipes top to bottom, with a horizontal scan line. */
+@media (max-width: 760px) {
+  html.vlayout .schem-layer.diagram { clip-path: inset(0 0 calc((1 - var(--w, 0)) * 100%) 0); }
+  html.vlayout .schem-edge { left: 0; right: 0; bottom: auto; top: calc(var(--w, 0) * (100% - 4px)); width: auto; height: 2px; margin: -1px 0 0; }
+}
