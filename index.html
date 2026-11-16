@@ -467,14 +467,14 @@ const int  MAX_PWM      = 153;</code></template>
     <div class="p-head">
       <h2 id="brimcam-t">Brimcam</h2>
       <dl class="meta">
-        <div><dt>When</dt><dd>Fall 2026, in progress</dd></div>
+        <div><dt>When</dt><dd>Fall 2026</dd></div>
         <div><dt>Role</dt><dd>Solo, hardware and software</dd></div>
         <div><dt>Built with</dt><dd>Seeed XIAO ESP32S3 Sense, Herald, Gemini API</dd></div>
       </dl>
     </div>
     <div class="p-body">
       <p class="lede">A camera in the brim of a baseball cap that estimates the calories and macros in my dining-hall meals. It photographs the tray, a Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p>
-      <p>It started as camera glasses, but the battery was too big to hide in a frame, so it moved to a cap and I took on the software too. Most of the parts are here and the board is still on its way. Until it arrives, I'm testing the idea by sending tray photos to the bot by hand to see how close the estimates get.</p>
+      <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The cap does the seeing and the bot does the thinking: the hardware only has to take a good photo of the tray, and everything else happens on the Telegram side.</p>
     </div>
     <figure class="diagram flow" data-diagram>
       <svg viewBox="0 0 960 150" role="group" aria-label="Flow: the brim camera photographs the tray, Herald receives it on Telegram, the Gemini API names each item and its portion, and the macros come from UMD Dining's nutrition facts">
