@@ -654,3 +654,7 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
   .arena figcaption .runstat, .arena figcaption > p, .arena .replay { margin-left: var(--gutter); margin-right: var(--gutter); }
 }
 @media print { .runstat { display: none; } .arena { display: block; } }
+
+/* Theme switch sits left of the nav, apart from the thermal and egg buttons on the far right. */
+.top > button.power { margin-left: auto; }
+.top > button.power + nav { margin-left: 0; }
