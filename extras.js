@@ -303,6 +303,39 @@
     const box = el("div", "la");
     box.innerHTML = `<canvas aria-hidden="true"></canvas><p class="lanote">Logic analyzer, simulated from the firmware's timing as the replay runs. Copper is forward, green is reverse. The sampling stop is sped up.</p>`;
     fig.querySelector("svg").after(box);
+
+    // Live status: what the robot is doing right now, and how long the run has taken.
+    const stat = el("div", "runstat");
+    stat.setAttribute("aria-hidden", "true");
+    stat.innerHTML = '<p class="rs-top"><i></i><span class="rs-state">Waiting</span><span class="rs-time">0.0 s</span></p><p class="rs-phase">Scroll here to start the run.</p>';
+    fig.querySelector("figcaption").prepend(stat);
+    const rsState = stat.querySelector(".rs-state"), rsTime = stat.querySelector(".rs-time"), rsPhase = stat.querySelector(".rs-phase");
+    const phaseOf = (s) => {
+      if (s.done) return "At the goal. Run complete.";
+      if (s.sampling) {
+        const h = s.held;
+        return h < 500 ? "At the pool: lowering the arm" : h < 1050 ? "At the pool: measuring depth" : h < 1400 ? "At the pool: reading the water color" : h < 1900 ? "At the pool: pumping a sample" : "At the pool: stowing the arm";
+      }
+      if (s.d < 150) return "Driving to the pool";
+      if (s.x < 170 && s.y > 50) return "Heading for the top wall";
+      if (s.x < 515) return "Following the top wall past the obstacles";
+      if (s.x < 640) return "Dropping to the limbo lane";
+      if (s.x < 690) return "Driving under the limbo";
+      return "Into the goal zone";
+    };
+    let lastPhase = "";
+    const showStat = (s, start) => {
+      stat.classList.toggle("live", !s.done);
+      rsState.textContent = s.done ? "Done" : "Running";
+      rsTime.textContent = ((s.t - start) / 1000).toFixed(1) + " s";
+      const ph = phaseOf(s);
+      if (ph !== lastPhase) { rsPhase.textContent = ph; lastPhase = ph; }
+    };
+    // Replay brings the whole bench (map, status and analyzer) onto the screen.
+    fig.querySelector(".replay")?.addEventListener("click", () => {
+      const r = fig.getBoundingClientRect(), top = head() + 12;
+      if (r.top < top - 4 || r.bottom > innerHeight) glide(scrollY + r.top - top);
+    });
     const cv = box.querySelector("canvas");
     const ctx = cv.getContext("2d");
     let WIN = 5000;
@@ -416,6 +449,7 @@
     fig.addEventListener("otvstart", () => { hist = []; t0 = null; });
     fig.addEventListener("otvtick", (e) => {
       if (t0 === null) t0 = e.detail.t;
+      showStat(e.detail, t0);
       hist.push(sample(e.detail));
       const cut = e.detail.t - WIN - 500;
       while (hist.length > 2 && hist[1].t < cut) hist.shift();
@@ -435,6 +469,10 @@
       hist.push(sample({ t: 8800, done: true }));
       t0 = 0;
       WIN = 8800;
+      stat.classList.remove("live");
+      rsState.textContent = "Still capture";
+      rsTime.textContent = "8.8 s";
+      rsPhase.textContent = "One full run, from start square to goal.";
       draw();
     }
   })();

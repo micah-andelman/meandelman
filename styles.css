@@ -617,3 +617,40 @@ button.power .knob .moon { fill: currentColor; stroke: none; opacity: 0; transfo
 button.power[aria-checked="true"] .knob .sun { opacity: 0; transform: rotate(60deg) scale(.6); }
 button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { button.power .knob svg { transition: none; } }
+
+/* ---------- OTV test bench: map, live status and analyzer on one screen ---------- */
+.runstat { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--board); }
+.arena figcaption .runstat p { margin: 0; max-width: none; }
+.arena figcaption .rs-top { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-3); }
+.rs-top i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+.runstat.live .rs-top i { background: var(--copper); box-shadow: 0 0 6px var(--copper); animation: led 1.2s ease-in-out infinite; }
+.rs-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.arena figcaption .rs-phase { font-size: 18px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+@media (prefers-reduced-motion: reduce) { .runstat.live .rs-top i { animation: none; } }
+@media (min-width: 1000px) {
+  .arena {
+    display: grid; align-items: start;
+    /* The map is sized so map + analyzer fit under the header on one screen (880 x 476 viewBox). */
+    grid-template-columns: min(max(540px, calc((100svh - 340px) * 1.849)), 70%) minmax(0, 1fr);
+    grid-template-areas: "map side" "la la";
+    column-gap: clamp(24px, 3vw, 40px);
+  }
+  .arena > svg { grid-area: map; }
+  .arena figcaption { grid-area: side; flex-direction: column; justify-content: flex-start; gap: 18px; margin-top: 0; }
+  .arena figcaption p { font-size: 16px; }
+  .arena .la { grid-area: la; margin-top: 16px; }
+}
+@media (max-width: 999px) {
+  /* Stacked: map, live status, analyzer, then the description and Replay. */
+  .arena { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .arena figcaption { display: contents; }
+  .arena > svg { order: 1; }
+  .arena figcaption .runstat { order: 2; margin-top: 12px; }
+  .arena .la { order: 3; }
+  .arena figcaption > p { order: 4; margin-top: 16px; }
+  .arena .replay { order: 5; justify-self: start; margin-top: 12px; }
+}
+@media (max-width: 760px) {
+  .arena figcaption .runstat, .arena figcaption > p, .arena .replay { margin-left: var(--gutter); margin-right: var(--gutter); }
+}
+@media print { .runstat { display: none; } .arena { display: block; } }

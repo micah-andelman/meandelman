@@ -261,11 +261,11 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       if (Math.abs(diff(heading, target)) > 120) target += 180;
       const step = diff(heading, target);
       heading += Math.sign(step) * Math.min(Math.abs(step), dt * 0.35);
-      place(route, d, heading);
+      const pt = place(route, d, heading);
       trail.style.strokeDashoffset = glow.style.strokeDashoffset = len - d;
       // State for the logic analyzer (extras.js).
       fig.dispatchEvent(new CustomEvent("otvtick", { detail: {
-        t: now, d, held, turn: dt ? step / dt : 0, done: d >= len,
+        t: now, d, held, turn: dt ? step / dt : 0, done: d >= len, x: pt.x, y: pt.y,
         sampling: d >= SAMPLE_AT && held > 0 && held < SAMPLE_MS,
       } }));
       if (d < len) raf = requestAnimationFrame(tick);
