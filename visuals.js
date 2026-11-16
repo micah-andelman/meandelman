@@ -363,10 +363,24 @@
           if (i >= 0) twin[i].setAttribute("class", m.target.getAttribute("class"));
         })).observe(svg, { subtree: true, attributes: true, attributeFilter: ["class"] });
       }
+      // Labels never get cut by the scan line: a part's block label fades out when the line
+      // reaches it, and its schematic label fades in once the line has passed it.
+      const pairs = orig.length === twin.length
+        ? orig.map((o, i) => [o, twin[i]]).filter(([o]) => o.classList.contains("blk")) : [];
       const setW = (w) => {
         w = clamp(w);
         sc.style.setProperty("--w", w.toFixed(4));
         sc.classList.toggle("wiping", w > 0.001 && w < 0.999);
+        const R = svg.getBoundingClientRect();
+        if (!R.width || !R.height) return;
+        const vert = !WIDE.matches;
+        pairs.forEach(([o, t]) => {
+          const b = (o.querySelector(":scope > rect") || o).getBoundingClientRect();
+          const a0 = vert ? (b.top - R.top) / R.height : (b.left - R.left) / R.width;
+          const a1 = vert ? (b.bottom - R.top) / R.height : (b.right - R.left) / R.width;
+          o.toggleAttribute("data-lo", w > a0);
+          t.toggleAttribute("data-lo", w < a1);
+        });
       };
       // Desktop: the pinned scene's progress drives it (stage four, then a short hold).
       otvFig.addEventListener("sceneprogress", (e) => { if (WIDE.matches) setW((e.detail - 0.64) / 0.24); });

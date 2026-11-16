@@ -1131,6 +1131,10 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
 .scroll.wiping .schem-edge { opacity: 1; }
 @media (max-width: 760px) { html.vlayout .schem-layer.diagram { right: auto; width: 100%; } .schem-edge { bottom: 4px; } }
 @media print { .schem-layer, .schem-edge { display: none !important; } }
+/* While the scan line crosses a part, its labels hide instead of splicing block and schematic text. */
+.has-schem .blk text { transition: opacity .18s; }
+html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text { opacity: 0 !important; }
+@media print { html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text { opacity: 1 !important; } }
 /* Phone: the schematic wipes top to bottom, with a horizontal scan line. */
 @media (max-width: 760px) {
   html.vlayout .schem-layer.diagram { clip-path: inset(0 0 calc((1 - var(--w, 0)) * 100%) 0); }
