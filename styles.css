@@ -904,29 +904,6 @@ html.thermal .diagram.schem .sym .sym-v { fill: #e9dcef !important; }
 html.thermal .diagram.schem .pad { fill: #ffe9a8; stroke: #ffe9a8; }
 
 /* ---------- OTV technical drawing ---------- */
-.otvdraw { grid-column: 1; margin: 10px 0 0; max-width: 560px; }
-.otvdraw svg { display: block; width: 100%; height: auto; background: var(--board); border-radius: 6px; font-family: var(--text); }
-.otvdraw figcaption { margin-top: 8px; font-size: 14px; color: var(--ink-3); }
-.otvdraw .od-h { font: 600 14px var(--text); fill: var(--ink-3); }
-.otvdraw .od-tread { fill: color-mix(in srgb, var(--ink) 18%, var(--board)); stroke: var(--ink-2); stroke-width: 1.5; }
-.otvdraw .od-treadlines { stroke: var(--ink-3); stroke-width: 1; opacity: .7; }
-.otvdraw .od-body { fill: color-mix(in srgb, var(--mask) 22%, var(--board)); stroke: var(--ink-2); stroke-width: 1.5; }
-.otvdraw .od-marker { fill: #f4f4f0; stroke: #222; stroke-width: 1.5; }
-.otvdraw .od-markerin { fill: #111; }
-.otvdraw .od-sonar { fill: none; stroke: var(--ink-2); stroke-width: 2; }
-.otvdraw .od-sonar-s { fill: var(--ink-3); }
-.otvdraw .od-arm { fill: none; stroke: var(--copper); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.otvdraw .od-armdown { fill: none; stroke: var(--copper); stroke-width: 1.5; stroke-dasharray: 3 4; }
-.otvdraw .od-armend { fill: var(--copper); }
-.otvdraw .od-fwd { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
-.otvdraw .od-wheel { fill: var(--board); stroke: var(--ink-3); stroke-width: 1.5; }
-.otvdraw .od-ground { stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 1 5; stroke-linecap: round; }
-.otvdraw .od-hidden { fill: none; stroke: var(--ink-3); stroke-width: 1.2; stroke-dasharray: 4 3; }
-.otvdraw .od-dim path, .otvdraw .od-call path { fill: none; stroke: var(--ink-3); stroke-width: 1; }
-.otvdraw .od-dim text { font: 600 13.5px var(--text); fill: var(--ink-2); }
-.otvdraw .od-call circle { fill: var(--ink-2); }
-.otvdraw .od-call text { font-size: 13.5px; fill: var(--ink-2); }
-@media print { .otvdraw { display: none; } }
 
 /* ---------- Arena: camera's-eye view ---------- */
 .arena .det { opacity: 0; transition: opacity .3s; pointer-events: none; }
@@ -1043,6 +1020,7 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
    (visuals.js adds .inview), so nothing plays out of sight or on a page-load timer. */
 :is(.hero, .project, .arena, .brief):not(.inview) :is(.hero-trace .line, .hero-trace .via, .led.on, .site .ring, .site.sampling .rip, .runstat.live .rs-top i, .msg.typing) { animation-play-state: paused; }
 :is(.hero, .project, .arena, .brief):not(.inview) .msg.typing::after { animation-play-state: paused; }
+.hero:not(.inview) h1::after { animation-play-state: paused; }
 /* No 3D tilt: rotating the board rasterized its text and blurred it on hover.
    The moving highlight stays; it's a plain overlay, so text stays sharp. */
 .lit-host, .lit-host.lamp { transform: none !important; transition: none; }
@@ -1146,3 +1124,35 @@ html.explode .hero-scene { margin-bottom: 38vh; }
 .capdraw .cw path { opacity: min(calc(var(--e, 0) * 3), .85); }
 /* Phone: the cap pins near the middle of the screen, not under the header with empty space below. */
 @media screen and (max-width: 760px) { html.capx-on .capscene > .capdraw { top: max(calc(var(--hh, 52px) + 12px), calc(50svh - 170px)); } }
+
+/* ---------- Current in the name ----------
+   A faint band of current runs through the copper letters; it speeds up while you point at a project. */
+.hero h1::after {
+  content: "Micah\A Andelman"; white-space: pre; position: absolute; inset: 0; pointer-events: none;
+  color: transparent;
+  background: repeating-linear-gradient(112deg, transparent 0 70px, rgb(255 238 205 / 0) 70px, rgb(255 240 214 / .55) 78px, rgb(255 238 205 / 0) 86px, transparent 86px 150px);
+  background-size: 300px 100%;
+  -webkit-background-clip: text; background-clip: text;
+  animation: current 6s linear infinite;
+  opacity: .4;
+}
+.hero.hot h1::after { animation-duration: 1.6s; opacity: .85; }
+@keyframes current { from { background-position: 0 0; } to { background-position: 300px 0; } }
+html.scope-pending .hero h1::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .hero h1::after { display: none; } }
+@media print { .hero h1::after { display: none; } }
+
+/* Section wires: on desktop the margin trace (main.js) draws each section's top edge as a branch
+   off the bus, filled with copper as you scroll, so the plain border steps aside. */
+html.mtrace-on .project, html.mtrace-on .experience, html.mtrace-on .contact { border-top-color: transparent; }
+.mtrace .branch { stroke: var(--rule); stroke-width: 2; }
+.mtrace .bfill { stroke: var(--copper); stroke-width: 2.5; }
+.mtrace .bend { fill: var(--paper); stroke: var(--rule); stroke-width: 2; transition: fill .3s, stroke .3s; }
+.mtrace .bend.lit { fill: var(--copper); stroke: var(--copper); }
+.mtrace .tee { fill: var(--copper); opacity: 0; transition: opacity .2s; }
+.mtrace .tee.lit { opacity: 1; }
+html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
+
+/* Protoboard accent: the diagram boards are perfboard, a 0.1 in grid of copper pads. */
+#pf circle { fill: none; stroke: color-mix(in srgb, var(--copper) 28%, transparent); stroke-width: 1.3; }
+.diagram .grid { fill: url(#pf); }

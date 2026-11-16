@@ -23,7 +23,7 @@
     e.target.classList.toggle("inview", e.isIntersecting);
     if (e.isIntersecting) e.target.dispatchEvent(new CustomEvent("inview"));
   }), { threshold: 0.15 });
-  $$(".hero, .project, .arena, .experience, .contact, .brief, .capdraw, .otvdraw").forEach((el) => inview.observe(el));
+  $$(".hero, .project, .arena, .experience, .contact, .brief, .capdraw").forEach((el) => inview.observe(el));
 
   // ------------------------------------------------------------ Component artwork
   // Each block keeps its layout but gains the outline of the real part: pins on chips,
@@ -219,7 +219,7 @@
 
 // ===================================================================== Round two
 // Exploded hero layers, schematic view, camera's-eye arena, linked animations,
-// cursor lighting and the exploded Brimcam cap.
+// cursor lighting, current in the name and the exploded Brimcam cap.
 (() => {
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const FINE = matchMedia("(hover: hover) and (pointer: fine) and (min-width: 761px)");
@@ -465,7 +465,7 @@
   // ------------------------------------------------------------ Cursor lighting
   // A highlight follows the pointer across diagrams, like a board under a lamp.
   if (FINE.matches && !REDUCED) {
-    $$(".diagram .scroll, .capdraw svg, .otvdraw svg").forEach((el) => {
+    $$(".diagram .scroll, .capdraw svg").forEach((el) => {
       const host = el.tagName === "svg" ? el.parentNode : el;
       host.classList.add("lit-host");
       const glint = document.createElement("i");
@@ -489,7 +489,7 @@
       });
     });
   } else if (!REDUCED) {
-    const hosts = $$(".diagram .scroll, .capdraw, .otvdraw").map((host) => {
+    const hosts = $$(".diagram .scroll, .capdraw").map((host) => {
       host.classList.add("lit-host", "sweep");
       const glint = document.createElement("i");
       glint.className = "glint";
@@ -510,6 +510,16 @@
     };
     addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(sweep); } }, { passive: true });
     sweep();
+  }
+
+  // ------------------------------------------------------------ Current in the name
+  // A faint flow of current runs through the copper letters; pointing at a project net speeds it up.
+  const heroEl = $(".hero");
+  if (heroEl) {
+    $$(".index a").forEach((a) => {
+      a.addEventListener("mouseenter", () => heroEl.classList.add("hot"));
+      a.addEventListener("mouseleave", () => heroEl.classList.remove("hot"));
+    });
   }
 
   // ------------------------------------------------------------ Exploded Brimcam cap

@@ -336,39 +336,51 @@ onScroll();
 })();
 
 // Margin trace: one copper trace down the left gutter, drawn as you scroll,
-// with a via and a stub into each section it passes.
+// with a via and a stub into each section it passes. Each section's top edge is a wire
+// branching off it, and copper runs across that wire once the trace reaches it.
 (() => {
   const hero = document.querySelector(".hero");
   const line = document.querySelector(".hero-trace .line");
   const stops = [...document.querySelectorAll(".project h2, .experience h2, .contact h2")];
   if (!hero || !line || !stops.length) return;
-  let svg, base, drawn, len = 0, vias = [], pts = [];
+  const sections = [...document.querySelectorAll(".project, .experience, .contact")];
+  let svg, base, drawn, len = 0, vias = [], pts = [], branches = [];
 
   const build = () => {
     svg?.remove();
     const gutter = parseFloat(getComputedStyle(hero).paddingLeft);
-    if (gutter < 32 || innerWidth <= 760) { svg = null; return; }
+    if (gutter < 32 || innerWidth <= 760) { svg = null; document.documentElement.classList.remove("mtrace-on"); return; }
+    const W = document.documentElement.clientWidth;
     const X = Math.round(gutter * 0.45);
     const l = line.getBoundingClientRect();
     const y0 = l.top + scrollY + l.height / 2;
     const ys = stops.map((h) => { const r = h.getBoundingClientRect(); return r.top + scrollY + Math.min(r.height / 2, 40); });
-    const end = ys[ys.length - 1];
+    const bys = sections.map((s) => Math.round(s.getBoundingClientRect().top + scrollY) + 0.5);
+    const end = Math.max(ys[ys.length - 1], bys[bys.length - 1]);
     svg = document.createElementNS(SVGNS, "svg");
     svg.setAttribute("class", "mtrace");
-    svg.setAttribute("width", gutter);
+    svg.setAttribute("width", W);
     svg.setAttribute("height", end + 20);
     svg.setAttribute("aria-hidden", "true");
     const d = `M${gutter},${y0} H${X + 10} Q${X},${y0} ${X},${y0 + 10} V${end}`;
     svg.innerHTML =
       `<path class="base" d="${d}"/><path class="drawn" d="${d}"/>` +
-      ys.map((y) => `<g><path class="stub" d="M${X},${y} H${gutter - 6}"/><circle class="via" cx="${X}" cy="${y}" r="5"/></g>`).join("");
+      bys.map((y) => `<g class="br"><path class="branch" d="M${X},${y} H${W - gutter}"/><path class="bfill" d="M${X},${y} H${W - gutter}"/>` +
+        `<circle class="tee" cx="${X}" cy="${y}" r="3.5"/><circle class="bend" cx="${W - gutter}" cy="${y}" r="5"/></g>`).join("") +
+      ys.map((y) => `<g class="st"><path class="stub" d="M${X},${y} H${gutter - 6}"/><circle class="via" cx="${X}" cy="${y}" r="5"/></g>`).join("");
     document.body.appendChild(svg);
     base = svg.querySelector(".base");
     drawn = svg.querySelector(".drawn");
     len = base.getTotalLength();
     drawn.style.strokeDasharray = `${len} ${len}`;
-    vias = [...svg.querySelectorAll("g")];
+    vias = [...svg.querySelectorAll("g.st")];
     pts = ys;
+    branches = [...svg.querySelectorAll("g.br")].map((g, i) => {
+      const fill = g.querySelector(".bfill"), bl = W - gutter - X;
+      fill.style.strokeDasharray = `${bl} ${bl}`;
+      return { y: bys[i], bl, fill, tee: g.querySelector(".tee"), end: g.querySelector(".bend") };
+    });
+    document.documentElement.classList.add("mtrace-on");
     update();
   };
 
@@ -388,6 +400,13 @@ onScroll();
     const target = scrollY + innerHeight * 0.6;
     drawn.style.strokeDashoffset = len - lengthAtY(target);
     vias.forEach((g, i) => g.classList.toggle("lit", pts[i] <= target));
+    // Copper runs across a section's wire over the next third of a screen after the trace reaches it.
+    branches.forEach((b) => {
+      const f = Math.min(1, Math.max(0, (target - b.y) / (innerHeight * 0.35)));
+      b.fill.style.strokeDashoffset = b.bl * (1 - f);
+      b.tee.classList.toggle("lit", f > 0);
+      b.end.classList.toggle("lit", f >= 1);
+    });
   };
   addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
   let t;
