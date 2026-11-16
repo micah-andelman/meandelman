@@ -320,7 +320,7 @@ a:hover { color: var(--mask); }
 .parts [aria-expanded="true"] .pt::after { content: " –"; }
 
 /* ---------- small screens ---------- */
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   body { font-size: 17px; }
   .top { padding-top: 12px; padding-bottom: 12px; }
   .top nav a[href="#experience"] { display: none; }
@@ -392,7 +392,7 @@ html.powerup main { animation: power-flicker .45s steps(1); }
 .mtrace .via { fill: var(--paper); stroke: var(--rule); stroke-width: 2; transition: fill .3s, stroke .3s; }
 .mtrace .lit .stub { stroke: var(--copper); }
 .mtrace .lit .via { fill: var(--copper); stroke: var(--copper); }
-@media (max-width: 760px) { .mtrace { display: none; } }
+@media screen and (max-width: 760px) { .mtrace { display: none; } }
 
 /* ---------- oscilloscope intro: the name is traced by a beam, once ---------- */
 html.scope-pending .hero h1 { color: transparent; }
@@ -462,7 +462,7 @@ html.scope-pending .hero h1 { color: transparent; }
   .parts .pn img { display: none; }
 
   .arena { margin: 8px 0 0; break-inside: avoid; }
-  .arena svg { max-height: 62mm; width: auto; max-width: 100%; border-radius: 0; }
+  .arena svg { max-height: 48mm; width: auto; max-width: 100%; border-radius: 0; }
   .arena figcaption p { font-size: 8.5pt; max-width: none; }
 
   .experience table { display: table; }
@@ -481,7 +481,7 @@ html.scope-pending .hero h1 { color: transparent; }
   a { text-decoration: none; }
 }
 
-@media (max-width: 420px) { .top nav a[href="#work"] { display: none; } }
+@media screen and (max-width: 420px) { .top nav a[href="#work"] { display: none; } }
 
 /* Signal scenes: pinned diagrams whose traces light up as you scroll through them. */
 html.lenis, html.lenis body { height: auto; }
@@ -500,7 +500,7 @@ html.lenis { scroll-behavior: auto; }
 .steps li::before { content: ""; position: absolute; left: 0; top: .55em; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; transition: background .3s; }
 .steps li.on { color: var(--ink); }
 .steps li.on::before { background: var(--copper); border-color: var(--copper); }
-@media (max-width: 760px) { .scene { height: auto !important; } .scene > .diagram { position: static; } .steps { display: none; } }
+@media screen and (max-width: 760px) { .scene { height: auto !important; } .scene > .diagram { position: static; } .steps { display: none; } }
 @media print {
   .scene { height: auto !important; margin-top: 0; }
   .scene > .diagram { position: static; }
@@ -521,7 +521,7 @@ html.lenis { scroll-behavior: auto; }
 .tools .egg.new { opacity: .8; }
 .tools .egg.new::after { content: ""; position: absolute; top: 3px; right: -1px; width: 5px; height: 5px; border-radius: 50%; background: var(--copper); }
 .tools button.heat:focus-visible, .tools button.egg:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; opacity: 1; }
-@media (max-width: 760px) { .tools .heat { display: none !important; } .tools { gap: 10px; } }
+@media screen and (max-width: 760px) { .tools .heat { display: none !important; } .tools { gap: 10px; } }
 
 /* egg list */
 .eggs { position: fixed; z-index: 20; width: min(300px, calc(100vw - 24px)); padding: 14px 10px 8px; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
@@ -612,12 +612,12 @@ html.thermal .heatkey { display: flex; }
 @media print {
   .la, .probe, .serial, .eggs, .codeview, .code-btn, .tools, .heatkey, .status { display: none !important; }
 }
-@media (max-width: 760px) { .la { padding: 0 16px; } }
+@media screen and (max-width: 760px) { .la { padding: 0 16px; } }
 
 /* ---------- audit fixes ---------- */
 /* Hash links (meandelman.com/#otv-route) land below the sticky header. */
 #otv-route, #experience, #contact { scroll-margin-top: 76px; }
-@media (max-width: 760px) { .cvb pre { font-size: 12.5px; } .cvh { padding: 12px 14px; } .cvb pre, .cvb .file { padding-left: 14px; margin-left: 0; } }
+@media screen and (max-width: 760px) { .cvb pre { font-size: 12.5px; } .cvh { padding: 12px 14px; } .cvb pre, .cvb .file { padding-left: 14px; margin-left: 0; } }
 @media print { .parts { margin-top: 14px; } }
 
 /* Theme switch icon: a sun in light mode, a moon in dark mode, riding on the knob. */
@@ -659,7 +659,7 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
   .arena figcaption > p { order: 4; margin-top: 16px; }
   .arena .replay { order: 5; justify-self: start; margin-top: 12px; }
 }
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   .arena figcaption .runstat, .arena figcaption > p, .arena .replay { margin-left: var(--gutter); margin-right: var(--gutter); }
 }
 @media print { .runstat { display: none; } .arena { display: block; } }
@@ -726,7 +726,7 @@ html.scope-pending .hero h1 { background: none; }
 .hero-nets .on .net-pad { fill: var(--copper); stroke: var(--copper); }
 .hero-nets .on .net-via { fill: var(--copper); }
 html.nets .hero-trace .drop { display: none; }
-@media (max-width: 760px) { .hero-nets, .silk .fid, .silk .silk-rev { display: none; } .silk .mh { width: 16px; height: 16px; border-width: 4px; } }
+@media screen and (max-width: 760px) { .hero-nets, .silk .fid, .silk .silk-rev { display: none; } .silk .mh { width: 16px; height: 16px; border-width: 4px; } }
 
 /* ---------- 2. Component artwork on diagram blocks ---------- */
 .blk .deco .pin { fill: color-mix(in srgb, var(--ink-3) 75%, var(--paper)); }
@@ -830,7 +830,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 .finder .f-rec { fill: #ff4b42; animation: rec 1.4s steps(1) infinite; }
 @keyframes rec { 50% { opacity: .2; } }
 .finder .f-hud { font-size: 11.5px; font-weight: 600; fill: rgb(255 255 255 / .85); letter-spacing: .04em; }
-@media (max-width: 760px) { .brimviz { grid-template-columns: 1fr; } }
+@media screen and (max-width: 760px) { .brimviz { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .finder .f-rec { animation: none; } .finder .f-lock, .finder .f-total { transition: none; } }
 
 /* ---------- 5. Stats on 7-segment displays ---------- */
@@ -870,7 +870,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 .conn .pin::after { content: ""; position: absolute; left: 5px; top: 5px; width: 6px; height: 6px; border-radius: 1px; background: color-mix(in srgb, var(--copper) 70%, var(--ink-3)); transition: background .2s, box-shadow .2s; }
 .conn a:hover .pin, .conn a:focus-visible .pin { background: color-mix(in srgb, var(--copper) 30%, var(--board)); box-shadow: inset 0 0 0 2px var(--copper); }
 .conn a:hover .pin::after, .conn a:focus-visible .pin::after { background: var(--copper); box-shadow: 0 0 8px var(--copper); }
-@media (max-width: 760px) { .conn { display: block; } }
+@media screen and (max-width: 760px) { .conn { display: block; } }
 
 /* ---------- 6. Title block ---------- */
 .foot { align-items: end; }
@@ -897,7 +897,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
   .conn { border: 0; padding: 0; background: none; } .conn .pin, .conn .conn-ref { display: none; }
 }
 .experience tbody td:not(.ref):not(.when) { width: 56%; max-width: none; }
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   .experience thead { display: none; }
   .experience tbody th[scope="row"], .experience tbody td { width: auto !important; }
   .experience td.ref { padding: 0 0 2px; }
@@ -1047,7 +1047,7 @@ html.thermal .diagram.schem .pad { fill: #ffe9a8; stroke: #ffe9a8; }
 .rail.l { left: 0; box-shadow: inset -1px 0 0 var(--rule); }
 .rail.r { right: 0; box-shadow: inset 1px 0 0 var(--rule); }
 .rail.l b { position: absolute; top: 90px; left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 10px var(--text); color: color-mix(in srgb, var(--ink) 50%, transparent); letter-spacing: .06em; white-space: nowrap; }
-@media (max-width: 760px) { .rails { display: none; } }
+@media screen and (max-width: 760px) { .rails { display: none; } }
 @media print { .rails { display: none; } }
 html.explode .hero { isolation: auto; }
 html.explode .hero::before, html.explode .hero::after { transform: translateZ(calc(var(--e) * -80px)); }
@@ -1075,14 +1075,14 @@ html .hero > .ly.ly, html .hero > .ly-tag.ly-tag { position: absolute; z-index: 
 .diagram .blk .sym .sym-ref { fill: var(--copper); }
 .diagram .blk .sym .sym-v { fill: var(--ink-2); }
 .diagram .blk .sym .sym-m { fill: var(--ink); }
-@media (max-width: 760px) { .viewsw { display: none; } }
+@media screen and (max-width: 760px) { .viewsw { display: none; } }
 @media print { .viewsw, .figbar { display: none !important; } }
 
 /* =====================================================================
    Phone: the real diagrams come back as swipeable boards above the parts
    lists, and the round-two graphics run on touch screens too.
    ===================================================================== */
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   .diagram .scroll { display: block; overflow-x: auto; overflow-y: hidden; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; overscroll-behavior-x: contain; }
   .diagram .scroll svg { width: 660px; max-width: none; max-height: none; }
   .diagram.flow .scroll svg { width: 620px; }
@@ -1113,9 +1113,9 @@ html.explode .hero h1, html.explode .hero .hero-trace, html.explode .hero .hero-
 html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transform: translateZ(calc(var(--e) * 230px * var(--zs))); }
 /* Touch screens: the lamp highlight sweeps with scrolling instead of following a cursor. */
 .lit-host.sweep > .glint { opacity: 1; transition: none; }
-@media (max-width: 760px) { .swipe-hint { display: flex; } }
+@media screen and (max-width: 760px) { .swipe-hint { display: flex; } }
 /* Phone: vertical boards fit the page width; no sideways swiping. */
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   html.vlayout .diagram .scroll { overflow: visible; margin: 0; padding: 0 0 4px; }
   html.vlayout .diagram .scroll svg, html.vlayout .diagram.flow .scroll svg { width: 100%; height: auto; }
   html.vlayout #pluto .diagram .scroll { padding: 0 14px; }
@@ -1129,14 +1129,14 @@ html.explode .hero .silk, html.explode .hero .hero-foot, .ly-tag-silk { transfor
 .schem-layer.diagram svg { display: block; width: 100%; height: auto; }
 .schem-edge { position: absolute; top: 0; bottom: 0; left: calc(var(--w, 0) * 100%); width: 2px; margin-left: -1px; background: var(--copper); box-shadow: 0 0 10px var(--copper), 0 0 22px color-mix(in srgb, var(--copper) 60%, transparent); opacity: 0; transition: opacity .2s; pointer-events: none; }
 .scroll.wiping .schem-edge { opacity: 1; }
-@media (max-width: 760px) { html.vlayout .schem-layer.diagram { right: auto; width: 100%; } .schem-edge { bottom: 4px; } }
+@media screen and (max-width: 760px) { html.vlayout .schem-layer.diagram { right: auto; width: 100%; } .schem-edge { bottom: 4px; } }
 @media print { .schem-layer, .schem-edge { display: none !important; } }
 /* While the scan line crosses a part, its labels hide instead of splicing block and schematic text. */
 .has-schem .blk text { transition: opacity .18s; }
 html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text { opacity: 0 !important; }
 @media print { html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text { opacity: 1 !important; } }
 /* Phone: the schematic wipes top to bottom, with a horizontal scan line. */
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {
   html.vlayout .schem-layer.diagram { clip-path: inset(0 0 calc((1 - var(--w, 0)) * 100%) 0); }
   html.vlayout .schem-edge { left: 0; right: 0; bottom: auto; top: calc(var(--w, 0) * (100% - 4px)); width: auto; height: 2px; margin: -1px 0 0; }
 }
@@ -1149,3 +1149,18 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
 /* No 3D tilt: rotating the board rasterized its text and blurred it on hover.
    The moving highlight stays; it's a plain overlay, so text stays sharp. */
 .lit-host, .lit-host.lamp { transform: none !important; transition: none; }
+
+/* ---------- Print: each project is one two-column grid ----------
+   Title and paragraphs on the left, details and stats on the right, then the
+   parts list and drawings full width. Removes the gap under each title. */
+@media print {
+  .project { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+  .project > .p-head, .project > .p-body { display: contents; }
+  .project > * { grid-column: 1 / -1; }
+  .project h2 { grid-column: 1; grid-row: 1; }
+  .project .meta { grid-column: 2; grid-row: 1 / span 2; }
+  .project .p-body > p.lede { grid-column: 1; grid-row: 2; margin-top: 6px; }
+  .project .p-body > p:not(.lede) { grid-column: 1; grid-row: 3; }
+  .project .specs { grid-column: 2; grid-row: 3; margin-top: 10px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; }
+  .experience thead { display: none; }
+}
