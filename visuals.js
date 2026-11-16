@@ -387,7 +387,7 @@
     svgEl("path", { class: "det-box", d: "M-24,-14 v-10 h10 M14,-24 h10 v10 M24,14 v10 h-10 M-14,24 h-10 v-10" }, det);
     svgEl("path", { class: "det-axis", d: "M0,0 H30" }, det);
     const lab = svgEl("g", { class: "det-lab" }, det);
-    svgEl("rect", { x: 28, y: -34, width: 150, height: 20, rx: 3 }, lab);
+    const labBox = svgEl("rect", { x: 28, y: -34, width: 150, height: 20, rx: 3 }, lab);
     const txt = svgEl("text", { x: 34, y: -20 }, lab);
     txt.textContent = "ArUco";
     const hud = svgEl("g", { class: "cam-hud", "aria-hidden": "true" }, arena.querySelector("svg"));
@@ -403,6 +403,14 @@
       det.setAttribute("transform", `translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`);
       det.querySelector(".det-axis").setAttribute("transform", `rotate(${(s.h ?? 0).toFixed(1)})`);
       txt.textContent = `x ${xm.toFixed(2)} m   y ${ym.toFixed(2)} m   θ ${Math.round(th)}°`;
+      // Keep the readout inside the arena: flip it left near the goal wall, and below near the top wall.
+      const w = Math.ceil(txt.getComputedTextLength()) + 12;
+      labBox.setAttribute("width", w);
+      const left = s.x + 28 + w > 800, below = s.y < 40;
+      labBox.setAttribute("x", left ? -28 - w : 28);
+      labBox.setAttribute("y", below ? 14 : -34);
+      txt.setAttribute("x", left ? -22 - w : 34);
+      txt.setAttribute("y", below ? 28 : -20);
       det.classList.add("on");
     });
   }

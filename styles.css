@@ -1156,3 +1156,57 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 /* Protoboard accent: the diagram boards are perfboard, a 0.1 in grid of copper pads. */
 #pf circle { fill: none; stroke: color-mix(in srgb, var(--copper) 28%, transparent); stroke-width: 1.3; }
 .diagram .grid { fill: url(#pf); }
+
+/* ---------- OTV in 3D (otv3d.js) ----------
+   Default (no JS, no WebGL): the chapters are a plain list. .o3-live pins a full-bleed stage for
+   seven screens of scroll; .o3-still shows one still view with the list under it. */
+.o3 { position: relative; margin: clamp(40px, 8vh, 96px) calc(-1 * var(--gutter)) 0; }
+.o3-stage { position: relative; }
+.o3 canvas, .o3-tags, .o3-bar, .o3-load, .o3-src { display: none; }
+.o3-steps { list-style: none; margin: 0; padding: 0 var(--gutter); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+.o3-n { font-size: 13px; font-weight: 600; color: var(--copper); letter-spacing: .04em; }
+.o3-steps h4 { margin: 2px 0 4px; font-family: var(--display); font-size: 28px; line-height: 1; font-weight: 700; }
+.o3-steps p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--ink-2); }
+
+.o3-live, .o3-still { --o3h: 100svh; }
+.o3-live { height: calc(var(--o3h) * 7); }
+.o3-live .o3-stage { position: sticky; top: 0; height: var(--o3h); overflow: hidden; }
+.o3-still .o3-stage { padding-top: min(78svh, 680px); }
+.o3-still canvas, .o3-still .o3-tags { bottom: auto !important; height: min(78svh, 680px) !important; }
+:is(.o3-live, .o3-still) canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+:is(.o3-live, .o3-still) .o3-tags { display: block; position: absolute; inset: 0; pointer-events: none; }
+.o3-tags svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.o3-lead { fill: none; stroke: var(--ink-3); stroke-width: 1; transition: opacity .25s; }
+.o3-dot { fill: var(--copper); transition: opacity .25s; }
+.o3-tag { position: absolute; left: 0; top: 0; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; transition: opacity .25s; will-change: transform; padding: 2px 7px; margin-top: -2px; border-radius: 5px; background: color-mix(in srgb, var(--paper) 86%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 60%, transparent); }
+.o3-tag.l { translate: -100% 0; }
+:is(.o3-live, .o3-still) .o3-src { display: block; position: absolute; right: var(--gutter); top: calc(var(--hh, 56px) + 14px); margin: 0; max-width: 34ch; text-align: right; font-size: 13px; color: var(--ink-3); }
+.o3-live .o3-steps { position: absolute; left: var(--gutter); bottom: clamp(28px, 7vh, 72px); width: min(380px, calc(100% - 2 * var(--gutter))); padding: 0; display: block; }
+.o3-live .o3-steps li { position: absolute; left: 0; bottom: 0; width: 100%; opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s; pointer-events: none; }
+.o3-live .o3-steps li.on { opacity: 1; transform: none; pointer-events: auto; }
+.o3-live .o3-steps li { padding: 16px 18px 18px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 70%, transparent); }
+.o3-live .o3-bar { padding: 7px 12px; border-radius: 8px; background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.o3-live .o3-src { padding: 4px 8px; border-radius: 6px; background: color-mix(in srgb, var(--paper) 70%, transparent); }
+.o3-live .o3-steps h4 { font-size: clamp(30px, 3.4vw, 44px); }
+.o3-live .o3-steps p { color: var(--ink-2); }
+.o3-live .o3-bar { display: flex; gap: 14px; position: absolute; right: var(--gutter); bottom: clamp(28px, 7vh, 72px); font-size: 13px; color: var(--ink-3); }
+.o3-bar span { transition: color .2s; }
+.o3-bar span.on { color: var(--copper); font-weight: 600; }
+.o3-live:not(.o3-ready) .o3-load, .o3-still:not(.o3-ready) .o3-load { display: block; position: absolute; inset: 0; margin: auto; height: 1.5em; text-align: center; font-size: 14px; color: var(--ink-3); }
+.o3-still .o3-steps { margin-top: 24px; }
+@media screen and (max-width: 760px) {
+  .o3-live, .o3-still { --o3h: 100svh; }
+  .o3-live { height: calc(var(--o3h) * 6); }
+  .o3-live .o3-bar { display: none; }
+  .o3-live .o3-steps { bottom: 20px; width: calc(100% - 2 * var(--gutter)); }
+  .o3-live .o3-steps li { padding: 14px 16px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); box-shadow: 0 0 0 1px var(--rule); }
+  .o3-live .o3-steps h4 { font-size: 28px; }
+  .o3-live .o3-steps p { font-size: 15px; }
+  .o3-tag { font-size: 12.5px; }
+  :is(.o3-live, .o3-still) .o3-src { left: var(--gutter); right: auto; text-align: left; font-size: 12px; }
+}
+@media print { .o3 { display: none; } }
+
+/* Labels that sit on the perfboard or the arena grid get a halo in the board colour,
+   so pads and grid dots never run through the letters. */
+.diagram .pins text, .arena .floor-lab, .arena svg > text, .arena g > text:not(.det-lab text) { paint-order: stroke; stroke: var(--board); stroke-width: 4px; stroke-linejoin: round; }

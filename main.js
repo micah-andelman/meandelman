@@ -411,6 +411,13 @@ onScroll();
   addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
   let t;
   addEventListener("resize", () => { clearTimeout(t); t = setTimeout(build, 150); });
+  // Content that grows after load (Pluto's typed brief, the 3D section) moves every section below it.
+  let lastH = 0;
+  new ResizeObserver(() => {
+    const h = document.body.scrollHeight;
+    if (Math.abs(h - lastH) < 2) return;
+    lastH = h; clearTimeout(t); t = setTimeout(build, 150);
+  }).observe(document.body);
   document.fonts.ready.then(build);
   addEventListener("load", build);
 })();

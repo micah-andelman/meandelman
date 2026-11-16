@@ -99,6 +99,25 @@
       </dl>
     </div>
 
+    <section class="o3" id="otv-3d" aria-labelledby="o3-t">
+      <h3 class="sr" id="o3-t">The OTV in 3D</h3>
+      <div class="o3-stage">
+        <canvas aria-hidden="true"></canvas>
+        <div class="o3-tags" aria-hidden="true"></div>
+        <p class="o3-src">From the team's Onshape CAD. Arduino, breadboard and wiring added from photos.</p>
+        <ol class="o3-steps">
+          <li><span class="o3-n">01 / 06</span><h4>The robot</h4><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and 12.8 cm tall. It has to stay under 3 kg and fit under the limbo.</p></li>
+          <li><span class="o3-n">02 / 06</span><h4>Drive</h4><p>Two JGY370 worm-gear motors, 6 V and 30 RPM, each turning an 8 cm wheel directly, with a caster at the back. Running the sides at different speeds steers it and lets it turn in place.</p></li>
+          <li><span class="o3-n">03 / 06</span><h4>Brains</h4><p>An Arduino UNO R4 WiFi. The overhead vision system tracks the ArUco marker on top and sends position and heading over Wi-Fi. It has to stop within 150 mm of the pool.</p></li>
+          <li><span class="o3-n">04 / 06</span><h4>Arm</h4><p>A printed arm between two SG90 servos. One motion swings it down over the pool, so the sensors at the tip face the water and the intake tube dips in.</p></li>
+          <li><span class="o3-n">05 / 06</span><h4>Depth</h4><p>The HC-SR04 at the tip times a ping off the water to measure how deep it is. The reading has to be right within 4 mm.</p></li>
+          <li><span class="o3-n">06 / 06</span><h4>Sample</h4><p>A peristaltic pump, switched by a MOSFET on D10, pulls at least 20 mL up the tube. The sample has to stay on board until the end of the run.</p></li>
+        </ol>
+        <div class="o3-bar" aria-hidden="true"><span>Robot</span><span>Drive</span><span>Brains</span><span>Arm</span><span>Depth</span><span>Sample</span></div>
+        <p class="o3-load" aria-hidden="true">Loading the CAD&hellip;</p>
+      </div>
+    </section>
+
     <figure class="diagram" data-diagram data-schem data-groups="Sensors|Controller and power|Outputs">
       <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
         <defs>
@@ -384,7 +403,6 @@ const int  MAX_PWM      = 153;</code></template>
           <rect class="dimbg" x="842" y="194" width="20" height="52" />
           <text x="0" y="0" text-anchor="middle" transform="translate(857 220) rotate(-90)">2.0 m</text>
         </g>
-        <g class="fid" aria-hidden="true"><g><circle class="fc" cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="3.5" /></g><g><circle class="fc" cx="868" cy="12" r="7" /><circle cx="868" cy="12" r="3.5" /></g><g><circle class="fc" cx="12" cy="464" r="7" /><circle cx="12" cy="464" r="3.5" /></g></g>
       </svg>
       <figcaption>
         <p>The route my code drives in ENES100's simulator, drawn to scale on the 4 × 2 m arena. The robot starts in a random square and samples the pool in the other one. It then drives up to the top wall, follows it through the 25 cm gap past both rows of obstacles, and cuts down to the limbo lane to reach the goal. I checked 40 randomized runs against the robot's footprint. It never went more than 1 mm past a wall, and it cleared the obstacles by 1.6 to 2 cm.</p>
@@ -499,14 +517,14 @@ const int  MAX_PWM      = 153;</code></template>
             <path class="cw-g" data-a="bat-" data-b="bd-" /><path class="cw-s" data-a="tp" data-b="bdt" />
             <path class="cw-s" data-a="led" data-b="bdl" /><path class="cw-c" data-a="ant" data-b="bda" />
           </g>
-          <g class="cl" data-dx="0" data-dy="-4" data-pins="bat+:366,236 bat-:366,246" data-s="1.3" data-c="314,239">
+          <g class="cl" data-dx="0" data-dy="-4" data-pins="bat+:365,229 bat-:366,239" data-s="1.3" data-c="314,239">
             <g class="part" style="transform-origin: 314px 239px"><g transform="rotate(-8 314 239)">
               <rect class="c-pouch" x="262" y="222" width="96" height="34" rx="4" />
               <path class="c-pouchseam" d="M268,227 H352 M268,251 H352" />
               <rect class="c-pcm" x="352" y="226" width="14" height="26" rx="1.5" /><path class="c-pcmic" d="M355,231 h8 M355,236 h5 M355,247 h8" />
               <text class="c-print" x="272" y="237">LiPo 3.7 V</text><text class="c-print" x="272" y="250">500 mAh</text>
             </g></g>
-            <g class="lab"><path d="M264.6,253.3 L232,306 L160,306" /><circle cx="264.6" cy="253.3" r="2.5" /><text class="lt" x="152" y="302" text-anchor="end">500 mAh LiPo</text><text class="lt s" x="152" y="320" text-anchor="end">protected, under the crown</text><g class="ln" transform="translate(160 306)"><circle r="15" /><text y="6">2</text></g></g>
+            <g class="lab"><path d="M245.5,249 L232,306 L160,306" /><circle cx="245.5" cy="249" r="2.5" /><text class="lt" x="152" y="302" text-anchor="end">500 mAh LiPo</text><text class="lt s" x="152" y="320" text-anchor="end">protected, under the crown</text><g class="ln" transform="translate(160 306)"><circle r="15" /><text y="6">2</text></g></g>
           </g>
           <g class="cl" data-dx="-10" data-dy="128" data-pins="bd+:610,346 bd-:612,356 bdt:626,334 bdl:668,356 bda:662,336" data-s="2.1" data-c="640,358">
             <g class="part" style="transform-origin: 640px 358px"><g transform="rotate(16 640 358)">
@@ -649,5 +667,6 @@ const int  MAX_PWM      = 153;</code></template>
 <script src="main.js" defer></script>
 <script src="extras.js" defer></script>
 <script src="visuals.js" defer></script>
+<script type="module" src="otv3d.js"></script>
 </body>
 </html>
