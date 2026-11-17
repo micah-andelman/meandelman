@@ -1024,8 +1024,8 @@ async function course(sec, routes) {
     // Going under, as one barrel roll: the camera glides in low from behind, just right of the caster,
     // rolls as it passes underneath (that's where it looks up at the underside), keeps rolling out past
     // the front and comes up the other side upright, then turns back into the look-down shot.
-    // The path rides along with the robot; it lingers a moment underneath, then speeds out.
-    const mk = M_(), exitLen = (mk.limbo - mk.under) * 0.62;
+    // The path rides along with the robot; it lingers a moment underneath, then pulls back out slowly.
+    const mk = M_(), exitLen = (mk.limbo - mk.under) * 0.92;
     let u = -1;
     if (hold > HOLD && d >= mk.wall && d < mk.under) { const e_ = (d - mk.wall) / (mk.under - mk.wall); u = 0.5 * smoother(e_); }
     else if (d >= mk.under && d < mk.under + exitLen) { const x_ = (d - mk.under) / exitLen; u = 0.5 + 0.5 * smoother(x_); }
@@ -1035,7 +1035,7 @@ async function course(sec, routes) {
       ROLL.getPoint(u, tmp);
       const pos = kA.copy(carrier.position).addScaledVector(side, tmp.x).addScaledVector(fwd, tmp.z).setY(tmp.y);
       // ease in from the orbit at the start and back out to it at the end
-      const into = smoother(clamp(u / 0.12)), outof = smoother(clamp((u - 0.88) / 0.12));
+      const into = smoother(clamp(u / 0.12)), outof = smoother(clamp((u - 0.76) / 0.24));
       camPos.lerp(pos, into * (1 - outof));
       camTgt.lerp(kB.copy(carrier.position).setY(0.05), into * (1 - outof));
       // a stable "up" that never lines up with the view, then the roll on top of it
