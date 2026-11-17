@@ -1287,3 +1287,45 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 @media screen and (max-width: 900px) { .pluto-parts { grid-template-columns: 1fr 1fr; } .pp-tools { grid-column: 1 / -1; } }
 @media screen and (max-width: 560px) { .pluto-parts { grid-template-columns: 1fr; } .pp-tools dl { grid-template-columns: 1fr; } }
 @media print { .pluto-parts { grid-template-columns: 1fr 1fr 2fr; gap: 10px; margin-top: 8px; padding-top: 6px; } .pluto-parts dd { font-size: 8pt; } .pluto-parts dt { font-size: 9pt; } }
+
+/* ---------- The OTV diagram as a finished PCB (visuals.js) ----------
+   Black parts with silkscreen outlines on solder mask, traces in copper under the mask, a hatched
+   ground pour that keeps clear of every trace and part. Only the real board: the schematic copy
+   sits in .schem-layer and hides the finish. */
+#otv .scroll > svg { --silk: color-mix(in srgb, var(--ink) 40%, transparent); --tin: #b9c2be; }
+#otv .scroll > svg .grid { display: none; }
+.pour { fill: url(#pour); }
+.pour-ln { stroke: color-mix(in srgb, var(--copper) 20%, transparent); stroke-width: 1.3; }
+.keep { fill: none; stroke: var(--board); stroke-width: 18; stroke-linejoin: round; stroke-linecap: round; }
+.keep-blk { fill: var(--board); }
+.ep0 { stop-color: #2b3233; }
+.ep1 { stop-color: #121617; }
+#otv .scroll > svg .tr { stroke: color-mix(in srgb, var(--copper) 40%, var(--board)); stroke-width: 3; stroke-linejoin: miter; }
+#otv .scroll > svg .tr.on { stroke: var(--copper); stroke-width: 3.5; }
+#otv .scroll > svg .sig { stroke-width: 3; stroke-linejoin: miter; }
+#otv .scroll > svg .blk > rect:not(.court), #otv .scroll > svg .blk.mcu > rect:not(.court) { fill: url(#epoxy); stroke: #3c4644; stroke-width: 1; }
+#otv .scroll > svg .blk:hover > rect:not(.court), #otv .scroll > svg .blk.on > rect:not(.court) { stroke: var(--copper); stroke-width: 2; }
+#otv .scroll > svg .blk:focus-visible > rect:not(.court) { stroke: var(--focus); stroke-width: 3; }
+#otv .scroll > svg .blk .court { fill: none; stroke: var(--silk); stroke-width: 1.2; }
+#otv .scroll > svg .blk.on .court { stroke: color-mix(in srgb, var(--copper) 70%, transparent); }
+#otv .scroll > svg .blk > text, #otv .scroll > svg .blk.mcu > text { fill: #eef2f0; }
+#otv .scroll > svg .blk > .sub, #otv .scroll > svg .blk.mcu > .sub { fill: #9ba7a2; }
+#otv .scroll > svg .blk > .ref, #otv .scroll > svg .blk.mcu > .ref { fill: #7f8b87; opacity: 1; }
+#otv .scroll > svg .blk.mcu.hot > rect:not(.court) { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--copper) 45%, transparent)); }
+#otv .scroll > svg .blk .pin1 { fill: #5b6663; }
+#otv .scroll > svg .blk .deco .pin, #otv .scroll > svg .blk .deco .term { fill: var(--tin); }
+#otv .scroll > svg .blk .deco .hdr { fill: #1a1f20; stroke: var(--silk); stroke-width: 1; }
+#otv .scroll > svg .blk .deco .fin { fill: color-mix(in srgb, var(--tin) 70%, #3a4240); }
+#otv .scroll > svg .blk .deco .ant { stroke: color-mix(in srgb, var(--copper) 75%, var(--board)); }
+#otv .scroll > svg .blk .deco .hub.ring { fill: #1a1f20; stroke: var(--tin); stroke-width: 1.4; }
+#otv .scroll > svg .blk .deco .horn { stroke: var(--tin); stroke-width: 1.6; }
+#otv .scroll > svg .blk .sign { stroke: #9ba7a2; }
+#otv .scroll > svg .blk.on .deco .pin, #otv .scroll > svg .blk.on .deco .term { fill: var(--copper); }
+#otv .scroll > svg .blk.on .deco .ant, #otv .scroll > svg .blk.on .deco .horn, #otv .scroll > svg .blk.on .deco .hub.ring { stroke: var(--copper); }
+.silk-name { font-size: 12px; font-weight: 600; letter-spacing: .14em; fill: var(--silk); }
+.diagram.schem :is(.pour, .keep, .keep-blk, .court, .silk-name) { display: none; }
+html.thermal :is(.pour, .keep, .keep-blk, .silk-name) { display: none; }
+html.thermal .diagram .blk .court { fill: none; stroke: none; }
+@media print { :is(.pour, .keep, .keep-blk) { display: none; } }
+#otv .scroll > svg .blk.mcu.hot :is(.deco rect, .court) { filter: none; }
+#otv .scroll > svg .blk .deco :is(.pin, .fin, .term) { stroke: none; }

@@ -66,15 +66,17 @@
     drive: (g, x, y, w, h) => {
       for (let i = 0; i < 5; i++) svgEl("rect", { class: "fin", x: x + w + 3 + i * 6, y: y + 8, width: 3, height: h - 16, rx: 1 }, g);
     },
+    // off-board parts plug in: a 3-pin servo header for the arm, a 2-way screw terminal for the pump
     arm: (g, x, y, w, h) => {
-      const cx = x + w + 18, cy = y + h / 2;
-      svgEl("path", { class: "horn", d: `M${cx - 12},${cy} L${cx + 12},${cy}` }, g);
-      svgEl("circle", { class: "hub", cx, cy, r: 5 }, g);
+      const cx = x + w + 4, cy = y + h / 2;
+      svgEl("rect", { class: "hdr", x: cx, y: cy - 16, width: 12, height: 32, rx: 1.5 }, g);
+      svgEl("rect", { class: "pin", x: cx + 3.4, y: cy - 12.6, width: 5.2, height: 5.2 }, g);
+      [0, 10].forEach((d) => svgEl("circle", { class: "pin", cx: cx + 6, cy: cy + d, r: 2.6 }, g));
     },
     pump: (g, x, y, w, h) => {
-      const cx = x + w + 18, cy = y + h / 2;
-      svgEl("circle", { class: "hub ring", cx, cy, r: 11 }, g);
-      svgEl("path", { class: "horn", d: `M${cx},${cy} L${cx + 8},${cy - 3} M${cx},${cy} L${cx - 2},${cy + 8} M${cx},${cy} L${cx - 6},${cy - 6}` }, g);
+      const cx = x + w + 4, cy = y + h / 2;
+      svgEl("rect", { class: "hdr", x: cx, y: cy - 14, width: 16, height: 28, rx: 1.5 }, g);
+      [-6.5, 6.5].forEach((d) => { svgEl("circle", { class: "hub ring", cx: cx + 8, cy: cy + d, r: 4.2 }, g); svgEl("path", { class: "horn", d: `M${cx + 5.5},${cy + d + 2.5} l5,-5` }, g); });
     },
     power: (g, x, y, w, h) => {
       svgEl("rect", { class: "term", x: x + w, y: y + h / 2 - 9, width: 7, height: 18, rx: 2 }, g);
@@ -88,6 +90,37 @@
     const art = ART[b.dataset.k];
     if (art && b.closest("#otv")) deco(b, art);
   });
+
+  // ------------------------------------------------------------ A finished board (OTV)
+  // The OTV diagram reads as a made PCB rather than perfboard: a hatched ground pour that keeps
+  // clear of every trace and part, silkscreen outlines round the parts and the board's name in
+  // the corner. The schematic copy hides all of it (styles.css).
+  const otvSvg = $("#otv [data-diagram] svg");
+  if (otvSvg) {
+    const vb = otvSvg.viewBox.baseVal, VW = vb.width || 960, VH = vb.height || 440;
+    const defs = otvSvg.querySelector("defs");
+    const pat = svgEl("pattern", { id: "pour", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+    svgEl("line", { x1: 0, y1: 0, x2: 0, y2: 6, class: "pour-ln" }, pat);
+    const ep = svgEl("linearGradient", { id: "epoxy", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    svgEl("stop", { offset: 0, class: "ep0" }, ep); svgEl("stop", { offset: 1, class: "ep1" }, ep);
+    const first = otvSvg.querySelector(".tr");
+    const under = (el) => { first.before(el); return el; };
+    under(svgEl("rect", { class: "pour", x: 30, y: 30, width: VW - 60, height: VH - 60, rx: 8, "aria-hidden": "true" }));
+    $$(".tr", otvSvg).forEach((t) => under(svgEl("path", { d: t.getAttribute("d"), class: "keep", "aria-hidden": "true" })));
+    $$(".blk", otvSvg).forEach((b) => {
+      const r = b.querySelector(":scope > rect");
+      const x = +r.getAttribute("x"), y = +r.getAttribute("y"), w = +r.getAttribute("width"), h = +r.getAttribute("height");
+      let bb = null; try { bb = b.getBBox(); } catch (e) { bb = null; }
+      const box = bb && bb.width ? { x: bb.x, y: bb.y, w: bb.width, h: bb.height } : { x, y, w, h };
+      const k = svgEl("rect", { class: "keep-blk", x: box.x - 10, y: box.y - 10, width: box.w + 20, height: box.h + 20, rx: 6, "aria-hidden": "true" });
+      const tf = b.getAttribute("transform");
+      if (tf) k.setAttribute("transform", tf);
+      under(k);
+      r.after(svgEl("rect", { class: "court", x: x - 5, y: y - 5, width: w + 10, height: h + 10, rx: 3, "aria-hidden": "true" })); // after the body, so :scope > rect still finds the body
+    });
+    const name = svgEl("text", { class: "silk-name", x: VW - 42, y: VH - 13, "text-anchor": "end", "aria-hidden": "true" }, otvSvg);
+    name.textContent = "ENES100 OTV";
+  }
 
   // ------------------------------------------------------------ 7-segment displays
   // Segments a-g on a 30 x 54 cell, slanted like a bench meter. Unlit segments stay faintly visible.
@@ -376,6 +409,29 @@
       setW(0);
       onScroll();
     }
+    // Real boards are routed with 45-degree corners: cut each square corner of the board's
+    // traces (and their fills and clearances). Endpoints stay put, so pads still line up.
+    const chamfer = (d, C = 10) => {
+      const tok = d.match(/[MHVL]|-?[\d.]+/g), pts = [];
+      let x = 0, y = 0, cmd = "";
+      for (let i = 0; i < tok.length; ) {
+        if (/[MHVL]/.test(tok[i])) cmd = tok[i++];
+        if (cmd === "H") x = +tok[i++]; else if (cmd === "V") y = +tok[i++]; else { x = +tok[i++]; y = +tok[i++]; }
+        if (cmd === "M" && pts.length) return d; // more than one subpath: leave it alone
+        pts.push([x, y]);
+      }
+      if (pts.length < 3) return d;
+      const out = [`M${pts[0][0]},${pts[0][1]}`];
+      for (let i = 1; i < pts.length - 1; i++) {
+        const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+        const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), c = Math.min(C, l1 / 2, l2 / 2);
+        if (!l1 || !l2) continue;
+        out.push(`L${(bx - (bx - ax) / l1 * c).toFixed(1)},${(by - (by - ay) / l1 * c).toFixed(1)}`, `L${(bx + (cx - bx) / l2 * c).toFixed(1)},${(by + (cy - by) / l2 * c).toFixed(1)}`);
+      }
+      const e = pts[pts.length - 1]; out.push(`L${e[0]},${e[1]}`);
+      return out.join(" ");
+    };
+    $$(".scroll > svg .tr, .scroll > svg .sig, .scroll > svg .keep", otvFig).forEach((p) => p.setAttribute("d", chamfer(p.getAttribute("d"))));
   }
 
   // ------------------------------------------------------------ Arena: camera's-eye view

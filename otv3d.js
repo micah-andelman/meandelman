@@ -1551,7 +1551,6 @@ async function plutoScene(sec) {
   // soft light: a round glow for sprites, a strip that's bright down the middle, a fade for reflections
   const glowTex = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.22, "rgba(255,255,255,.5)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, 128, 128); }).t;
   const stripTex = canvasTex(8, 64, (c) => { const g = c.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, 8, 64); }).t;
-  const fadeTex = canvasTex(8, 64, (c) => { const g = c.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, "#000"); g.addColorStop(1, "#fff"); c.fillStyle = g; c.fillRect(0, 0, 8, 64); }).t;
   const add = (color, map, opacity) => new THREE.MeshBasicMaterial({ color, map, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
   const sprite = (color, size, opacity = 1) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); sp.scale.setScalar(size); return sp; };
   const strip = (len, w, color, opacity) => { const g = new THREE.PlaneGeometry(1, w); g.translate(0.5, 0, 0); g.rotateX(-Math.PI / 2); const m = new Mesh(g, add(color, stripTex, opacity)); m.scale.x = len; return m; };
@@ -1639,11 +1638,16 @@ async function plutoScene(sec) {
     const tip = sprite(color, 0.2, 0.7); g.add(tip);
     const packets = [0, 1, 2].map(() => { const sp = sprite("#ffffff", 0.07, 0.9); sp.add(sprite(color, 2.6, 0.6)); g.add(sp); return sp; });
     const lt = labelTex(text, color, reply), PX = 0.0014;
-    const label = flatPlane(lt.t, lt.w * PX, lt.h * PX);
-    label.position.set((x0 + x1) / 2, 0.075 + lt.h * PX / 2, -0.02); label.rotation.x = -0.32; g.add(label);
+    // the card wipes in from the sender's side as the arrow grows
+    const lw = lt.w * PX, lg = new THREE.PlaneGeometry(lw, lt.h * PX); lg.translate(dir * lw / 2, 0, 0);
+    const label = new Mesh(lg, new THREE.MeshBasicMaterial({ map: lt.t, toneMapped: false, transparent: true, depthWrite: false }));
+    label.position.set((x0 + x1) / 2 - dir * lw / 2, 0.075 + lt.h * PX / 2, -0.02); label.rotation.x = -0.32; g.add(label);
     // the drop from the arrow down to the floor, so each row reads as a row
     const tick = new Mesh(new THREE.BoxGeometry(0.006, 0.1, 0.006), basic(color, { opacity: 0.35 })); tick.position.set(x0, -0.05, 0); g.add(tick);
-    return { g, a, b, s0, s1, dir, x0, x1, L, segs, head, dot, pulse, label, mat, k, halo, spill, tip, packets, reply };
+    const nt = canvasTex(64, 64, (c) => { c.strokeStyle = "#9aa6a0"; c.lineWidth = 3; c.beginPath(); c.arc(32, 32, 26, 0, 7); c.stroke(); c.fillStyle = "#dfe7e3"; c.font = `700 30px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(String(k + 1), 32, 34); });
+    const num = flatPlane(nt.t, 0.12, 0.12); num.rotation.x = -Math.PI / 2; num.position.set(LX(0) - 0.55 - 0, -0.098, 0); g.add(num);
+    const guide = new Mesh(new THREE.BoxGeometry(LX(4) - LX(0) + 0.9, 0.002, 0.004), basic("#9aa6a0", { opacity: 0.12 })); guide.position.set(0.0, -0.099, 0); g.add(guide);
+    return { g, a, b, s0, s1, dir, x0, x1, L, segs, num, guide, head, dot, pulse, label, mat, k, halo, spill, tip, packets, reply };
   });
 
   // ---- the lane heads: screens that fill in as the message goes by
@@ -1668,8 +1672,10 @@ async function plutoScene(sec) {
     });
     const m = flatPlane(t.t, 0.8, 0.554); m.material.depthWrite = true; m.position.set(0, 0.33, 0); m.rotation.x = -0.1; heads[i].g.add(m);
     const halo = new Mesh(new THREE.PlaneGeometry(1.0, 0.75), add(L.color, haloTex, 0.35)); halo.position.set(0, 0.33, -0.012); halo.rotation.x = -0.1; heads[i].g.add(halo); heads[i].halo = halo;
-    const refl = new Mesh(m.geometry, new THREE.MeshBasicMaterial({ map: t.t, alphaMap: fadeTex, transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false }));
-    refl.position.set(0, -0.33, 0.06); refl.rotation.x = 0.1; refl.scale.y = -1; heads[i].g.add(refl);
+    // a solid frame behind the screen, so it reads as a thing standing there
+    const back = new Mesh(new THREE.BoxGeometry(0.82, 0.574, 0.03), new THREE.MeshStandardMaterial({ color: "#1d2522", roughness: 0.5, metalness: 0.4 }));
+    back.position.set(0, 0.33, -0.018); back.rotation.x = -0.1; heads[i].g.add(back);
+    const neck = new Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.03), back.material); neck.position.set(0, 0.06, -0.03); heads[i].g.add(neck);
     return t;
   };
   // my phone, standing up, with the chat on it
@@ -1806,7 +1812,10 @@ async function plutoScene(sec) {
       // once it has arrived, packets keep streaming along the current arrow
       const flow = k === now && q >= 1 && doneW < 0.5;
       A.packets.forEach((pk, j) => { pk.visible = flow; if (!flow) return; const u = (time / 900 + j / 3) % 1; pk.position.x = A.x0 + A.dir * A.L * u; pk.material.opacity = 0.9 * Math.sin(Math.PI * u); pk.children[0].material.opacity = 0.5 * Math.sin(Math.PI * u); });
-      A.label.material.opacity = o * smoother(clamp((q - 0.15) / 0.45));
+      const rv = Math.max(0.001, smoother(clamp((q - 0.05) / 0.75)));
+      A.label.scale.x = rv; A.label.material.map.repeat.x = rv; A.label.material.map.offset.x = A.dir > 0 ? 0 : 1 - rv;
+      A.label.material.opacity = o * smoother(clamp((q - 0.05) / 0.3));
+      A.num.material.opacity = o; A.guide.material.opacity = 0.12 * o;
     });
     ACTS.forEach((B) => {
       const a = arrows[B.k0];
