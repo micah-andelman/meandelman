@@ -1522,51 +1522,165 @@ if (plutoSec) {
 }
 
 async function plutoScene(sec) {
-  // One command, start to finish: a message leaves my phone, goes through Telegram's servers to the bot on
-  // Fly.io where Pluto (Claude Code, headless) runs, Pluto checks Canvas and the calendar, books the time,
-  // and the reply comes back the same way. It ends on the calendar with the new block in it.
+  // One command as a 3D sequence diagram. Five lanes (my phone, Telegram, Pluto on Fly.io, Canvas, Calendar)
+  // stand at the back and time runs toward you. Each message is an arrow that shoots from one lane to the
+  // next as you scroll, with what it carries written on it (replies are dashed). The lane heads are screens
+  // that fill in as things happen, and they slide along with you like a table's sticky header, so the
+  // current step always sits right under them. It ends pulled back on the whole exchange.
   const K = await kit();
   const { THREE } = K;
-  const { Vector3, Group, Mesh, MeshStandardMaterial: Std } = THREE;
+  const { Vector3, Group, Mesh } = THREE;
   const stage = sec.querySelector(".o3-stage");
   const canvas = sec.querySelector("canvas");
-  const tagsEl = sec.querySelector(".o3-tags");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const { renderer, scene } = makeRenderer(K, canvas);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // a light scene: full density on high-DPI screens
-  const rim = new THREE.DirectionalLight(0xbfe6ff, 0.8); rim.position.set(-1, 0.8, -1.2); scene.add(rim);
-  const cam = new THREE.PerspectiveCamera(34, 1, 0.01, 20);
-  const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
-  const FONT = "Barlow, system-ui, sans-serif";
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 60);
+  const FONT = "Barlow, system-ui, sans-serif", MONO = "ui-monospace, Consolas, monospace";
   const TEX = 2; // textures drawn at twice their layout size, so text stays sharp up close
   const canvasTex = (w, h, draw) => {
     const c = document.createElement("canvas"); c.width = w * TEX; c.height = h * TEX;
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    const redraw = (...a) => { const g = c.getContext("2d"); g.setTransform(TEX, 0, 0, TEX, 0, 0); draw(g, w, h, ...a); t.needsUpdate = true; };
+    const redraw = (...a) => { const g = c.getContext("2d"); g.setTransform(TEX, 0, 0, TEX, 0, 0); g.clearRect(0, 0, w, h); draw(g, w, h, ...a); t.needsUpdate = true; };
     redraw();
     return { t, redraw };
   };
-  const placeAt = (m, x, y, z) => { m.position.set(x, y, z); return m; };
   const wrap = (c, text, maxW) => { const words = text.split(" "), lines = []; let line = ""; for (const wd of words) { const t = line ? line + " " + wd : wd; if (c.measureText(t).width > maxW && line) { lines.push(line); line = wd; } else line = t; } if (line) lines.push(line); return lines; };
+  const basic = (color, o = {}) => new THREE.MeshBasicMaterial({ color, toneMapped: false, transparent: true, ...o });
+  // soft light: a round glow for sprites, a strip that's bright down the middle, a fade for reflections
+  const glowTex = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.22, "rgba(255,255,255,.5)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, 128, 128); }).t;
+  const stripTex = canvasTex(8, 64, (c) => { const g = c.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, 8, 64); }).t;
+  const fadeTex = canvasTex(8, 64, (c) => { const g = c.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, "#000"); g.addColorStop(1, "#fff"); c.fillStyle = g; c.fillRect(0, 0, 8, 64); }).t;
+  const add = (color, map, opacity) => new THREE.MeshBasicMaterial({ color, map, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const sprite = (color, size, opacity = 1) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); sp.scale.setScalar(size); return sp; };
+  const strip = (len, w, color, opacity) => { const g = new THREE.PlaneGeometry(1, w); g.translate(0.5, 0, 0); g.rotateX(-Math.PI / 2); const m = new Mesh(g, add(color, stripTex, opacity)); m.scale.x = len; return m; };
+  const flatPlane = (tex, w, h) => new Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, transparent: true, depthWrite: false }));
 
   const ASK = "Find time for my physics problem set today.";
   const REPLY = "Blocked 4:00 to 5:30 for the physics problem set. It's due at 11:59 PM.";
 
-  // a soft floor so the objects sit on something
-  const floor = new Mesh(new THREE.CircleGeometry(3.2, 64), new Std({ color: "#1b2420", roughness: 1, transparent: true, opacity: 0.0 }));
-  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  // ---- the lanes and the messages between them. Times are in chapters (0 to 7), the same clock the
+  // step cards use: Ask, Telegram, Pluto, Canvas, Calendar, Reply, Done.
+  const LANES = [
+    { name: "My phone", color: "#e0965a" },
+    { name: "Telegram", sub: "Telegram's servers", color: "#5aa9e6" },
+    { name: "Pluto", sub: "Claude Code, headless, on Fly.io", color: "#3fd68f" },
+    { name: "Canvas", sub: "assignments", color: "#e2685c" },
+    { name: "Calendar", sub: "today", color: "#8ea6ff" },
+  ];
+  const LX = (i) => (i - 2) * 1.0;
+  const ROW0 = 0.8, ROWS = 0.5, rowZ = (k) => ROW0 + k * ROWS;
+  //       from, to, start, end, what it carries, a reply (dashed)
+  const MSGS = [
+    [0, 1, 1.12, 1.55, `“${ASK}”`],
+    [1, 2, 2.1, 2.5, "New message, through the Telegram channel plugin"],
+    [2, 3, 3.05, 3.32, "What's due today?"],
+    [3, 2, 3.42, 3.72, "Physics problem set · due 11:59 PM", true],
+    [2, 4, 4.03, 4.22, "When am I free today?"],
+    [4, 2, 4.27, 4.46, "Free after Calc III: 4:00 to 5:30", true],
+    [2, 4, 4.52, 4.7, "Add “Physics problem set”, 4:00 to 5:30"],
+    [4, 2, 4.75, 4.92, "Added ✓", true],
+    [2, 1, 5.08, 5.3, "Reply"],
+    [1, 0, 5.38, 5.7, `“${REPLY}”`],
+  ];
+  const LAST = rowZ(MSGS.length - 1);
 
-  // ---- the phone
-  const phone = new Group(); phone.position.set(-1.55, 0, 0.05); phone.rotation.set(0, 0.18, 0); scene.add(phone);
-  const PW = 0.26, PD = 0.52;
+  // ---- the floor: a faint grid that fades out at the edges
   {
-    const r = 0.034, sh = new THREE.Shape();
-    sh.moveTo(-PW / 2 + r, -PD / 2); sh.lineTo(PW / 2 - r, -PD / 2); sh.quadraticCurveTo(PW / 2, -PD / 2, PW / 2, -PD / 2 + r); sh.lineTo(PW / 2, PD / 2 - r);
-    sh.quadraticCurveTo(PW / 2, PD / 2, PW / 2 - r, PD / 2); sh.lineTo(-PW / 2 + r, PD / 2); sh.quadraticCurveTo(-PW / 2, PD / 2, -PW / 2, PD / 2 - r); sh.lineTo(-PW / 2, -PD / 2 + r); sh.quadraticCurveTo(-PW / 2, -PD / 2, -PW / 2 + r, -PD / 2);
-    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 4, curveSegments: 16 });
-    g.rotateX(-Math.PI / 2);
-    phone.add(placeAt(new Mesh(g, std("#1b1d20", { metalness: 0.6, roughness: 0.28 })), 0, 0.002, 0));
+    const t = canvasTex(512, 512, (c) => {
+      c.strokeStyle = "rgba(140,152,146,0.22)"; c.lineWidth = 1;
+      for (let i = 0; i <= 512; i += 32) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 512); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(512, i); c.stroke(); }
+      const g = c.createRadialGradient(256, 256, 60, 256, 256, 256); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,1)");
+      c.globalCompositeOperation = "destination-out"; c.fillStyle = g; c.fillRect(0, 0, 512, 512); c.globalCompositeOperation = "source-over";
+    });
+    const m = flatPlane(t.t, 8, 8); m.rotation.x = -Math.PI / 2; m.position.set(0, -0.001, LAST / 2 + 0.3); scene.add(m);
+  }
+
+  // ---- lane lines, and the activation bars that grow while a lane is busy
+  LANES.forEach((L, i) => {
+    const len = LAST + 0.6;
+    const m = new Mesh(new THREE.BoxGeometry(0.012, 0.003, len), basic(L.color, { opacity: 0.4 }));
+    m.position.set(LX(i), 0.002, len / 2); scene.add(m);
+    const gl = strip(len, 0.16, L.color, 0.13); gl.rotation.y = -Math.PI / 2; gl.position.set(LX(i), 0.001, 0); scene.add(gl);
+  });
+  const act = (lane, k0, k1) => { // busy from row k0 to row k1
+    const g = new THREE.BoxGeometry(0.045, 0.025, 1); g.translate(0, 0, 0.5);
+    const m = new Mesh(g, basic(LANES[lane].color, { opacity: 0.55 })); m.position.set(LX(lane), 0.016, rowZ(k0)); scene.add(m);
+    return { m, k0, k1, len: rowZ(k1) - rowZ(k0) };
+  };
+  const ACTS = [act(2, 1, 8), act(3, 2, 3), act(4, 4, 7)];
+
+  // ---- the messages: an arrow per message, with a card saying what it carries
+  const labelTex = (text, color, dashed) => {
+    const m = document.createElement("canvas").getContext("2d"); m.font = `600 30px ${FONT}`;
+    const lines = wrap(m, text, 600), w = Math.ceil(Math.max(...lines.map((l) => m.measureText(l).width))) + 46, h = lines.length * 40 + 28;
+    const t = canvasTex(w, h, (c) => {
+      c.fillStyle = "rgba(14,20,18,0.9)"; c.beginPath(); c.roundRect(2, 2, w - 4, h - 4, 14); c.fill();
+      c.strokeStyle = color; c.lineWidth = 2.5; if (dashed) c.setLineDash([9, 7]); c.stroke(); c.setLineDash([]);
+      c.fillStyle = "#eef3ef"; c.font = `600 30px ${FONT}`; c.textBaseline = "top"; lines.forEach((l, i) => c.fillText(l, 23, 15 + i * 40));
+    });
+    return { t: t.t, w, h };
+  };
+  const arrows = MSGS.map(([a, b, s0, s1, text, reply], k) => {
+    const color = LANES[a].color, dir = Math.sign(LX(b) - LX(a));
+    const x0 = LX(a) + dir * 0.07, x1 = LX(b) - dir * 0.07, L = Math.abs(x1 - x0);
+    const g = new Group(); g.position.set(0, 0.1, rowZ(k)); scene.add(g);
+    const mat = basic(color);
+    const segs = [];
+    if (reply) for (let x = 0; x < L - 0.08; x += 0.085) { const sm = new Mesh(new THREE.BoxGeometry(0.05, 0.014, 0.014), mat); sm.position.x = x0 + dir * (x + 0.025); g.add(sm); segs.push({ m: sm, at: (x + 0.05) / L }); }
+    else { const sg = new THREE.BoxGeometry(1, 0.016, 0.016); sg.translate(0.5, 0, 0); const sm = new Mesh(sg, mat); sm.position.x = x0; g.add(sm); segs.push({ m: sm, solid: true }); }
+    const head = new Mesh(new THREE.ConeGeometry(0.035, 0.09, 20), mat); head.rotation.z = -dir * Math.PI / 2; g.add(head);
+    const dot = new Mesh(new THREE.SphereGeometry(0.022, 16, 10), mat); dot.position.x = x0 - dir * 0.0; g.add(dot);
+    const pulse = new Group(); g.add(pulse);
+    pulse.add(new Mesh(new THREE.SphereGeometry(0.022, 16, 10), basic("#ffffff"))); pulse.add(sprite(color, 0.34, 0.9)); pulse.add(sprite("#ffffff", 0.12, 0.8));
+    const halo = strip(1, 0.075, color, 0.55); halo.position.x = x0; g.add(halo); // glow around the shaft
+    const spill = strip(1, 0.34, color, 0.2); spill.position.set(x0, -0.098, 0); g.add(spill); // its light on the floor
+    const tip = sprite(color, 0.2, 0.7); g.add(tip);
+    const packets = [0, 1, 2].map(() => { const sp = sprite("#ffffff", 0.07, 0.9); sp.add(sprite(color, 2.6, 0.6)); g.add(sp); return sp; });
+    const lt = labelTex(text, color, reply), PX = 0.0014;
+    const label = flatPlane(lt.t, lt.w * PX, lt.h * PX);
+    label.position.set((x0 + x1) / 2, 0.075 + lt.h * PX / 2, -0.02); label.rotation.x = -0.32; g.add(label);
+    // the drop from the arrow down to the floor, so each row reads as a row
+    const tick = new Mesh(new THREE.BoxGeometry(0.006, 0.1, 0.006), basic(color, { opacity: 0.35 })); tick.position.set(x0, -0.05, 0); g.add(tick);
+    return { g, a, b, s0, s1, dir, x0, x1, L, segs, head, dot, pulse, label, mat, k, halo, spill, tip, packets, reply };
+  });
+
+  // ---- the lane heads: screens that fill in as the message goes by
+  const heads = LANES.map((L, i) => {
+    const g = new Group(); g.position.set(LX(i), 0, 0); scene.add(g);
+    const ped = new Mesh(new THREE.BoxGeometry(0.66, 0.04, 0.18), new THREE.MeshStandardMaterial({ color: "#26302c", roughness: 0.6, metalness: 0.3 }));
+    ped.position.y = 0.02; g.add(ped);
+    const glowBar = new Mesh(new THREE.BoxGeometry(0.6, 0.008, 0.01), basic(L.color, { opacity: 0.5 })); glowBar.position.set(0, 0.042, 0.092); g.add(glowBar);
+    return { g, glowBar };
+  });
+  const haloTex = canvasTex(500, 375, (c) => { c.shadowColor = "#fff"; c.shadowBlur = 34; c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = 6; c.beginPath(); c.roundRect(52, 52, 396, 271, 22); c.stroke(); }).t;
+  const panel = (i, draw) => {
+    const L = LANES[i];
+    const t = canvasTex(520, 360, (c, W_, H_, st) => {
+      c.fillStyle = "rgba(13,19,17,0.95)"; c.beginPath(); c.roundRect(3, 3, W_ - 6, H_ - 6, 22); c.fill();
+      c.strokeStyle = L.color; c.lineWidth = 3; c.stroke();
+      c.fillStyle = L.color; c.beginPath(); c.arc(38, 46, 8, 0, 7); c.fill();
+      c.fillStyle = "#eef3ef"; c.font = `700 40px ${FONT}`; c.textBaseline = "middle"; c.fillText(L.name, 58, 46);
+      c.fillStyle = "#8d9a94"; c.font = `500 24px ${FONT}`; c.fillText(L.sub, 30, 92);
+      c.fillStyle = "rgba(255,255,255,0.08)"; c.fillRect(24, 114, W_ - 48, 2);
+      draw(c, W_, H_, st);
+    });
+    const m = flatPlane(t.t, 0.8, 0.554); m.material.depthWrite = true; m.position.set(0, 0.33, 0); m.rotation.x = -0.1; heads[i].g.add(m);
+    const halo = new Mesh(new THREE.PlaneGeometry(1.0, 0.75), add(L.color, haloTex, 0.35)); halo.position.set(0, 0.33, -0.012); halo.rotation.x = -0.1; heads[i].g.add(halo); heads[i].halo = halo;
+    const refl = new Mesh(m.geometry, new THREE.MeshBasicMaterial({ map: t.t, alphaMap: fadeTex, transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false }));
+    refl.position.set(0, -0.33, 0.06); refl.rotation.x = 0.1; refl.scale.y = -1; heads[i].g.add(refl);
+    return t;
+  };
+  // my phone, standing up, with the chat on it
+  const PW = 0.22, PD = 0.44;
+  {
+    const r = 0.03, sh = new THREE.Shape(), x = -PW / 2, y = -PD / 2;
+    sh.moveTo(x + r, y); sh.lineTo(x + PW - r, y); sh.quadraticCurveTo(x + PW, y, x + PW, y + r); sh.lineTo(x + PW, y + PD - r); sh.quadraticCurveTo(x + PW, y + PD, x + PW - r, y + PD);
+    sh.lineTo(x + r, y + PD); sh.quadraticCurveTo(x, y + PD, x, y + PD - r); sh.lineTo(x, y + r); sh.quadraticCurveTo(x, y, x + r, y);
+    const gm = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 4, curveSegments: 14 });
+    const body = new Mesh(gm, new THREE.MeshStandardMaterial({ color: "#1b1d20", metalness: 0.6, roughness: 0.28 }));
+    body.position.set(0, 0.04 + PD / 2 + 0.01, -0.03); body.rotation.x = -0.08; heads[0].g.add(body); heads[0].phone = body;
   }
   const screen = canvasTex(480, 960, (c, W_, H_, state = 0) => {
     c.fillStyle = "#0e1412"; c.fillRect(0, 0, W_, H_);
@@ -1585,140 +1699,67 @@ async function plutoScene(sec) {
     if (state === 2) { c.fillStyle = "#1d3b2d"; c.beginPath(); c.roundRect(20, y, 110, 54, 18); c.fill(); c.fillStyle = "#7d8a85"; [50, 75, 100].forEach((x) => { c.beginPath(); c.arc(x, y + 27, 6, 0, 7); c.fill(); }); }
     if (state >= 3) bubble(REPLY, false);
   });
-  const scr = new Mesh(new THREE.PlaneGeometry(PW * 0.9, PD * 0.93), new THREE.MeshBasicMaterial({ map: screen.t, toneMapped: false }));
-  scr.rotation.x = -Math.PI / 2; scr.position.y = 0.0175; phone.add(scr);
-
-  // ---- a server: a rack with a lit front panel and a nameplate
-  const server = (x, z, name, sub, color, units) => {
-    const g = new Group(); g.position.set(x, 0, z); scene.add(g);
-    const RW = 0.36, RH = 0.62, RD = 0.34;
-    const frame = std("#20262b", { metalness: 0.5, roughness: 0.45 });
-    g.add(placeAt(new Mesh(new THREE.BoxGeometry(RW, RH, RD), frame), 0, RH / 2, 0));
-    const leds = [];
-    for (let i = 0; i < units; i++) {
-      const u = new Mesh(new THREE.BoxGeometry(RW * 0.86, 0.05, 0.01), std(color, { metalness: 0.3, roughness: 0.4 }));
-      u.position.set(0, 0.07 + i * 0.065, RD / 2 + 0.002); g.add(u);
-      for (let j = 0; j < 3; j++) {
-        const led = new Mesh(new THREE.BoxGeometry(0.012, 0.008, 0.004), new THREE.MeshBasicMaterial({ color: "#3fd68f", toneMapped: false }));
-        led.position.set(RW * 0.32 - j * 0.022, 0.07 + i * 0.065, RD / 2 + 0.009); g.add(led); leds.push(led);
-      }
-    }
-    const plate = canvasTex(720, 200, (c, W_, H_) => { c.fillStyle = "#11161a"; c.fillRect(0, 0, W_, H_); c.fillStyle = "#e8ece8"; c.font = `700 70px ${FONT}`; c.textBaseline = "top"; c.fillText(name, 26, 22); c.fillStyle = "#9aa6a0"; c.font = `500 40px ${FONT}`; c.fillText(sub, 26, 112); });
-    const pm = new Mesh(new THREE.PlaneGeometry(RW * 0.9, RW * 0.25), new THREE.MeshBasicMaterial({ map: plate.t, toneMapped: false }));
-    pm.position.set(0, RH + 0.065, 0); pm.rotation.x = -0.35; g.add(pm);
-    return { g, leds, top: new Vector3(x, RH, z), front: new Vector3(x, RH * 0.6, z + RD / 2) };
-  };
-  const tg = server(-0.5, -0.15, "Telegram", "Telegram's servers", "#3a4650", 7);
-  const fly = server(0.62, -0.15, "Fly.io", "the bot, and Pluto", "#2c4a3c", 5);
-  // Pluto's terminal on the Fly.io machine
-  const term = canvasTex(640, 420, (c, W_, H_, lines = []) => {
-    c.fillStyle = "#0b100e"; c.fillRect(0, 0, W_, H_);
-    c.fillStyle = "#6ff0b4"; c.font = `600 26px ui-monospace, Consolas, monospace`; c.textBaseline = "top";
-    c.fillText("pluto · Claude Code (headless)", 18, 14);
-    c.fillStyle = "#cfe3d8"; c.font = `500 23px ui-monospace, Consolas, monospace`;
-    lines.forEach((l, i) => c.fillText(l, 18, 64 + i * 38));
+  {
+    const scr = new Mesh(new THREE.PlaneGeometry(PW * 0.9, PD * 0.93), new THREE.MeshBasicMaterial({ map: screen.t, toneMapped: false }));
+    scr.position.z = 0.0155; heads[0].phone.add(scr);
+    const pg = new Mesh(new THREE.PlaneGeometry(0.42, 0.66), add("#e0965a", glowTex, 0.18)); pg.position.z = -0.01; heads[0].phone.add(pg); heads[0].halo = pg;
+  }
+  const tgPanel = panel(1, (c, W_, H_, st = 0) => {
+    c.font = `500 25px ${FONT}`; c.textBaseline = "top";
+    const row = (y, who, text) => { c.fillStyle = "#5aa9e6"; c.fillText(who, 30, y); c.fillStyle = "#cfdcd6"; c.fillText(text, 130, y); };
+    if (!st) { c.fillStyle = "#6c7a73"; c.fillText("Passes my chat to my bot", 30, 140); }
+    if (st >= 1) row(140, "→ bot", "Find time for my physics…");
+    if (st >= 2) row(182, "→ me", "Blocked 4:00 to 5:30 for…");
   });
-  const termM = new Mesh(new THREE.PlaneGeometry(0.32, 0.21), new THREE.MeshBasicMaterial({ map: term.t, toneMapped: false }));
-  termM.position.set(0, 0.62 + 0.34, -0.06); termM.rotation.x = -0.18; fly.g.add(termM); // above the nameplate
-  const stand = new Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.02), std("#20262b")); stand.position.set(0, 0.62 + 0.13, -0.08); fly.g.add(stand);
-
-  // ---- the two tools this command uses: Canvas and the calendar
-  const tile = (x, z, name, sub, color) => {
-    const g = new Group(); g.position.set(x, 0, z); scene.add(g);
-    const t = canvasTex(520, 300, (c, W_, H_, lit = 0) => { c.fillStyle = color; c.fillRect(0, 0, W_, H_); if (lit) { c.fillStyle = `rgba(224,150,90,${0.35 * lit})`; c.fillRect(0, 0, W_, H_); } c.fillStyle = "#fff"; c.font = `700 64px ${FONT}`; c.textBaseline = "top"; c.fillText(name, 28, 40); c.fillStyle = "rgba(255,255,255,.8)"; c.font = `500 36px ${FONT}`; c.fillText(sub, 28, 130); });
-    const side = std(color, { roughness: 0.5 });
-    const m = new Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.23), [side, side, new Std({ map: t.t, roughness: 0.5, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
-    m.position.y = 0.02; g.add(m);
-    return { g, m, at: new Vector3(x, 0.05, z) };
-  };
-  const canvasTool = tile(1.42, -0.42, "Canvas", "assignments", "#8f3b34");
-  const calTool = tile(1.42, 0.08, "Calendar", "free time, events", "#2a5f8f");
-
-  // ---- the day, where the block lands
-  const day = new Group(); day.position.set(0.25, 0, 0.95); scene.add(day);
-  const H0 = 7, H1 = 24, DW = 2.4, hx = (hr) => -DW / 2 + ((hr - H0) / (H1 - H0)) * DW;
-  const ruler = canvasTex(2400, 120, (c, W_) => {
-    c.fillStyle = "#e9ece8"; c.fillRect(0, 0, W_, 120); c.fillStyle = "#6a7d73"; c.font = `600 28px ${FONT}`; c.textBaseline = "top";
-    for (let hr = H0; hr <= H1; hr++) { const x = ((hr - H0) / (H1 - H0)) * W_; c.fillRect(x - 1, 0, 2, hr % 3 === 0 ? 40 : 22); if (hr % 3 === 0 && hr < H1) c.fillText(`${((hr + 11) % 12) + 1} ${hr < 12 ? "AM" : "PM"}`, x + 6, 48); }
+  const TERM = [
+    [2.5, "telegram › Find time for my physics…"],
+    [3.05, "canvas   › assignments due today"],
+    [3.72, "           physics PS · 11:59 PM"],
+    [4.03, "calendar › free time today"],
+    [4.46, "           free 4:00–5:30"],
+    [4.92, "calendar › added 4:00–5:30 ✓"],
+    [5.08, "telegram › reply sent"],
+  ];
+  const termPanel = panel(2, (c, W_, H_, n = 0) => {
+    c.font = `500 20px ${MONO}`; c.textBaseline = "top";
+    TERM.slice(0, n).forEach(([, l], i) => { c.fillStyle = i === n - 1 ? "#d8ffe9" : "#8fb3a2"; c.fillText(l, 28, 134 + i * 31); });
+    if (n < TERM.length) { c.fillStyle = "#3fd68f"; c.fillRect(28, 138 + n * 31, 11, 20); }
   });
-  const rs = std("#d9ddd9");
-  day.add(placeAt(new Mesh(new THREE.BoxGeometry(DW, 0.01, 0.12), [rs, rs, new Std({ map: ruler.t, roughness: 0.8 }), rs, rs, rs]), 0, 0.005, 0.12));
-  const block = (label, sub, h0, h1, color) => {
-    const w = hx(h1) - hx(h0);
-    const tex = canvasTex(Math.round(w * 2600), Math.round(0.13 * 2600), (c, W_, H_) => {
-      c.fillStyle = color; c.fillRect(0, 0, W_, H_); c.textBaseline = "top";
-      const fit = (t, px, wt) => { let sz = px; c.font = `${wt} ${sz}px ${FONT}`; while (c.measureText(t).width > W_ - 28 && sz > 10) { sz -= 2; c.font = `${wt} ${sz}px ${FONT}`; } return sz; };
-      const s1 = fit(label, 82, 700); c.fillStyle = "#fff"; c.fillText(label, 14, 34);
-      fit(sub, Math.min(60, s1 * 0.75), 500); c.fillStyle = "rgba(255,255,255,.82)"; c.fillText(sub, 14, 50 + s1);
+  const canPanel = panel(3, (c, W_, H_, st = 0) => {
+    const items = [["ENES100 milestone report", "Fri"], ["Calc III WebAssign 9", "Thu"], ["Physics problem set", "today 11:59 PM"]];
+    c.textBaseline = "middle";
+    items.forEach(([n, d], i) => {
+      const y = 140 + i * 66, hit = st && i === 2;
+      c.fillStyle = hit ? "rgba(226,104,92,0.28)" : "rgba(255,255,255,0.05)"; c.beginPath(); c.roundRect(24, y, W_ - 48, 54, 10); c.fill();
+      if (hit) { c.strokeStyle = "#e2685c"; c.lineWidth = 2; c.stroke(); }
+      c.fillStyle = "#e6ece9"; c.font = `600 24px ${FONT}`; c.fillText(n, 40, y + 27);
+      c.fillStyle = hit ? "#ffb3a8" : "#8d9a94"; c.font = `500 20px ${FONT}`; const dw = c.measureText(d).width; c.fillText(d, W_ - 40 - dw, y + 27);
     });
-    const side = std(color, { roughness: 0.5 });
-    const m = new Mesh(new THREE.BoxGeometry(w, 0.04, 0.13), [side, side, new Std({ map: tex.t, roughness: 0.5, emissive: "#e0965a", emissiveIntensity: 0 }), side, side, side]);
-    m.position.set(hx(h0) + w / 2, 0.02, 0); day.add(m); return m;
-  };
-  block("ENES100", "10:00", 10, 11.25, "#2a5f8f");
-  block("Calc III", "2:00", 14, 15.25, "#2a5f8f");
-  const study = block("Physics problem set", "4:00 to 5:30", 16, 17.5, "#b8692a");
-  block("Due", "11:59 PM", 22.7, 23.98, "#9a3b34");
-
-  // ---- the message: a glowing bubble that travels in arcs between the stops
-  const msg = new Mesh(new THREE.SphereGeometry(0.03, 32, 20), new THREE.MeshBasicMaterial({ color: "#ffb070", toneMapped: false }));
-  scene.add(msg);
-  const halo = new Mesh(new THREE.RingGeometry(0.04, 0.05, 64), new THREE.MeshBasicMaterial({ color: "#ffb070", transparent: true, opacity: 0.5, side: THREE.DoubleSide, toneMapped: false }));
-  scene.add(halo);
-  const P = {
-    phone: () => phone.getWorldPosition(new Vector3()).setY(0.05),
-    tg: () => tg.top.clone().setY(0.66),
-    fly: () => fly.top.clone().setY(0.66),
-    canvas: () => canvasTool.at.clone(),
-    cal: () => calTool.at.clone(),
-    day: () => study.getWorldPosition(new Vector3()).setY(0.06),
-  };
-  const arc = (a, b, u, h = 0.45) => { const pa = P[a](), pb = P[b](); const o = pa.clone().lerp(pb, u); o.y += Math.sin(u * Math.PI) * h; return o; };
-
-  // ---- labels
-  const svgNS = "http://www.w3.org/2000/svg";
-  const lsvg = document.createElementNS(svgNS, "svg"); tagsEl.appendChild(lsvg);
-  const TAGS = [
-    [0, () => P.phone(), "Sent on Telegram"],
-    [1, () => tg.top.clone().setY(0.62), "Telegram's servers"],
-    [2, () => fly.top.clone().setY(0.62), "The Telegram channel plugin hands it to Claude Code"],
-    [3, () => canvasTool.at.clone(), "Physics problem set: due 11:59 PM"],
-    [4, () => calTool.at.clone(), "Free after Calc III: 4:00 to 5:30"],
-    [4, () => study.getWorldPosition(new Vector3()).add(new Vector3(0, 0.14, -0.04)), "Blocked, within my daily study limit"],
-    [5, () => P.phone(), "The reply, in the same chat"],
-  ].map(([ch, at, text]) => {
-    const path = document.createElementNS(svgNS, "path"); path.setAttribute("class", "o3-lead"); lsvg.appendChild(path);
-    const dot = document.createElementNS(svgNS, "circle"); dot.setAttribute("r", "3"); dot.setAttribute("class", "o3-dot"); lsvg.appendChild(dot);
-    const t = document.createElement("span"); t.className = "o3-tag r"; t.textContent = text; tagsEl.appendChild(t);
-    return { ch, at, path, dot, t, w: 0, h: 0, o: 0 };
+  });
+  const calPanel = panel(4, (c, W_, H_, st = 0) => {
+    const H0 = 7, H1 = 24, x0 = 30, x1 = W_ - 30, hx = (h) => x0 + ((h - H0) / (H1 - H0)) * (x1 - x0);
+    c.fillStyle = "rgba(255,255,255,0.06)"; c.fillRect(x0, 160, x1 - x0, 110);
+    c.fillStyle = "#6c7a73"; c.font = `500 18px ${FONT}`; c.textBaseline = "top";
+    for (let h = 9; h < 24; h += 3) { c.fillRect(hx(h), 160, 1, 110); c.fillText(`${((h + 11) % 12) + 1}${h < 12 ? "a" : "p"}`, hx(h) - 8, 282); }
+    const blk = (h0, h1, color, label) => { c.fillStyle = color; c.beginPath(); c.roundRect(hx(h0), 172, hx(h1) - hx(h0), 86, 8); c.fill(); c.fillStyle = "#fff"; c.font = `600 17px ${FONT}`; c.fillText(label, hx(h0) + 6, 180); };
+    blk(10, 11.25, "#2a5f8f", "ENES"); blk(14, 15.25, "#2a5f8f", "Calc");
+    if (st) { blk(16, 17.5, "#d67a32", "Physics"); c.strokeStyle = "#ffd2a8"; c.lineWidth = 2; c.stroke(); }
+    blk(22.6, 24, "#9a3b34", "Due");
+    c.fillStyle = "#8d9a94"; c.font = `500 20px ${FONT}`; c.fillText(st ? "4:00 to 5:30 · Physics problem set" : "Free after Calc III", 30, 130);
   });
 
-  // ---- camera: one framing per chapter, eased between them
-  const SHOTS = [
-    [[-1.45, 0.05, 0.05], 0.7, 1.0, 1.0],   // the phone
-    [[-0.95, 0.3, -0.05], 0.45, 0.55, 2.0], // to Telegram
-    [[0.45, 0.6, -0.15], 0.3, 0.42, 2.3],   // to Pluto on Fly.io, its terminal in view
-    [[1.0, 0.25, -0.25], 0.25, 0.65, 1.6],  // Canvas
-    [[0.85, 0.05, 0.55], -0.25, 0.9, 2.2],  // the calendar tile and the day
-    [[-0.5, 0.3, 0.1], 0.3, 0.6, 2.6],      // the reply
-    [[0.0, 0.25, 0.35], 0.0, 0.62, 3.6],    // the whole path
-  ].map(([t_, az, el, r]) => ({ tgt: new Vector3(...t_), az, el, r }));
-  const N = SHOTS.length;
+  // ---- camera
   const ocam = orbitCam(Vector3);
-  const tgt = new Vector3(), v = new Vector3();
-  let W = 0, H = 0, lastT = 0, cur = -1, p = 0, screenState = -1, termState = -1;
+  const tgt = new Vector3(), tmp = new Vector3();
+  let W = 0, H = 0, lastT = 0, cur = -1, p = 0, st0 = -1, st1 = -1, st2 = -1, st3 = -1, st4 = -1;
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight;
-    TAGS.forEach((e) => { e.w = 0; e.h = 0; });
     renderer.setSize(W, H, false); cam.aspect = W / H;
     if (W >= 760) cam.setViewOffset(W, H, -W * 0.08, H * 0.03, W, H); else cam.clearViewOffset();
-    cam.updateProjectionMatrix(); lsvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    cam.updateProjectionMatrix();
   };
   new ResizeObserver(resize).observe(stage);
-  const TERM = [[], ["telegram › " + "Find time for my physics", "           problem set today."],
-    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM"],
-    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM", "calendar › free 4:00–5:30", "calendar › added 4:00–5:30 ✓"],
-    ["telegram › Find time for my physics…", "canvas   › physics PS due 11:59 PM", "calendar › added 4:00–5:30 ✓", "reply    › sent"]];
+  const N = 7;
 
   const frame = (time) => {
     if (!W) return;
@@ -1726,68 +1767,80 @@ async function plutoScene(sec) {
     const r_ = sec.getBoundingClientRect(), travel = sec.offsetHeight - stage.offsetHeight;
     const want = travel > 0 ? clamp(-r_.top / travel) : 0;
     p += (want - p) * (dt ? 1 - Math.exp(-dt / 0.18) : 1);
-    const s = p * (N - 0.001), ch = Math.floor(s), f = s - ch;
-    const e = (a, b) => smoother(clamp((f - a) / (b - a)));
+    const s = p * (N - 0.001), ch = Math.floor(s);
 
-    // the message's journey
-    let pos = null;
-    if (ch === 0 && f > 0.55) pos = P.phone();
-    if (ch === 1) pos = arc("phone", "tg", e(0.1, 0.8), 0.55);
-    if (ch === 2) pos = arc("tg", "fly", e(0.1, 0.75), 0.4);
-    if (ch === 3) pos = f < 0.5 ? arc("fly", "canvas", e(0.05, 0.45), 0.3) : arc("canvas", "fly", e(0.55, 0.95), 0.3);
-    if (ch === 4) pos = f < 0.35 ? arc("fly", "cal", e(0.03, 0.33), 0.3) : f < 0.7 ? arc("cal", "day", e(0.38, 0.68), 0.25) : null;
-    if (ch === 5) pos = f < 0.5 ? arc("fly", "tg", e(0.05, 0.45), 0.4) : arc("tg", "phone", e(0.5, 0.92), 0.55);
-    msg.visible = halo.visible = !!pos;
-    if (pos) { msg.position.copy(pos); halo.position.copy(pos); halo.lookAt(cam.position); halo.scale.setScalar(1 + 0.25 * Math.sin(time / 180)); }
+    // which message is current, and where the camera's attention is along the time axis
+    let now = -1; arrows.forEach((A, k) => { if (s >= A.s0 - 0.05) now = k; });
+    let fz = rowZ(0) - 0.5, fx = LX(0) + 0.5;
+    for (let k = 0; k < arrows.length; k++) {
+      const A = arrows[k], prevZ = k ? rowZ(k - 1) : rowZ(0) - 0.5, prevS = k ? arrows[k - 1].s1 : 0.6;
+      const prevX = k ? (arrows[k - 1].x0 + arrows[k - 1].x1) / 2 : LX(0) + 0.5;
+      if (s < prevS) break;
+      const u = smoother(clamp((s - prevS) / Math.max(0.05, A.s0 - prevS + 0.05)));
+      fz = prevZ + (rowZ(k) - prevZ) * u; fx = prevX + ((A.x0 + A.x1) / 2 - prevX) * u;
+    }
+    const doneW = smoother(clamp((s - 6.05) / 0.5));
+    const hz = Math.max(0, fz - 0.85) * (1 - doneW); // the sticky header row
+    heads.forEach((h, i) => {
+      h.g.position.z = hz;
+      const A = arrows[now], busy = A && (A.a === i || A.b === i) && s < A.s1 + 0.25;
+      h.glowBar.material.opacity = busy ? 0.6 + 0.4 * Math.sin(time / 120) : 0.35;
+      if (h.halo) h.halo.material.opacity += ((busy ? 0.75 + 0.15 * Math.sin(time / 160) : 0.22) - h.halo.material.opacity) * (dt ? 1 - Math.exp(-dt / 0.15) : 1);
+    });
 
-    // the phone's chat, Pluto's terminal, the tools lighting up, the block landing
-    const scrState = ch === 0 ? (f > 0.4 ? 1 : 0) : ch < 5 ? (ch >= 2 ? 2 : 1) : (f > 0.85 || ch > 5 ? 3 : 2);
-    if (scrState !== screenState) { screenState = scrState; screen.redraw(scrState); }
-    const tState = ch < 2 ? 0 : ch === 2 ? (f > 0.75 ? 1 : 0) : ch === 3 ? (f > 0.45 ? 2 : 1) : ch === 4 ? (f > 0.3 ? 3 : 2) : 4;
-    if (tState !== termState) { termState = tState; term.redraw(TERM[tState]); }
-    canvasTool.m.material[2].emissiveIntensity = ch === 3 ? 0.45 * Math.sin(Math.PI * clamp(f / 0.9)) : 0;
-    calTool.m.material[2].emissiveIntensity = ch === 4 ? 0.45 * (1 - e(0.6, 0.9)) : 0;
-    const land = ch < 4 ? 0 : ch === 4 ? e(0.6, 0.9) : 1;
-    study.visible = land > 0.01; study.position.y = 0.02 + (1 - land) * 0.35;
-    study.material[2].emissiveIntensity = ch === 4 ? 0.4 * land : ch === 6 ? 0.25 : 0;
-    // the racks' LEDs flicker while the message passes through them
-    const busy = (srv, on) => srv.leds.forEach((l, i) => { l.material.color.set(on && Math.sin(time / 70 + i * 1.7) > 0 ? "#ffb070" : "#3fd68f"); });
-    busy(tg, (ch === 1 && f > 0.7) || (ch === 2 && f < 0.3) || (ch === 5 && f > 0.35 && f < 0.6));
-    busy(fly, (ch === 2 && f > 0.6) || ch === 3 || ch === 4 || (ch === 5 && f < 0.15));
+    // the arrows: grow from sender to receiver, then dim once the next one starts
+    arrows.forEach((A, k) => {
+      const q = smoother(clamp((s - A.s0) / (A.s1 - A.s0)));
+      const z = rowZ(k), under = clamp((z - (hz + 0.12)) / 0.3); // fades as the header row slides over it
+      const d0 = k === now ? 1 : k === now - 1 ? 0.4 : 0.16, dim = d0 + (0.75 - d0) * doneW * (k === now ? 0 : 1); // older rows fade back
+      const o = q > 0 ? under * dim : 0;
+      A.g.visible = o > 0.01;
+      if (!A.g.visible) return;
+      A.mat.opacity = o;
+      A.segs.forEach((sg) => { if (sg.solid) sg.m.scale.x = A.dir * Math.max(0.001, A.L * q); else sg.m.visible = sg.at <= q + 0.001; });
+      A.head.position.x = A.x0 + A.dir * A.L * q; A.head.visible = q > 0.04;
+      A.pulse.visible = q > 0 && q < 1; A.pulse.position.x = A.head.position.x; A.pulse.scale.setScalar(0.85 + 0.25 * Math.sin(time / 90));
+      const ln = A.dir * Math.max(0.001, A.L * q);
+      A.halo.scale.x = A.spill.scale.x = ln; A.halo.material.opacity = (A.reply ? 0.3 : 0.55) * o; A.spill.material.opacity = 0.22 * o;
+      A.tip.visible = A.head.visible; A.tip.position.x = A.head.position.x; A.tip.material.opacity = 0.7 * o;
+      // once it has arrived, packets keep streaming along the current arrow
+      const flow = k === now && q >= 1 && doneW < 0.5;
+      A.packets.forEach((pk, j) => { pk.visible = flow; if (!flow) return; const u = (time / 900 + j / 3) % 1; pk.position.x = A.x0 + A.dir * A.L * u; pk.material.opacity = 0.9 * Math.sin(Math.PI * u); pk.children[0].material.opacity = 0.5 * Math.sin(Math.PI * u); });
+      A.label.material.opacity = o * smoother(clamp((q - 0.15) / 0.45));
+    });
+    ACTS.forEach((B) => {
+      const a = arrows[B.k0];
+      B.m.visible = s > a.s1; B.m.scale.z = Math.max(0.001, clamp(fz - rowZ(B.k0), 0, B.len)); // grows down to the current row
+      B.m.material.opacity = 0.55 * clamp((rowZ(B.k1) - (hz + 0.1)) / 0.3);
+    });
 
-    // camera
-    const i0 = Math.min(N - 1, ch), i1 = Math.min(N - 1, ch + 1), u = smoother(clamp((f - 0.62) / 0.38));
-    const A = SHOTS[i0], B = SHOTS[i1];
-    const narrow = cam.aspect < 1 ? Math.min(2.6, 1.3 / cam.aspect) : 1;
-    tgt.lerpVectors(A.tgt, B.tgt, u);
-    const st = ocam.to(A.az + angDiff(A.az, B.az) * u + 0.05 * Math.sin(time / 4100), A.el + (B.el - A.el) * u, (A.r + (B.r - A.r) * u) * narrow, tgt, dt, 0.5);
+    // the screens
+    const ps = s < 0.45 ? 0 : s < 2.5 ? 1 : s < 5.7 ? 2 : 3;
+    if (ps !== st0) { st0 = ps; screen.redraw(ps); }
+    const ts = s >= 5.7 ? 2 : s >= 1.55 ? 1 : 0;
+    if (ts !== st1) { st1 = ts; tgPanel.redraw(ts); }
+    const n = TERM.filter(([t]) => s >= t).length;
+    if (n !== st2) { st2 = n; termPanel.redraw(n); }
+    const cs = s >= 3.72 ? 1 : 0;
+    if (cs !== st3) { st3 = cs; canPanel.redraw(cs); }
+    const ks = s >= 4.92 ? 1 : 0;
+    if (ks !== st4) { st4 = ks; calPanel.redraw(ks); }
+
+    // camera: close on the phone to start and for the reply, following the newest arrow in between,
+    // pulled back on the whole diagram at the end
+    const tall = cam.aspect < 1, narrow = tall ? Math.min(1.8, 1.15 / cam.aspect) : 1;
+    let az = 0.14, el = 0.48, r = 4.0 * narrow;
+    tgt.set(fx * (tall ? 0.95 : 0.8), 0.24, fz - 0.42);
+    const wPhone = Math.max(1 - smoother(clamp((s - 0.55) / 0.5)), smoother(clamp((s - 5.72) / 0.22)) * (1 - smoother(clamp((s - 6.0) / 0.35))));
+    tmp.set(LX(0), 0.3, hz); tgt.lerp(tmp, wPhone);
+    az += (0.1 - az) * wPhone; el += (0.16 - el) * wPhone; r += (1.25 * Math.min(narrow, 1.4) - r) * wPhone;
+    tmp.set(0.1, 0, LAST / 2 - 0.15); tgt.lerp(tmp, doneW);
+    az += (0.12 - az) * doneW; el += (1.02 - el) * doneW; r += (11.5 * narrow - r) * doneW;
+    const st = ocam.to(az + 0.04 * Math.sin(time / 4100), el, r, tgt, dt, 0.4);
     ocam.place(cam, cam.position); cam.lookAt(st.tgt);
     renderer.render(scene, cam);
 
     if (ch !== cur) { cur = ch; steps.forEach((li, j) => li.classList.toggle("on", j === ch)); bar.forEach((b, j) => b.classList.toggle("on", j === ch)); }
-
-    // labels: flip at the edges, never overlap, only when their anchor is on screen
-    const placed = [];
-    TAGS.forEach((T_) => {
-      const want_ = T_.ch === ch && f > 0.25 ? 1 : 0;
-      T_.o += (want_ - T_.o) * (dt ? 1 - Math.exp(-dt / 0.2) : 1);
-      let o = T_.o;
-      if (o > 0.02) { v.copy(T_.at()).project(cam); if (v.z > 1 || Math.abs(v.x) > 0.96 || Math.abs(v.y) > 0.92) o = 0; }
-      T_.t.style.opacity = T_.path.style.opacity = T_.dot.style.opacity = o.toFixed(3);
-      if (o < 0.02) return;
-      const x = (v.x + 1) / 2 * W, y = (1 - v.y) / 2 * H;
-      const tw = T_.w ||= T_.t.offsetWidth, th = T_.h ||= T_.t.offsetHeight, reach = W < 600 ? 22 : 46;
-      let side = x > W * 0.5 ? "r" : "l";
-      if (side === "r" && x + reach + 6 + tw > W - 8) side = "l"; else if (side === "l" && x - reach - 6 - tw < 8) side = "r";
-      T_.t.classList.toggle("l", side === "l"); T_.t.classList.toggle("r", side === "r");
-      const dx = side === "r" ? reach : -reach;
-      let ty = y - 26; const lx = side === "r" ? x + dx + 6 : x + dx - 6 - tw;
-      for (let k = 0; k < 6; k++) { const hit = placed.find((q) => lx < q.x + q.w + 6 && lx + tw + 6 > q.x && ty - 10 < q.y + q.h && ty - 10 + th > q.y); if (!hit) break; ty = hit.y + hit.h + 14; }
-      placed.push({ x: lx, y: ty - 10, w: tw, h: th });
-      T_.dot.setAttribute("cx", x.toFixed(1)); T_.dot.setAttribute("cy", y.toFixed(1));
-      T_.path.setAttribute("d", `M${x.toFixed(1)},${y.toFixed(1)} L${(x + dx * 0.5).toFixed(1)},${ty.toFixed(1)} H${(x + dx).toFixed(1)}`);
-      T_.t.style.transform = `translate(${(x + dx + (side === "r" ? 6 : -6)).toFixed(1)}px, ${(ty - 10).toFixed(1)}px)`;
-    });
   };
 
   resize();
