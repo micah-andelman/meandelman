@@ -313,8 +313,251 @@
           : `rotateX(${(e * 48).toFixed(2)}deg) rotateZ(${(-e * 10).toFixed(2)}deg) scale(${(1 - e * 0.36).toFixed(4)})`;
       hero.classList.toggle("exploding", e > 0.001);
     };
+
+    // ---------------------------------------------------------- The core is a protoboard sign
+    // As the board comes apart, the core turns out to be green protoboard carrying an LED sign:
+    // 5x7 LED letters spelling PORTFOLIO, wired like a real multiplexed matrix. Row buses run
+    // along each row of LEDs from an ATmega328P (through a resistor each), column wires drop to
+    // 74HC595 shift registers under the letters, and a screw terminal brings in 5 V.
+    // It is drawn once as SVG and painted into canvases at two to three times screen
+    // resolution: Chrome rasterises live SVG inside the tilted 3D plate at flat-screen
+    // resolution, so the near edge came out soft. A canvas is a texture the GPU samples
+    // directly, so it stays sharp at any tilt. The lit LEDs are a second canvas that a
+    // compositor-only wipe reveals left to right once the layers above have cleared.
+    const core = $(".ly-core", hero);
+    $(".ly-tag", core).textContent = "Protoboard";
+    const cvBoard = document.createElement("canvas");
+    cvBoard.className = "pb";
+    const litWrap = document.createElement("div");
+    litWrap.className = "pb-litwrap";
+    const cvLit = document.createElement("canvas");
+    cvLit.className = "pb-lit";
+    litWrap.appendChild(cvLit);
+    core.prepend(cvBoard, litWrap);
+    const PB_CSS = `
+      text { font-family: "Barlow", "Arial Narrow", Arial, sans-serif; }
+      .pad { fill: #c8834a; } .hole { fill: #0a1f15; } .mh { fill: #0a1f15; stroke: #c8834a; stroke-width: 3; }
+      .j { fill: #d4d7da; stroke: #8d9196; stroke-width: .06; }
+      .bare { fill: none; stroke: #c4c8cc; stroke-width: .18; stroke-linecap: round; stroke-linejoin: round; }
+      .ins, .core { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .ins { stroke: rgba(0,0,0,.45); stroke-width: .4; } .core { stroke-width: .26; }
+      .red { stroke: #e2453a; } .blk { stroke: #2a2d31; } .blu { stroke: #3d8ee8; } .grn { stroke: #42c07c; }
+      .ylw { stroke: #f2c230; } .wht { stroke: #eef0f2; } .org { stroke: #f08a2c; } .vio { stroke: #9a66e0; }
+      .ref { font-size: .72px; font-weight: 700; fill: #f4f1e8; }
+      .val { font-size: .6px; font-weight: 600; fill: #cfe0d4; }
+      .icn { font-size: .72px; font-weight: 600; fill: #b9bcc0; letter-spacing: .02px; }
+      .leg { fill: none; stroke: #b7bbbf; stroke-width: .13; stroke-linecap: round; }
+      .lead { fill: none; stroke-width: .36; stroke-linecap: round; }
+      .res { fill: #d9c49a; stroke: rgba(0,0,0,.35); stroke-width: .06; }
+      .ecap { fill: #22364f; stroke: #0d1726; stroke-width: .08; } .ecap-s { fill: none; stroke: #c7d2df; stroke-width: .26; }
+      .ecap-t { fill: none; stroke: #8796a8; stroke-width: .07; }
+      .disc { fill: #e2a335; stroke: #9a6516; stroke-width: .07; }
+      .ic { fill: #1d1f22; stroke: #000; stroke-width: .06; } .notch { fill: #0b0c0d; }
+      .xtal { fill: #cfd2d6; stroke: #7d8186; stroke-width: .08; }
+      .term { fill: #2f8f4e; stroke: #1b5a30; stroke-width: .08; } .screw { fill: #c9ccd0; stroke: #7d8186; stroke-width: .06; }
+      .rim { fill: #5c1a14; } .lens { fill: #7a2318; } .hot { fill: rgba(255,255,255,.3); }
+      .lens-on { fill: #ffd9c2; } .hot-on { fill: rgba(255,255,255,.75); }`;
+    const FONT = {
+      P: ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+      O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+      R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+      T: ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+      F: ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+      L: ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+      I: ["01110", "00100", "00100", "00100", "00100", "00100", "01110"],
+    };
+    // paint an SVG into a canvas at k times its size
+    const paint = async (svg, cv, w, h, k) => {
+      svg.setAttribute("xmlns", NS);
+      svg.setAttribute("width", w);
+      svg.setAttribute("height", h);
+      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
+      try {
+        const img = new Image();
+        img.src = url;
+        await img.decode();
+        cv.width = Math.round(w * k);
+        cv.height = Math.round(h * k);
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      } finally { URL.revokeObjectURL(url); }
+    };
+    let built = "", job = 0;
+    const buildPB = async () => {
+      const W = core.offsetWidth, H = core.offsetHeight;
+      const key = W + "x" + H;
+      if (!W || key === built) return;
+      built = key;
+      const my = ++job;
+      const lines = W >= 700 ? ["PORTFOLIO"] : ["PORT", "FOLIO"];
+      const LINE_H = 24; // a line of letters (rows 0..12) and its shift registers (16..19)
+      const cols = lines.map((s) => s.length * 6 - 1);
+      const right = Math.max(...cols) * 2;
+      const top = -4, bottom = (lines.length - 1) * LINE_H + 24, left = -33;
+      const p = Math.min((W - 40) / (right - left + 6), (H - 40) / (bottom - top + 8));
+      const ox = Math.round((W - (right + left) * p) / 2 / p) * p, oy = Math.round((H - (bottom + top) * p) / 2 / p) * p;
+
+      const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}` });
+      svgEl("style", {}, svg).textContent = PB_CSS;
+      // the pad grid lines up with the parts: every lead lands in a hole
+      const pat = svgEl("pattern", { id: "pads", patternUnits: "userSpaceOnUse", width: p, height: p, x: ox - p / 2, y: oy - p / 2 }, svgEl("defs", {}, svg));
+      svgEl("circle", { class: "pad", cx: p / 2, cy: p / 2, r: p * 0.34 }, pat);
+      svgEl("circle", { class: "hole", cx: p / 2, cy: p / 2, r: p * 0.14 }, pat);
+      svgEl("rect", { x: 6, y: 6, width: W - 12, height: H - 12, fill: "url(#pads)" }, svg);
+      [[18, 18], [W - 18, 18], [18, H - 18], [W - 18, H - 18]].forEach(([x, y]) => svgEl("circle", { class: "mh", cx: x, cy: y, r: 7 }, svg));
+      const g = svgEl("g", { transform: `translate(${ox},${oy}) scale(${p})` }, svg);
+      const wires = svgEl("g", {}, g), parts = svgEl("g", {}, g), jumpers = svgEl("g", {}, g), joints = svgEl("g", {}, g), leds = svgEl("g", {}, g);
+      // the lit LEDs, cropped to the letters
+      const bx = ox - 2.6 * p, by = oy - 2.6 * p, bw = (right + 3.2) * p, bh = ((lines.length - 1) * LINE_H + 17.2) * p;
+      const lit = svgEl("svg", { viewBox: `${bx} ${by} ${bw} ${bh}` });
+      svgEl("style", {}, lit).textContent = PB_CSS;
+      const rg = svgEl("radialGradient", { id: "glow" }, svgEl("defs", {}, lit));
+      svgEl("stop", { offset: "0", "stop-color": "#ff8a55", "stop-opacity": ".85" }, rg);
+      svgEl("stop", { offset: ".45", "stop-color": "#ff5a30", "stop-opacity": ".36" }, rg);
+      svgEl("stop", { offset: "1", "stop-color": "#ff4020", "stop-opacity": "0" }, rg);
+      const lg = svgEl("g", { transform: `translate(${ox},${oy}) scale(${p})` }, lit);
+
+      const seen = new Set();
+      const pin = (x, y) => { const k = x + "," + y; if (!seen.has(k)) { seen.add(k); svgEl("circle", { class: "j", cx: x, cy: y, r: 0.24 }, joints); } };
+      const poly = (pts) => "M" + pts.map((q) => q.join(",")).join(" L");
+      const bare = (pts) => { svgEl("path", { class: "bare", d: poly(pts) }, wires); pin(...pts[0]); pin(...pts[pts.length - 1]); };
+      const wire = (d, col) => { svgEl("path", { class: "ins", d }, jumpers); svgEl("path", { class: `core ${col}`, d }, jumpers); };
+      const jump = (a, b, col, bow = 0.2) => { // an insulated jumper that arcs over whatever it crosses
+        const [x1, y1] = a, [x2, y2] = b, dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+        const k = Math.min(3, len * bow), cx = (x1 + x2) / 2 + (dy / len) * k, cy = (y1 + y2) / 2 - (Math.abs(dx) / len) * k;
+        wire(`M${x1},${y1} Q${cx.toFixed(2)},${cy.toFixed(2)} ${x2},${y2}`, col);
+        pin(x1, y1); pin(x2, y2);
+      };
+      const route = (pts, col) => { wire(poly(pts), col); pin(...pts[0]); pin(...pts[pts.length - 1]); };
+      const text = (x, y, s, cls = "ref", anchor = "middle") => { const t = svgEl("text", { x, y, class: cls, "text-anchor": anchor }, parts); t.textContent = s; };
+      const BANDS = { "220": ["#d1352b", "#d1352b", "#6b3a1e"], "10k": ["#6b3a1e", "#111", "#e07a1f"] };
+      const res = (x1, x2, y, val) => { // horizontal resistor, leads at (x1, y) and (x2, y)
+        svgEl("path", { class: "leg", d: `M${x1},${y} L${x2},${y}` }, parts);
+        const mx = (x1 + x2) / 2;
+        svgEl("rect", { class: "res", x: mx - 1.2, y: y - 0.42, width: 2.4, height: 0.84, rx: 0.38 }, parts);
+        BANDS[val].concat("#c9a227").forEach((c, i) => svgEl("rect", { x: mx - 0.8 + i * 0.4 + (i === 3 ? 0.3 : 0), y: y - 0.42, width: 0.18, height: 0.84, fill: c }, parts));
+        pin(x1, y); pin(x2, y);
+      };
+      const ecap = (x1, x2, y, r) => { // radial electrolytic lying across two rails
+        const cx = (x1 + x2) / 2;
+        svgEl("path", { class: "leg", d: `M${x1},${y} L${x2},${y}` }, parts);
+        svgEl("circle", { class: "ecap", cx, cy: y, r }, parts);
+        svgEl("path", { class: "ecap-s", d: `M${cx + r * 0.78},${y - r * 0.62} A${r},${r} 0 0 1 ${cx + r * 0.78},${y + r * 0.62}` }, parts);
+        svgEl("circle", { class: "ecap-t", cx, cy: y, r: r * 0.55 }, parts);
+        pin(x1, y); pin(x2, y);
+      };
+      const disc = (x1, x2, y) => { // ceramic disc
+        svgEl("path", { class: "leg", d: `M${x1},${y} L${x2},${y}` }, parts);
+        svgEl("ellipse", { class: "disc", cx: (x1 + x2) / 2, cy: y, rx: 0.75, ry: 0.5 }, parts);
+        pin(x1, y); pin(x2, y);
+      };
+      const dipH = (x0, yt, n, name, ref) => { // DIP-2n lying across: pins x0..x0+n-1 at yt and yt+3
+        for (let i = 0; i < n; i++) { pin(x0 + i, yt); pin(x0 + i, yt + 3); }
+        svgEl("rect", { class: "ic", x: x0 - 0.55, y: yt + 0.35, width: n - 1 + 1.1, height: 2.3, rx: 0.12 }, parts);
+        svgEl("path", { class: "notch", d: `M${x0 - 0.55},${yt + 1.1} a0.4,0.4 0 0 1 0,0.8` }, parts);
+        text(x0 + (n - 1) / 2, yt + 1.78, name, "icn");
+        text(x0 - 0.6, yt + 4.3, ref, "ref", "start");
+      };
+      const dipV = (x0, y0, n, name, ref) => { // DIP-2n standing up: pins y0..y0+n-1 at x0 and x0+3
+        for (let i = 0; i < n; i++) { pin(x0, y0 + i); pin(x0 + 3, y0 + i); }
+        svgEl("rect", { class: "ic", x: x0 + 0.35, y: y0 - 0.55, width: 2.3, height: n - 1 + 1.1, rx: 0.12 }, parts);
+        svgEl("path", { class: "notch", d: `M${x0 + 1.1},${y0 - 0.55} a0.4,0.4 0 0 0 0.8,0` }, parts);
+        const t = svgEl("text", { class: "icn", x: 0, y: 0, "text-anchor": "middle", transform: `translate(${x0 + 1.75},${y0 + (n - 1) / 2}) rotate(90)` }, parts);
+        t.textContent = name;
+        text(x0 + 1.5, y0 + n + 0.6, ref);
+      };
+
+      // ---- the letters: LEDs on a 2-hole pitch, a row bus under each row, a wire per column
+      let n595 = 0, prevChain = null;
+      lines.forEach((word, li) => {
+        const y0 = li * LINE_H, c = cols[li];
+        for (let r = 0; r < 7; r++) bare([[-4, y0 + 2 * r], [(c - 1) * 2, y0 + 2 * r]]);
+        const chips = Math.ceil(c / 8);
+        for (let k = 0; k < chips; k++) {
+          const x0 = 16 * k + 4, yt = y0 + 16;
+          dipH(x0, yt, 8, "74HC595", `U${2 + n595++}`);
+          jump([x0, yt + 3], [x0, y0 + 21], "red", 0.5);         // VCC
+          jump([x0 + 7, yt + 3], [x0 + 7, y0 + 22], "blk", 0.4); // GND
+          if (prevChain) route([prevChain, [prevChain[0], y0 + 20], [x0 + 1, y0 + 20], [x0 + 1, yt + 3]], "ylw");
+          prevChain = [x0 + 6, yt + 3];
+        }
+        bare([[-4, y0 + 21], [16 * chips + 2, y0 + 21]]);
+        bare([[-4, y0 + 22], [16 * chips + 2, y0 + 22]]);
+        for (let col = 0; col < c; col++) {
+          const letter = FONT[word[Math.floor(col / 6)]], lc = col % 6;
+          if (lc === 5) continue;
+          const rows = [0, 1, 2, 3, 4, 5, 6].filter((r) => letter[r][lc] === "1");
+          const x = col * 2, xw = x + 1, k = Math.floor(col / 8), j = col % 8;
+          // cathode wire: down the column beside the LEDs, then over to its 595 output
+          route([[xw, y0 + 2 * rows[0]], [xw, y0 + 13.4], [16 * k + 4 + j, y0 + 15], [16 * k + 4 + j, y0 + 16]], "blu");
+          rows.forEach((r) => {
+            const y = y0 + 2 * r;
+            svgEl("path", { class: "leg", d: `M${x + 0.5},${y} L${xw},${y}` }, wires);
+            svgEl("circle", { class: "rim", cx: x, cy: y, r: 0.82 }, leds);
+            svgEl("circle", { class: "lens", cx: x, cy: y, r: 0.64 }, leds);
+            svgEl("circle", { class: "hot", cx: x - 0.22, cy: y - 0.24, r: 0.2 }, leds);
+            svgEl("circle", { cx: x, cy: y, r: 2.1, fill: "url(#glow)" }, lg);
+            svgEl("circle", { class: "rim", cx: x, cy: y, r: 0.82 }, lg);
+            svgEl("circle", { class: "lens-on", cx: x, cy: y, r: 0.64 }, lg);
+            svgEl("circle", { class: "hot-on", cx: x - 0.22, cy: y - 0.24, r: 0.22 }, lg);
+          });
+        }
+        // a second line shares the first line's row drive
+        if (li > 0) for (let r = 0; r < 7; r++) jump([-4, 2 * r], [-4, y0 + 2 * r], ["red", "org", "ylw", "grn", "blu", "vio", "wht"][r], 0.06 + r * 0.025);
+      });
+
+      // ---- the controller, left of the letters. Rails: +5 V at x = -24, ground at x = -22.
+      for (let r = 0; r < 7; r++) { res(-9, -5, 2 * r, "220"); bare([[-11, 2 * r], [-9, 2 * r]]); bare([[-5, 2 * r], [-4, 2 * r]]); }
+      text(-7, -1.2, "R1–R7", "val");
+      dipV(-14, 0, 14, "ATMEGA328P", "U1");
+      bare([[-24, -1], [-24, 20]]);
+      bare([[-22, 3], [-22, 22]]);
+      // 5 V in through a screw terminal
+      svgEl("rect", { class: "term", x: -31.3, y: -0.6, width: 2.6, height: 4.2, rx: 0.2 }, parts);
+      svgEl("circle", { class: "screw", cx: -30, cy: 0, r: 0.62 }, parts);
+      svgEl("circle", { class: "screw", cx: -30, cy: 2, r: 0.62 }, parts);
+      svgEl("path", { class: "lead red", d: `M${left - 2},-0.4 C${left + 0.5},-0.4 ${left + 0.5},0 -31.3,0` }, parts);
+      svgEl("path", { class: "lead blk", d: `M${left - 2},2.8 C${left + 0.5},2.8 ${left + 0.5},2 -31.3,2` }, parts);
+      pin(-28, 0); pin(-28, 2);
+      text(-30, -1.3, "J1"); text(-30, 4.6, "5V IN", "val");
+      bare([[-28, 0], [-24, 0]]);
+      jump([-28, 2], [-22, 3], "blk", 0.3);
+      ecap(-24, -22, 7, 1.15); text(-25.6, 7.25, "C1", "ref", "end"); text(-25.6, 8.1, "100µ", "val", "end");
+      disc(-24, -22, 12); text(-25.6, 12.25, "C2", "ref", "end"); text(-25.6, 13.1, "100n", "val", "end");
+      // reset pull-up, power and ground
+      res(-20, -16, 0, "10k"); bare([[-24, 0], [-20, 0]]); bare([[-16, 0], [-14, 0]]);
+      jump([-14, 6], [-24, 5], "red", 0.18);
+      bare([[-22, 7], [-14, 7]]);
+      // 16 MHz crystal on XTAL1/XTAL2 (pins 9 and 10) and its load caps
+      svgEl("rect", { class: "xtal", x: -17.65, y: 7.6, width: 1.3, height: 2.8, rx: 0.65 }, parts);
+      pin(-17, 8); pin(-17, 10);
+      disc(-22, -20, 8); disc(-22, -20, 10);
+      bare([[-20, 8], [-14, 8]]); bare([[-20, 10], [-17, 10]]);
+      jump([-17, 10], [-14, 9], "wht", 0.3);
+      text(-17, 12.3, "Y1", "ref"); text(-17, 13.1, "16M", "val");
+      // supply for the shift registers
+      jump([-24, 20], [-4, 21], "red", 0.06);
+      bare([[-22, 22], [-4, 22]]);
+      // data, clock and latch out to the first shift register
+      jump([-11, 9], [5, 19], "ylw", 0.1);
+      jump([-11, 11], [6, 19], "grn", 0.1);
+      jump([-11, 13], [7, 19], "vio", 0.1);
+      g.append(joints); // solder over the wires
+      g.append(leds);
+
+      const k = Math.min((devicePixelRatio || 1) * 1.75, 3, Math.sqrt(9e6 / (W * H)));
+      await Promise.all([paint(svg, cvBoard, W, H, k), paint(lit, cvLit, bw, bh, k)]).catch(() => { built = ""; });
+      if (my !== job) return;
+      Object.assign(litWrap.style, { left: bx + "px", top: by + "px", width: bw + "px", height: bh + "px" });
+    };
+    buildPB();
+    addEventListener("resize", () => { if (!hero.classList.contains("exploding")) buildPB(); });
+    // the sign lights once the layers above have cleared, and goes dark again on the way back
+    const lamp = () => hero.classList.toggle("pb-on", last > (hero.classList.contains("pb-on") ? 0.5 : 0.66));
+
     addEventListener("scroll", run, { passive: true });
     run();
+    addEventListener("scroll", lamp, { passive: true });
+    lamp();
   }
 
   // ------------------------------------------------------------ Schematic view (OTV)

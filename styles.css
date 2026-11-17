@@ -1329,3 +1329,31 @@ html.thermal .diagram .blk .court { fill: none; stroke: none; }
 @media print { :is(.pour, .keep, .keep-blk) { display: none; } }
 #otv .scroll > svg .blk.mcu.hot :is(.deco rect, .court) { filter: none; }
 #otv .scroll > svg .blk .deco :is(.pin, .fin, .term) { stroke: none; }
+
+/* =====================================================================
+   Hero: the core plate is green protoboard carrying an LED sign that
+   spells PORTFOLIO. visuals.js paints it into canvases (sharp at any
+   tilt). The layers above clear first, then the lit LEDs are revealed
+   by a compositor-only wipe: the window slides right while the canvas
+   inside slides back by the same amount, so the LEDs stay put.
+   ===================================================================== */
+:root { --pb-board: #17603f; --pb-board-2: #0f4a30; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pb-board: #145536; --pb-board-2: #0b3a25; } }
+:root[data-theme="dark"] { --pb-board: #145536; --pb-board-2: #0b3a25; }
+.ly-core { background: linear-gradient(160deg, var(--pb-board), var(--pb-board-2)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pb-board) 70%, #fff 30%), 0 40px 80px rgb(0 0 0 / calc(var(--e) * .45)); }
+.ly-core > .pb, .ly-core > .pb-litwrap { transform-style: flat; }
+.ly-core .ly-tag { z-index: 1; }
+.pb { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pb-litwrap { position: absolute; overflow: hidden; transform: translateX(-100%); transition: transform 1.3s cubic-bezier(.5, 0, .25, 1); }
+.pb-lit { display: block; width: 100%; height: 100%; transform: translateX(100%); transition: transform 1.3s cubic-bezier(.5, 0, .25, 1); }
+.hero.pb-on :is(.pb-litwrap, .pb-lit) { transform: none; }
+.hero:not(.pb-on) .pb-litwrap { opacity: 0; transition: opacity .25s, transform 0s .25s; }
+.hero:not(.pb-on) .pb-lit { transition: transform 0s .25s; }
+/* The plate fades in a little later than before, and everything above it clears before the sign lights. */
+html.explode .hero .ly-core { opacity: clamp(0, (var(--e) - .08) * 2.6, 1); }
+.hero { --fade: clamp(0, (.64 - var(--e)) * 4.5, 1); }
+html.explode .hero.exploding :is(h1, .hero-trace, .hero-nets, .silk, .hero-foot, .ly-tag-cu, .ly-tag-silk) { opacity: var(--fade); }
+html.explode .hero.exploding .ly-mask { opacity: calc(min(var(--e) * 1.4, 1) * var(--fade)); }
+html.explode .hero.exploding::before, html.explode .hero.exploding::after { opacity: var(--fade); }
+.hero.pb-on .hero-foot { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .pb-litwrap, .pb-lit { transition: none; } }
