@@ -1656,3 +1656,15 @@ html.snapping { scroll-snap-type: y proximity; }
 .bf-show:not(.on) .bf-panel { position: static; transform: none; }
 .bf-show:not(.on) .bf-controls { display: none; }
 @media print { .bf-show .bf-stage { height: auto; perspective: none; } .bf-ring { position: static !important; transform: none !important; translate: none !important; width: auto !important; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .bf-panel { position: static; transform: none !important; opacity: 1 !important; } .bf-controls { display: none; } }
+
+/* ---------- BuildFest: the two certificates, tilted toward each other ---------- */
+.bf-certs { display: grid; grid-template-columns: repeat(2, minmax(0, 540px)); justify-content: center; gap: clamp(24px, 4vw, 56px); margin-top: clamp(24px, 4vh, 40px); perspective: 1400px; }
+.project .bf-certs { grid-column: 1 / -1; }
+.bf-cert { margin: 0; transform: rotateY(6deg) scale(.96); transform-origin: 50% 50%; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.bf-cert + .bf-cert { transform: rotateY(-6deg) scale(.96); }
+.bf-cert:hover, .bf-cert + .bf-cert:hover { transform: none; }
+.bf-cert img { display: block; width: 100%; height: auto; border-radius: 6px; box-shadow: 0 0 0 6px color-mix(in srgb, #fff 70%, var(--rule)), 0 0 0 7px var(--rule), 0 22px 40px rgb(0 0 0 / .25); }
+.bf-certs-cap { grid-column: 1 / -1; margin: 6px 0 0; text-align: center; font-size: 14px; color: var(--ink-3); }
+@media screen and (max-width: 760px) { .bf-certs { grid-template-columns: 1fr; } .bf-cert, .bf-cert + .bf-cert { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bf-cert { transition: none; } }
+@media print { .bf-cert, .bf-cert + .bf-cert { transform: none; } }
