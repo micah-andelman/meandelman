@@ -534,6 +534,7 @@
           const letter = FONT[word[Math.floor(col / 6)]], lc = col % 6;
           if (lc === 5) continue;
           const rows = [0, 1, 2, 3, 4, 5, 6].filter((r) => letter[r][lc] === "1");
+          if (!rows.length) continue; // an empty column (the sides of the I) has no LEDs and no wire
           const x = col * 2, xw = x + 1, k = Math.floor(col / 8), j = col % 8;
           // cathode wire: down the column beside the LEDs, then over to its 595 output
           route([[xw, y0 + 2 * rows[0]], [xw, y0 + 13.4], [16 * k + 4 + j, y0 + 15], [16 * k + 4 + j, y0 + 16]], "blu");

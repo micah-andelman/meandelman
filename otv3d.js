@@ -1884,6 +1884,92 @@ async function plutoScene(sec, opts = {}) {
   (opts.loop || loopWhileVisible)(sec, frame);
 }
 
+// ---------------------------------------------------------------- BuildFest card: the dashboard in 3D
+// For the home page card: five real screenshots of the team's tool stand as thin panels. They start
+// stacked like a deck, fan out into an arc and sway, then fold back, and a gold "1st" medal drops in
+// on its ribbon while they're open. Runs on a clock while the card is on screen, like the other cards.
+async function buildfestScene(sec, opts = {}) {
+  const K = await kit();
+  const { THREE } = K;
+  const { Group, Mesh, MeshStandardMaterial: Std, MeshBasicMaterial: Basic } = THREE;
+  const stage = sec.querySelector(".o3-stage");
+  const canvas = sec.querySelector("canvas");
+  const { renderer, scene } = makeRenderer(K, canvas);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 30);
+  const loader = new THREE.TextureLoader();
+  const SHOTS = ["card-overview", "card-explore", "card-funder", "card-links", "card-phones"];
+  const tex = await Promise.all(SHOTS.map((n) => loader.loadAsync(`img/buildfest/${n}.jpg`)));
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  tex.forEach((t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; t.generateMipmaps = true; });
+
+  // the panels: a thin dark slab with the screenshot on its face (unlit, so the colours stay true)
+  const edge = new Std({ color: "#1d2124", roughness: 0.6 });
+  const deck = new Group(); scene.add(deck);
+  const panels = tex.map((t, i) => {
+    const w = 1.15, h = Math.min(1.05, (w * t.image.height) / t.image.width);
+    const face = new Basic({ map: t, toneMapped: false });
+    const slab = new Mesh(new THREE.BoxGeometry(w + 0.03, h + 0.03, 0.02), [edge, edge, edge, edge, edge, edge]);
+    const img = new Mesh(new THREE.PlaneGeometry(w, h), face); img.position.z = 0.0105; slab.add(img);
+    const g = new Group(); g.add(slab); deck.add(g);
+    return { g, i };
+  });
+  const N = panels.length, mid = (N - 1) / 2;
+
+  // the medal: a gold disc with "1st" on it, hanging from a two-colour ribbon
+  const medal = new Group(); scene.add(medal);
+  const gold = new Std({ color: "#d9a441", metalness: 0.85, roughness: 0.28 });
+  const disc = new Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 64), gold); disc.rotation.x = Math.PI / 2; medal.add(disc);
+  const rim = new Mesh(new THREE.TorusGeometry(0.2, 0.014, 12, 64), new Std({ color: "#a8741f", metalness: 0.9, roughness: 0.35 })); medal.add(rim);
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  { const x = c.getContext("2d"); x.fillStyle = "#3a2606"; x.font = "700 120px 'Barlow Condensed', Arial Narrow, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("1st", 128, 136); }
+  const label = new THREE.CanvasTexture(c); label.colorSpace = THREE.SRGBColorSpace; label.anisotropy = maxAniso;
+  const face = new Mesh(new THREE.CircleGeometry(0.17, 48), new Basic({ map: label, transparent: true, toneMapped: false })); face.position.z = 0.0215; medal.add(face);
+  const ribbonMat = (col) => new Std({ color: col, roughness: 0.7, side: THREE.DoubleSide });
+  [[-1, "#b8692a"], [1, "#0e6a4c"]].forEach(([s, col]) => {
+    const r = new Mesh(new THREE.PlaneGeometry(0.11, 0.42), ribbonMat(col));
+    r.position.set(s * 0.06, 0.3, -0.03); r.rotation.z = s * 0.28; medal.add(r);
+  });
+
+  let W = 0, H = 0;
+  const resize = () => {
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    if (!W || !H) return;
+    renderer.setSize(W, H, false);
+    cam.aspect = W / H; cam.updateProjectionMatrix();
+  };
+  new ResizeObserver(resize).observe(stage);
+
+  const T = 10; // seconds per loop: stacked, fan out, hold and sway, fold back
+  let t0 = 0;
+  const frame = (time) => {
+    if (!W) return;
+    const t = ((time - (t0 ||= time)) / 1000) % T;
+    const open = t < 1.2 ? 0 : t < 3 ? smoother((t - 1.2) / 1.8) : t < 8 ? 1 : t < 9.6 ? 1 - smoother((t - 8) / 1.6) : 0;
+    const R = 2.4;
+    panels.forEach(({ g, i }) => {
+      const a = (i - mid) * 0.53 * open;                       // place on an arc around a point behind the deck
+      g.position.set(Math.sin(a) * R, (i - mid) * -0.012 * (1 - open), (Math.cos(a) - 1) * R + (mid - i) * 0.035 * (1 - open));
+      g.rotation.set(0, a, (i - mid) * 0.035 * (1 - open));    // a slight hand-of-cards splay while stacked
+    });
+    deck.rotation.y = 0.22 * Math.sin((time / 1000) * 0.6) * open - 0.08;
+    deck.position.y = 0.03 * Math.sin(time / 900);
+    // the medal drops in as the fan opens, swings a little, and leaves as it folds
+    const m = t < 2.6 ? 0 : t < 3.6 ? smoother((t - 2.6) / 1) : t < 8.2 ? 1 : t < 9 ? 1 - smoother((t - 8.2) / 0.8) : 0;
+    medal.visible = m > 0.01;
+    medal.position.set(0.98, 0.54 - (1 - m) * 0.8, 0.55);
+    medal.rotation.set(0, Math.sin(time / 700) * 0.35 * m, Math.sin(time / 520) * 0.12 * m);
+    medal.scale.setScalar(0.55 + 0.3 * m);
+    const narrow = cam.aspect < 1.4 ? 1.4 / cam.aspect : 1;
+    cam.position.set(Math.sin(time / 4200) * 0.25, 0.55, 3.75 * narrow);
+    cam.lookAt(0, 0.3, -0.45);
+    renderer.render(scene, cam);
+  };
+
+  resize();
+  sec.classList.add("o3-ready");
+  (opts.loop || loopWhileVisible)(sec, frame);
+}
+
 // ---------------------------------------------------------------- the home page cards
 // Each project card on the home page plays its project's 3D scene on its own, on a clock instead of
 // scroll: the OTV tour, the cap coming apart and taking its shot, and one message to Pluto. Nothing
@@ -1911,6 +1997,7 @@ if (cardEls.length && GL && !REDUCED) {
       const f = clockOf(15, 1.5, 7, 0); return (now) => f(now);
     })() }),
     brimcam: (sec) => capScene(sec, { card: true, zoom: 1.12, loop: cardLoop, clock: clockOf(11, 1.6, 1.2, 0.8) }),
+    buildfest: (sec) => buildfestScene(sec, { loop: cardLoop }),
     pluto: (sec) => plutoScene(sec, { card: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
   };
   const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
