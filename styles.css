@@ -1570,3 +1570,55 @@ html.snapping { scroll-snap-type: y proximity; }
 }
 @media (prefers-reduced-motion: reduce) { .pmenu-list, .pmenu-btn svg { transition: none; } }
 @media print { .pmenu { display: none; } }
+
+/* =====================================================================
+   BuildFest: the award chip, its project page, and its home card.
+   ===================================================================== */
+/* four project cards: two by two on wide screens */
+@media screen and (min-width: 761px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+
+/* the award: a copper chip with a small medal */
+.award, .card-award { display: inline-flex; align-items: center; gap: 8px; font-family: var(--text); font-weight: 700; letter-spacing: .02em; color: var(--copper-ink);
+  background: color-mix(in srgb, var(--copper) 12%, var(--paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--copper) 55%, transparent); border-radius: 999px; }
+.award i, .card-award i { flex: none; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe7a3, #d9a441 60%, #a8741f); box-shadow: 0 0 0 2px color-mix(in srgb, #d9a441 35%, transparent); }
+.project :is(h1, h2) .award { display: flex; width: max-content; max-width: 100%; margin-top: 18px; padding: 6px 14px; font-size: clamp(14px, 1.3vw, 17px); line-height: 1.2; white-space: normal; }
+.card-award { align-self: flex-start; margin: 0 0 12px; padding: 4px 11px; font-size: 13px; }
+.card-win > a { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--copper) 45%, var(--rule)); }
+
+/* the project page: what I built, and the rest */
+.bf-parts { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); margin: clamp(32px, 6vh, 56px) 0 0; padding-top: 22px; border-top: 1px solid var(--rule); }
+.bf-parts h4 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
+.bf-mine dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; }
+.bf-mine dt { font-weight: 600; font-size: 17px; color: var(--ink); }
+.bf-mine dd { margin: 4px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
+.bf-side p { margin: 0 0 22px; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
+.project .bf-parts { grid-column: 1 / -1; }
+@media screen and (max-width: 900px) { .bf-parts { grid-template-columns: 1fr; } }
+@media screen and (max-width: 560px) { .bf-mine dl { grid-template-columns: 1fr; } }
+@media print { .bf-parts { margin: 8px 0 0; } }
+
+/* the home card's drawing: a dashboard fills in, the medal drops on */
+.f-win { fill: var(--paper); stroke: var(--rule); stroke-width: 1.5; }
+.f-bar { fill: color-mix(in srgb, var(--mask) 18%, var(--paper)); }
+.f-dot { fill: var(--copper); }
+.f-t { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.f-kpi > rect:first-child, .f-chart > rect:first-child, .f-qr > rect { fill: var(--board); stroke: var(--rule); stroke-width: 1; }
+.f-k { fill: var(--mask); } .f-kl { fill: color-mix(in srgb, var(--ink-3) 45%, transparent); }
+.f-b { fill: var(--mask); transform-box: fill-box; transform-origin: bottom; animation: f-grow 7s infinite; animation-delay: calc(var(--i) * .12s); }
+.f-b:nth-of-type(4n+2) { fill: var(--copper); }
+@keyframes f-grow { 0%, 6% { transform: scaleY(0); } 22%, 88% { transform: scaleY(1); } 96%, 100% { transform: scaleY(0); } }
+.f-kpi { opacity: 0; animation: f-in 7s infinite; animation-delay: calc(var(--i, 0) * .15s); }
+@keyframes f-in { 0%, 4% { opacity: 0; transform: translateY(5px); } 12%, 90% { opacity: 1; transform: none; } 97%, 100% { opacity: 0; } }
+.f-track { fill: none; stroke: var(--board); stroke-width: 10; }
+.f-arc { fill: none; stroke: var(--mask); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transform: rotate(-90deg); transform-origin: 300px 104px; animation: f-arc 7s infinite; }
+@keyframes f-arc { 0%, 14% { stroke-dashoffset: 1; } 34%, 88% { stroke-dashoffset: .28; } 96%, 100% { stroke-dashoffset: 1; } }
+.f-qr path { fill: var(--ink); opacity: .75; }
+.f-qr { opacity: 0; animation: f-qr 7s infinite; }
+@keyframes f-qr { 0%, 30% { opacity: 0; } 38%, 88% { opacity: 1; } 96%, 100% { opacity: 0; } }
+.f-medal { transform-box: fill-box; transform-origin: 50% 0; opacity: 0; animation: f-medal 7s infinite; }
+@keyframes f-medal { 0%, 42% { opacity: 0; transform: translateY(-26px) rotate(-14deg); } 52% { opacity: 1; transform: translateY(2px) rotate(6deg); } 58%, 88% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; } }
+.f-coin { fill: #d9a441; stroke: #a8741f; stroke-width: 2; }
+.f-rib { fill: var(--copper); }
+.f-1 { font-family: var(--display); font-size: 20px; font-weight: 700; fill: #3a2606; }
+@media (prefers-reduced-motion: reduce) { .f-kpi, .f-qr, .f-medal { opacity: 1; } .f-arc { stroke-dashoffset: .28; } }

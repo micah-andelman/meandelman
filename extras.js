@@ -294,7 +294,7 @@
       "help              this list",
       "whoami            who built this",
       "projects          list the projects",
-      "open <name>       jump to otv, pluto, brimcam, route, experience or contact",
+      "open <name>       jump to buildfest, otv, pluto, brimcam, route, experience or contact",
       "status pluto      ask Pluto how it's doing",
       "ping micah        start an email to me",
       "resume            open my résumé",
@@ -306,9 +306,9 @@
       "clear, exit",
     ].forEach((l) => print_(esc(l))),
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
-    projects: () => ["ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
+    projects: () => ["BuildFest         1st place: 988-training insights tool for EveryMind", "ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
     open: (a) => {
-      const map = { otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", contact: "/#contact" };
+      const map = { buildfest: "/buildfest.html#buildfest", otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", contact: "/#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
       print_(`Opening ${a}.`);
       setTimeout(() => go(map[a]), 250);

@@ -2,7 +2,7 @@
 
 My portfolio site: [meandelman.com](https://meandelman.com). I'm an electrical engineering student at the University of Maryland, and the site is laid out like a circuit board: each project is a block diagram you can explore, with the real code behind it.
 
-It's plain HTML, CSS and JavaScript with no framework or build step, hosted on Cloudflare Pages. A short home page links to one page per project (`/otv`, `/brimcam`, `/pluto`), where the full write-ups, diagrams and 3D walkthroughs live.
+It's plain HTML, CSS and JavaScript with no framework or build step, hosted on Cloudflare Pages. A short home page links to one page per project (`/buildfest`, `/otv`, `/brimcam`, `/pluto`), where the full write-ups, diagrams and 3D walkthroughs live.
 
 ## What's in it
 
@@ -20,7 +20,7 @@ It's plain HTML, CSS and JavaScript with no framework or build step, hosted on C
 | File | What it is |
 |---|---|
 | `index.html` | Home: the hero, project cards, experience and contact |
-| `otv.html`, `brimcam.html`, `pluto.html` | One page per project, with tabs across the top to move between them |
+| `buildfest.html`, `otv.html`, `brimcam.html`, `pluto.html` | One page per project, with tabs across the top to move between them |
 | `styles.css` | All styles, including dark mode and print |
 | `main.js` | Diagrams, phone parts lists, route replay, theme switch, scroll scenes |
 | `visuals.js` | The hero (exploded layers, protoboard sign), component artwork, schematic view, linked animations, card art |

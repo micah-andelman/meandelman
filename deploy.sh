@@ -18,7 +18,7 @@ vjs=$(md5sum visuals.js | cut -c1-8)
 ljs=$(md5sum layout.js | cut -c1-8)
 ojs=$(md5sum otv3d.js models/otv.glb | md5sum | cut -c1-8)
 # Every page gets the same hashed links and photo hookups.
-for page in index.html otv.html brimcam.html pluto.html 404.html; do
+for page in index.html buildfest.html otv.html brimcam.html pluto.html 404.html; do
   sed -e "s#href=\"\(/\?\)styles.css\"#href=\"\1styles.css?v=$css\"#" -e "s#src=\"\(/\?\)main.js\"#src=\"\1main.js?v=$js\"#" -e "s#src=\"\(/\?\)extras.js\"#src=\"\1extras.js?v=$xjs\"#" -e "s#src=\"\(/\?\)visuals.js\"#src=\"\1visuals.js?v=$vjs\"#" -e "s#src=\"\(/\?\)layout.js\"#src=\"\1layout.js?v=$ljs\"#" -e "s#src=\"\(/\?\)otv3d.js\"#src=\"\1otv3d.js?v=$ojs\"#" "$page" > "dist/$page"
   # Attach each photos/<part>.jpg to the diagram note with the same key.
   for f in photos/*.jpg; do

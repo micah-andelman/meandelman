@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BuildFest, Micah Andelman</title>
+<meta name="description" content="BuildFest, 1st place and EveryMind's Choice: a 988-training insights tool for EveryMind, a Maryland mental health nonprofit. What it does and what I built.">
+<link rel="canonical" href="https://meandelman.com/buildfest">
+<meta property="og:url" content="https://meandelman.com/buildfest">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BuildFest, Micah Andelman">
+<meta property="og:description" content="BuildFest, 1st place and EveryMind's Choice: a 988-training insights tool for EveryMind, a Maryland mental health nonprofit. What it does and what I built.">
+<meta property="og:image" content="https://meandelman.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Micah Andelman, electrical engineering, University of Maryland. meandelman.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#101614">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  // Theme choice, set before first paint.
+  (function () {
+    try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="subpage">
+<a class="skip" href="#buildfest">Skip to the project</a>
+
+<header class="top">
+  <a class="mark" href="./">Micah Andelman</a>
+  <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" /></svg><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" /></svg></span></span></button>
+  <nav aria-label="Sections">
+    <div class="pmenu">
+      <button class="pmenu-btn" type="button" aria-expanded="false" aria-controls="pmenu-list">Projects<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" /></svg></button>
+      <ul class="pmenu-list" id="pmenu-list" hidden>
+        <li><a href="buildfest.html" aria-current="page"><small aria-hidden="true">U1</small><span>BuildFest</span><em>1st place: 988-training insights tool</em></a></li>
+        <li><a href="otv.html"><small aria-hidden="true">U2</small><span>ENES100 OTV</span><em>Autonomous water-sampling robot</em></a></li>
+        <li><a href="brimcam.html"><small aria-hidden="true">U3</small><span>Brimcam</span><em>Camera cap that logs dining-hall macros</em></a></li>
+        <li><a href="pluto.html"><small aria-hidden="true">U4</small><span>Pluto</span><em>Personal agent on Telegram</em></a></li>
+        <li class="pmenu-all"><a href="./#work">All projects <span aria-hidden="true">&rarr;</span></a></li>
+      </ul>
+    </div>
+    <a href="./#experience">Experience</a>
+    <a href="resume.pdf">Résumé</a>
+    <a href="./#contact">Contact</a>
+  </nav>
+  <div class="tools">
+    <button class="heat" type="button" aria-pressed="false" aria-label="Thermal view" title="Thermal view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0Z" /><circle cx="12" cy="17" r="1.7" /><path class="lvl" d="M12 15.3V9" /></svg></button>
+    <button class="egg" type="button" aria-expanded="false" aria-controls="eggs" aria-label="Things to find" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.3 0 6 5.2 6 9.5a6 6 0 0 1-12 0c0-4.3 2.7-9.5 6-9.5Z" /></svg></button>
+  </div>
+</header>
+
+<main>
+  <nav class="ptabs" aria-label="Projects">
+    <a href="buildfest.html" aria-current="page"><small aria-hidden="true">U1</small>BuildFest</a>
+    <a href="otv.html"><small aria-hidden="true">U2</small>ENES100 OTV</a>
+    <a href="brimcam.html"><small aria-hidden="true">U3</small>Brimcam</a>
+    <a href="pluto.html"><small aria-hidden="true">U4</small>Pluto</a>
+    <a class="home" href="./#work"><span aria-hidden="true">&larr;</span> <span>All projects</span></a>
+  </nav>
+
+  <!-- ================= BUILDFEST ================= -->
+  <article class="project minor" id="buildfest" aria-labelledby="buildfest-t">
+    <div class="p-head">
+      <h1 id="buildfest-t">BuildFest<span class="award"><i aria-hidden="true"></i>1st place &middot; EveryMind&rsquo;s Choice</span></h1>
+      <dl class="meta">
+        <div><dt>Event</dt><dd>BuildFest, a Business Impact Challenge run by the Center for Social Value Creation at UMD&rsquo;s Smith School of Business</dd></div>
+        <div><dt>When</dt><dd>November 2026, a one-week build</dd></div>
+        <div><dt>Team</dt><dd>Five students, Team 16</dd></div>
+        <div><dt>Built with</dt><dd>Python, JavaScript, HTML and CSS, Claude Code</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">A one-week challenge to turn EveryMind's 988 training feedback into a working tool that shows what's landing with participants and where the gaps are. Our team's tool took first place of 44 teams and won the EveryMind's Choice award.</p>
+      <p>EveryMind is a Maryland mental health nonprofit that runs trainings across the state on 988, the national suicide and crisis lifeline. Everyone who attends fills out a survey afterward. Our tool reads those survey exports and answers four questions: did the training work, for whom, where are the gaps, and which sessions need a look. One command, or one drag-and-drop in the browser, turns an export into a single dashboard file that opens offline with no server, so EveryMind&rsquo;s staff can use it with no setup at all.</p>
+      <dl class="specs">
+        <div><dt>1</dt><dd>place of 44 teams, plus the EveryMind&rsquo;s Choice award</dd></div>
+        <div><dt>200</dt><dd>students competing</dd></div>
+        <div><dt>1,272</dt><dd>survey responses analysed in about 10 seconds</dd></div>
+      </dl>
+    </div>
+
+    <figure class="diagram flow" data-diagram>
+      <svg viewBox="0 0 960 150" role="group" aria-label="Flow: a Microsoft Forms survey export is cleaned and analysed in Python, the results build a single offline dashboard, and the dashboard produces a funder summary and session links">
+        <path class="tr" data-k="pipeline" d="M200,75 H270" />
+        <path class="tr" data-k="dash" d="M450,75 H520" />
+        <path class="tr" data-k="reports" d="M700,75 H770" />
+        <g class="blk" data-k="survey" tabindex="0" role="button" aria-label="Survey export"><rect x="20" y="45" width="180" height="60" /><text x="36" y="71">Survey export</text><text class="sub" x="36" y="91">Microsoft Forms</text></g>
+        <g class="blk" data-k="pipeline" tabindex="0" role="button" aria-label="Analysis"><rect x="270" y="45" width="180" height="60" /><text x="286" y="71">Analysis</text><text class="sub" x="286" y="91">Python pipeline</text></g>
+        <g class="blk" data-k="dash" tabindex="0" role="button" aria-label="Dashboard"><rect x="520" y="45" width="180" height="60" /><text x="536" y="71">Dashboard</text><text class="sub" x="536" y="91">One offline HTML file</text></g>
+        <g class="blk" data-k="reports" tabindex="0" role="button" aria-label="Reports and tools"><rect x="770" y="45" width="170" height="60" /><text x="786" y="71">Reports</text><text class="sub" x="786" y="91">Funders, trainers</text></g>
+      </svg>
+      <figcaption>
+        <p class="cap" data-default="Select a step.">Select a step.</p>
+        <template data-k="survey">After each training, participants answer a Microsoft Forms survey: what they knew about 988 before and after, how confident they feel using it, and open-ended comments. EveryMind exports the responses to Excel.</template>
+        <template data-k="pipeline">The analysis cleans the export, removes repeats, merges survey versions and measures how much knowledge changed, by group and by session. A new month, county or survey version needs no code changes.</template>
+        <template data-k="dash">Everything lands in one HTML file that opens in any browser with no internet. A new export can be dragged straight onto the page, and it is read in the browser and never uploaded.</template>
+        <template data-k="reports">From the dashboard: a one-page summary for funders and the board, session report cards, advice for the next version of the survey, and pre-filled survey links and QR codes for each session.</template>
+      </figcaption>
+    </figure>
+
+    <div class="bf-parts">
+      <div class="bf-mine">
+        <h4>What I built</h4>
+        <dl>
+          <div><dt>EveryMind redesign</dt><dd>I rebuilt the dashboard in EveryMind&rsquo;s own look: their colours, their fonts (embedded so it still works offline) and their website&rsquo;s layout and navigation, so it reads as their tool rather than a student project.</dd></div>
+          <div><dt>Funder and board summary</dt><dd>A printable one-page summary with a July to June fiscal-year selector and a grant-report table. Groups under 11 people are combined and no comments are shown.</dd></div>
+          <div><dt>Role views and a trainer playbook</dt><dd>&ldquo;Viewing as&rdquo; switches the dashboard between the people who use it, and trainers get a playbook on the Sessions tab.</dd></div>
+          <div><dt>Session links</dt><dd>A builder that makes a pre-filled survey link and a QR code for each training session, all generated offline.</dd></div>
+          <div><dt>Answers for participants</dt><dd>Draft answers to the eight questions participants ask most, for trainers and a participant FAQ, written for EveryMind to approve.</dd></div>
+          <div><dt>Honest labels</dt><dd>A 988 help footer on every page, and open-text results reported as agreement with AI-drafted labels, not as accuracy.</dd></div>
+        </dl>
+      </div>
+      <div class="bf-side">
+        <h4>The rest of the build</h4>
+        <p>My teammates built the Python analysis (cleaning, paired statistics, group tables and session scorecards), an in-browser engine that matches it check for check, and pages for participants and staff.</p>
+        <h4>Privacy</h4>
+        <p>The survey answers are real feedback from real people, so the dashboard embeds no names, comments, IDs or timestamps, and any group under 30 people is marked too small to compare. It&rsquo;s also why there are no screenshots here.</p>
+        <h4>How it was judged</h4>
+        <p>Industry judges in AI and data, with a representative from EveryMind, scored business and social impact (35%), technical soundness (30%), functionality (20%) and AI process and transparency (15%). The top five teams presented at the finals.</p>
+      </div>
+    </div>
+  </article>
+
+  <nav class="pnext" aria-label="More projects">
+    <a class="next" href="otv.html"><span>Next project</span><b>ENES100 OTV</b></a>
+  </nav>
+  <section class="pcontact" aria-label="Contact">
+    <p>Questions about this project, or looking for an intern? <a href="mailto:micah@meandelman.com">micah@meandelman.com</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Micah Andelman, College Park and Bedford.</p>
+  <dl class="titleblock">
+    <div class="tb-title"><dt>Title</dt><dd>Micah Andelman, portfolio</dd></div>
+    <div><dt>Drawn by</dt><dd>M. Andelman</dd></div>
+    <div><dt>Rev</dt><dd class="rev">C</dd></div>
+    <div><dt>Date</dt><dd>Nov 2026</dd></div>
+    <div><dt>Sheet</dt><dd>2 of 5</dd></div>
+  </dl>
+</footer>
+
+<script src="vendor/lenis-1.1.20.min.js" defer></script>
+<script src="layout.js" defer></script>
+<script src="main.js" defer></script>
+<script src="extras.js" defer></script>
+<script src="visuals.js" defer></script>
+</body>
+</html>
