@@ -509,7 +509,7 @@ onScroll();
 // Smooth scrolling (Lenis). The page still scrolls natively underneath; Lenis just eases the wheel.
 // Every scroll-driven animation registers its chapter positions (absolute scroll Y values) in
 // window.scrollStops, so a fast flick can't skip through one:
-//   - with a wheel or trackpad, each event is capped so the speed stays even, and a single gesture
+//   - with a wheel or trackpad, scrolling is paced so the speed stays even, and a single gesture
 //     (including a trackpad's coasting) stops at the next chapter. Keep scrolling and it moves on
 //     after a short beat; a fresh gesture moves on at once.
 //   - on touch screens (Lenis leaves touch scrolling native), the same positions become CSS snap
@@ -520,16 +520,22 @@ const scrollStops = () => (window.scrollStops || [])
 const lenis = (() => {
   if (REDUCED || !window.Lenis) return null;
   const head = document.querySelector(".top");
-  const MAX = 120; // px per wheel event: a hard flick moves no faster than a steady roll
   let last = 0, gate = null, gateDir = 0, heldAt = 0;
   const govern = (t) => {
     const ev = t.event;
     if (!ev.type.includes("wheel") || ev.ctrlKey) return true;
-    let d = Math.max(-MAX, Math.min(MAX, t.deltaY));
-    const dir = Math.sign(d), now = performance.now();
+    // Anything swallowed here must also cancel the wheel event: Lenis only cancels the events it
+    // scrolls, and an uncancelled one scrolls the page natively, in a raw jump.
+    const swallow = () => { if (ev.cancelable) ev.preventDefault(); return false; };
+    const raw = t.deltaY, dir = Math.sign(raw), now = performance.now();
     if (!dir) return true;
+    // Even speed: the scroll target never runs more than half a screen ahead of the page, so a hard
+    // flick and a steady roll move at the same pace. Nothing is thrown away, it's just paced.
+    const LEAD = innerHeight * 0.5, ahead = l.targetScroll - l.animatedScroll;
+    let d = dir > 0 ? Math.min(raw, Math.max(0, LEAD - ahead)) : Math.max(raw, Math.min(0, -LEAD - ahead));
     if (now - last > 240 || dir !== gateDir) { gate = null; heldAt = 0; } // a new gesture
     last = now;
+    if (gate != null && (gate - l.targetScroll) * dir < -1) gate = null; // already past it (keys, scrollbar)
     if (gate == null) {
       const pos = l.targetScroll, S = scrollStops();
       gate = (dir > 0 ? S.find((s) => s > pos + 3) : S.reverse().find((s) => s < pos - 3)) ?? null;
@@ -540,11 +546,12 @@ const lenis = (() => {
       if (Math.abs(room) < 1) { // parked on a chapter
         heldAt ||= now;
         // only a long, still-strong push carries on; a fling and its fading coast stop here
-        if (now - heldAt > 1200 && Math.abs(t.deltaY) >= 40) { gate = null; heldAt = 0; }
-        return false;
+        if (now - heldAt > 1200 && Math.abs(raw) >= 40) { gate = null; heldAt = 0; }
+        return swallow();
       }
       if (dir > 0 ? d > room : d < room) d = room;
     }
+    if (Math.abs(d) < 0.5) return swallow();
     t.deltaY = d;
     return true;
   };
@@ -568,11 +575,17 @@ const lenis = (() => {
     box.replaceChildren(...S.map((y) => { const i = document.createElement("i"); i.style.top = y + "px"; return i; }));
     document.documentElement.classList.toggle("snapping", S.length > 0);
   };
-  let t = 0;
+  // Moving snap points mid-scroll makes Safari jump, so they're only placed again when the width
+  // changes or the page's length really changes, not when the toolbar slides in and out.
+  let t = 0, lastW = 0, lastLen = 0;
   const later = () => { clearTimeout(t); t = setTimeout(place, 300); };
   addEventListener("load", later);
-  addEventListener("resize", later);
-  new ResizeObserver(later).observe(document.body);
+  addEventListener("resize", () => { if (innerWidth !== lastW) { lastW = innerWidth; later(); } });
+  new ResizeObserver(() => {
+    const len = document.documentElement.scrollHeight;
+    if (Math.abs(len - lastLen) > 150) { lastLen = len; later(); }
+  }).observe(document.body);
+  lastW = innerWidth; lastLen = document.documentElement.scrollHeight;
   later();
 })();
 
