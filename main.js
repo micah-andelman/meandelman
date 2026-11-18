@@ -605,13 +605,6 @@ const lenis = (() => {
     return { fig, svg, wrap, steps, traces, T, mcu: svg.querySelector(".blk.mcu"), extra: 0, p: -1, onScreen: false };
   });
 
-  // Each pinned diagram stops at the start, after the copper comes in, after it goes out, and at the end.
-  (window.scrollStops ||= []).push(() => scenes.flatMap((sc) => {
-    if (!sc.wrap || !sc.extra) return [];
-    const base = sc.wrap.getBoundingClientRect().top + scrollY - sc.pin;
-    return [0, sc.T.a[1], sc.T.b[1], 1].map((f) => base + sc.extra * f);
-  }));
-
   // Size each scene: the pinned diagram plus about two screens of scroll to play through.
   const layout = () => {
     const h = head ? head.offsetHeight : 0;

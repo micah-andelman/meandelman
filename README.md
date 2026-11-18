@@ -11,7 +11,7 @@ It's plain HTML, CSS and JavaScript with no framework or build step, hosted on C
 - **Block diagrams** for each project. Hover a part to see what it does and open the real firmware behind each part of the robot.
 - **Scroll-driven signal flow.** Each diagram pins in place while copper fills its traces from inputs to outputs.
 - **OTV route replay** on a to-scale ENES100 arena, with a live status readout.
-- **Scroll stops.** Every scroll animation registers its chapters (`window.scrollStops`); a fast flick or a trackpad's coasting stops at the next one instead of skipping it. On touch screens they're native snap points.
+- **Calm scrolling.** Wheel and trackpad scrolling is smooth (Lenis) at about half the usual sensitivity, paced so a hard flick can't race past the scroll animations. In the OTV course, a chapter that has finished playing glides on to the next with one scroll. Touch screens scroll natively.
 - **Small extras:** a light/dark power switch, a thermal view, a serial monitor (press the backtick key), an oscilloscope intro and a few hidden things.
 - **Print stylesheet** that turns a page into a datasheet.
 

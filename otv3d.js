@@ -59,14 +59,6 @@ const lazy = (sec, start, fail) => {
   io.observe(sec);
 };
 
-// A pinned 3D section's chapters as scroll stops (see main.js): fractions of the scroll through it.
-const stopsFor = (sec, fr) => (window.scrollStops ||= []).push(() => {
-  if (!sec.classList.contains("o3-live")) return [];
-  const stage = sec.querySelector(".o3-stage");
-  const top = sec.getBoundingClientRect().top + scrollY, travel = sec.offsetHeight - stage.offsetHeight;
-  return travel > 0 ? fr.map((f) => top + travel * f) : [];
-});
-
 const makeRenderer = (K, canvas) => {
   const { THREE } = K;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -355,7 +347,6 @@ if (tourSec) {
   else {
     tourSec.classList.add(REDUCED ? "o3-still" : "o3-live");
     if (!REDUCED) dispatchEvent(new Event("resize"));
-    stopsFor(tourSec, [0, 0.2, 0.4, 0.6, 0.8, 1]);
     lazy(tourSec, () => tour(tourSec), () => { tourSec.classList.remove("o3-live", "o3-still"); tourSec.classList.add("o3-off"); dispatchEvent(new Event("resize")); });
   }
 }
@@ -554,13 +545,6 @@ if (runSec && map2d) {
     const noteEl = document.querySelector(".o3r-note");
     if (note && noteEl) noteEl.textContent = note.textContent;
     runSec.classList.add("o3-live", RUN_MODE === "scrub" ? "o3r-scrub" : "o3r-lockmode");
-    // scroll stops: the start, just into each moment that plays on its own (the pool, the underside,
-    // the limbo), the goal and the end. Same chapter weights as course() below.
-    if (RUN_MODE === "scrub") {
-      const Wt = [0.5, 0.7, 1.4, 0.5, 0.5, 1.6, 1.1, 0.8], sum = Wt.reduce((x, y) => x + y, 0);
-      const at = (k, f = 0) => (Wt.slice(0, k).reduce((x, y) => x + y, 0) + Wt[k] * f) / sum;
-      stopsFor(runSec, [0, at(2, 0.08), at(3), at(5, 0.08), at(6, 0.08), at(7), 1]);
-    }
     document.documentElement.classList.add("o3r-on");
     dispatchEvent(new Event("resize"));
     lazy(runSec, () => course(runSec, routes), () => {
@@ -1182,7 +1166,6 @@ if (capSec) {
     capSec.classList.add("o3-live");
     document.documentElement.classList.add("o3c-on");
     dispatchEvent(new Event("resize"));
-    stopsFor(capSec, [0, 0.45, 0.81, 1]); // assembled, apart, back together, the shot
     lazy(capSec, () => capScene(capSec), () => {
       capSec.classList.remove("o3-live"); capSec.classList.add("o3-off");
       document.documentElement.classList.remove("o3c-on"); dispatchEvent(new Event("resize"));
@@ -1553,7 +1536,6 @@ if (plutoSec) {
   else {
     plutoSec.classList.add("o3-live");
     dispatchEvent(new Event("resize"));
-    stopsFor(plutoSec, [0, ...[0, 1, 2, 3, 4, 5, 6].map((k) => (k + 0.92) / 7)]); // each message once it has arrived
     lazy(plutoSec, () => plutoScene(plutoSec), () => { plutoSec.classList.remove("o3-live"); plutoSec.classList.add("o3-off"); dispatchEvent(new Event("resize")); });
   }
 }

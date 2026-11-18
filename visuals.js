@@ -697,8 +697,6 @@
     // the sign lights once the layers above have cleared, and goes dark again on the way back
     const lamp = () => hero.classList.toggle("pb-on", last > (hero.classList.contains("pb-on") ? 0.5 : 0.66));
 
-    // one stop: the board fully apart with the sign lit
-    (window.scrollStops ||= []).push(() => [innerHeight * 0.79 + 2]);
     addEventListener("scroll", run, { passive: true });
     run();
     addEventListener("scroll", lamp, { passive: true });
