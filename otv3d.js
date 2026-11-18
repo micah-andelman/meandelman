@@ -1886,8 +1886,8 @@ async function plutoScene(sec, opts = {}) {
 
 // ---------------------------------------------------------------- BuildFest card: the dashboard in 3D
 // For the home page card: five real screenshots of the team's tool stand on a turning ring. The one in
-// front is big enough to read; every few seconds the ring brings the next one round, and a gold "1st"
-// medal swings at its corner. Runs on a clock while the card is on screen, like the other cards.
+// front is big enough to read; every few seconds the ring brings the next one round. Each carries a
+// first-place rosette pinned to its corner. Runs on a clock while the card is on screen, like the other cards.
 async function buildfestScene(sec, opts = {}) {
   const K = await kit();
   const { THREE } = K;
@@ -1910,6 +1910,40 @@ async function buildfestScene(sec, opts = {}) {
   // The panels stand on a ring (a carousel). The one facing the camera is large enough to read; every
   // few seconds the ring turns to the next. Faces are unlit so the screenshots keep their true colours;
   // panels turned away are dimmed a little for depth.
+  // A first-place rosette (pleated gold ring, "1st" in the middle, two notched tails), drawn once on
+  // a canvas and pinned flat to each panel's top-right corner, so it turns with the panel.
+  const rosette = (() => {
+    const c = document.createElement("canvas"); c.width = 512; c.height = 704;
+    const x = c.getContext("2d"), cx = 256, cy = 236;
+    const tail = (dx, rot, col, dark) => {
+      x.save(); x.translate(cx + dx, cy + 60); x.rotate(rot);
+      x.beginPath(); x.moveTo(-58, 0); x.lineTo(58, 0); x.lineTo(58, 400); x.lineTo(0, 340); x.lineTo(-58, 400); x.closePath();
+      const g = x.createLinearGradient(-58, 0, 58, 0); g.addColorStop(0, dark); g.addColorStop(0.5, col); g.addColorStop(1, dark);
+      x.fillStyle = g; x.fill(); x.restore();
+    };
+    tail(-44, 0.22, "#c97a34", "#9a5520");
+    tail(44, -0.22, "#16805c", "#0b5a40");
+    const N = 28; // the pleats
+    for (let i = 0; i < N; i++) {
+      const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2, am = (a0 + a1) / 2;
+      x.beginPath(); x.moveTo(cx, cy);
+      x.lineTo(cx + Math.cos(a0) * 196, cy + Math.sin(a0) * 196);
+      x.lineTo(cx + Math.cos(am) * 228, cy + Math.sin(am) * 228);
+      x.lineTo(cx + Math.cos(a1) * 196, cy + Math.sin(a1) * 196);
+      x.closePath(); x.fillStyle = i % 2 ? "#c8902e" : "#e6b54e"; x.fill();
+    }
+    x.beginPath(); x.arc(cx, cy, 150, 0, Math.PI * 2); x.fillStyle = "#0e6a4c"; x.fill();
+    x.beginPath(); x.arc(cx, cy, 128, 0, Math.PI * 2);
+    const g = x.createRadialGradient(cx - 40, cy - 50, 10, cx, cy, 130); g.addColorStop(0, "#fbe7a6"); g.addColorStop(1, "#d9a441");
+    x.fillStyle = g; x.fill();
+    x.lineWidth = 6; x.strokeStyle = "#a8741f"; x.stroke();
+    x.fillStyle = "#3a2606"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.font = "700 128px 'Barlow Condensed', Arial Narrow, sans-serif"; x.fillText("1st", cx, cy - 8);
+    x.font = "700 34px 'Barlow Condensed', Arial Narrow, sans-serif"; x.fillText("PLACE", cx, cy + 66);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso;
+    return { mat: new Basic({ map: t, transparent: true, depthWrite: false, toneMapped: false }), asp: c.width / c.height };
+  })();
+
   const PH = 0.74, MAXW = 1.3;
   const edge = new Std({ color: "#1d2124", roughness: 0.55, metalness: 0.1 });
   const ring = new Group(); scene.add(ring);
@@ -1922,6 +1956,8 @@ async function buildfestScene(sec, opts = {}) {
     const img = new Mesh(new THREE.PlaneGeometry(w, h), face); img.position.z = 0.0095; slab.add(img);
     // the same screenshot on the back, so panels across the ring show a picture, not a dark slab
     const back = new Mesh(new THREE.PlaneGeometry(w, h), face); back.position.z = -0.0095; back.rotation.y = Math.PI; slab.add(back);
+    const rw = 0.3, pin = new Mesh(new THREE.PlaneGeometry(rw, rw / rosette.asp), rosette.mat);
+    pin.position.set(w / 2 - 0.07, h / 2 - 0.2, 0.014); pin.rotation.z = -0.14; pin.renderOrder = 2; slab.add(pin);
     const g = new Group(); g.add(slab); ring.add(g);
     const a = i * step; // around the ring, each panel facing out
     g.position.set(Math.sin(a) * R, h / 2 - PH / 2, Math.cos(a) * R);
@@ -1935,21 +1971,6 @@ async function buildfestScene(sec, opts = {}) {
     x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
     const sh = new Mesh(new THREE.PlaneGeometry(R * 3.2, R * 1.6), new Basic({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, toneMapped: false }));
     sh.rotation.x = -Math.PI / 2; sh.position.set(0, -PH / 2 - 0.06, R * 0.35); scene.add(sh); }
-
-  // the medal: a gold disc with "1st" on it, hanging from a two-colour ribbon at the front panel's corner
-  const medal = new Group(); scene.add(medal);
-  const gold = new Std({ color: "#d9a441", metalness: 0.85, roughness: 0.26 });
-  const disc = new Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 64), gold); disc.rotation.x = Math.PI / 2; medal.add(disc);
-  const rim = new Mesh(new THREE.TorusGeometry(0.15, 0.011, 12, 64), new Std({ color: "#a8741f", metalness: 0.9, roughness: 0.3 })); medal.add(rim);
-  const c = document.createElement("canvas"); c.width = c.height = 512;
-  { const x = c.getContext("2d"); x.fillStyle = "#3a2606"; x.font = "700 240px 'Barlow Condensed', Arial Narrow, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("1st", 256, 272); }
-  const label = new THREE.CanvasTexture(c); label.colorSpace = THREE.SRGBColorSpace; label.anisotropy = maxAniso;
-  const mface = new Mesh(new THREE.CircleGeometry(0.128, 48), new Basic({ map: label, transparent: true, toneMapped: false })); mface.position.z = 0.0162; medal.add(mface);
-  const ribbonMat = (col) => new Std({ color: col, roughness: 0.7, side: THREE.DoubleSide });
-  [[-1, "#b8692a"], [1, "#0e6a4c"]].forEach(([s, col]) => {
-    const r = new Mesh(new THREE.PlaneGeometry(0.085, 0.3), ribbonMat(col));
-    r.position.set(s * 0.045, 0.21, -0.02); r.rotation.z = s * 0.28; medal.add(r);
-  });
 
   let W = 0, H = 0;
   const resize = () => {
@@ -1977,13 +1998,8 @@ async function buildfestScene(sec, opts = {}) {
       const facing = Math.cos(a + rot);
       face.color.setScalar(0.7 + 0.3 * Math.abs(facing));
     });
-    // the medal hangs at the front panel's top-right corner and swings; it ducks out while the ring turns
-    const m = 1 - Math.sin(Math.PI * turn) * 0.85;
-    medal.position.set(0.6, 0.2 - (1 - m) * 0.08, 0.12);
-    medal.rotation.set(0, Math.sin(t * 1.4) * 0.4, Math.sin(t * 1.9) * 0.1);
-    medal.scale.setScalar(0.72 * (0.45 + 0.55 * m));
-    // frame the front panel plus the medal, wide or narrow
-    const d = Math.max(1.12 / (2 * tan), (MAXW + 1.0) / (2 * tan * cam.aspect));
+    // frame the front panel, wide or narrow
+    const d = Math.max(1.0 / (2 * tan), (MAXW + 0.8) / (2 * tan * cam.aspect));
     cam.position.set(Math.sin(t / 4.2) * 0.12, 0.2, d);
     cam.lookAt(0, 0.02, -0.2);
     renderer.render(scene, cam);
