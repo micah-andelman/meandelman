@@ -401,7 +401,9 @@
       .xtal { fill: #cfd2d6; stroke: #7d8186; stroke-width: .08; }
       .term { fill: #2f8f4e; stroke: #1b5a30; stroke-width: .08; } .screw { fill: #c9ccd0; stroke: #7d8186; stroke-width: .06; }
       .rim { fill: #5c1a14; } .lens { fill: #7a2318; } .hot { fill: rgba(255,255,255,.3); }
-      .lens-on { fill: #ffd9c2; } .hot-on { fill: rgba(255,255,255,.75); }`;
+      .lens-on { fill: #ffd9c2; } .hot-on { fill: rgba(255,255,255,.75); }
+      .pack { fill: #1c1e21; stroke: #000; stroke-width: .08; } .cell { fill: #c47a2c; } .cell-b { fill: #2a2d31; } .nub { fill: #c9ccd0; }
+      .packv { font-size: .62px; font-weight: 700; fill: #f4f1e8; }`;
     const FONT = {
       P: ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
       O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
@@ -440,7 +442,7 @@
       // Phones: the letters get the width. The controller is left off and the row lines come in on a
       // header (J1), as if the sign plugs into a controller board elsewhere.
       const narrow = lines.length > 1;
-      const top = -4, bottom = (lines.length - 1) * LINE_H + 24, left = narrow ? -9 : -33;
+      const top = -4, bottom = (lines.length - 1) * LINE_H + 24 + (narrow ? 9 : 0), left = narrow ? -9 : -33;
       const p = Math.min((W - 40) / (right - left + 6), (H - 40) / (bottom - top + 8));
       const ox = Math.round((W - (right + left) * p) / 2 / p) * p, oy = Math.round((H - (bottom + top) * p) / 2 / p) * p;
 
@@ -554,6 +556,28 @@
         if (li > 0) for (let r = 0; r < 7; r++) jump([-4, 2 * r], [-4, y0 + 2 * r], ["red", "org", "ylw", "grn", "blu", "vio", "wht"][r], 0.06 + r * 0.025);
       });
 
+      // the power source: a 3xAA holder (4.5 V), drawn standing (vertical) or lying down
+      const pack = (x, y, vertical) => {
+        const L = 10.2, T = 7.2, w = vertical ? T : L, h = vertical ? L : T;
+        svgEl("rect", { class: "pack", x, y, width: w, height: h, rx: 0.4 }, parts);
+        for (let i = 0; i < 3; i++) {
+          const o = 0.5 + i * 2.25;
+          if (vertical) {
+            svgEl("rect", { class: "cell", x: x + o, y: y + 0.7, width: 1.95, height: L - 2.6, rx: 0.5 }, parts);
+            svgEl("rect", { class: "cell-b", x: x + o, y: y + 0.7 + (L - 2.6) * 0.62, width: 1.95, height: (L - 2.6) * 0.38, rx: 0.5 }, parts);
+            svgEl("rect", { class: "nub", x: x + o + 0.6, y: y + (i % 2 ? L - 2.1 : 0.35), width: 0.75, height: 0.4, rx: 0.1 }, parts);
+          } else {
+            svgEl("rect", { class: "cell", x: x + 0.7, y: y + o, width: L - 2.6, height: 1.95, rx: 0.5 }, parts);
+            svgEl("rect", { class: "cell-b", x: x + 0.7 + (L - 2.6) * 0.62, y: y + o, width: (L - 2.6) * 0.38, height: 1.95, rx: 0.5 }, parts);
+            svgEl("rect", { class: "nub", x: x + (i % 2 ? L - 2.1 : 0.35), y: y + o + 0.6, width: 0.4, height: 0.75, rx: 0.1 }, parts);
+          }
+        }
+        const lx = vertical ? x + w / 2 : x + 1.2, ly = vertical ? y + h - 0.75 : y + h - 0.35;
+        const t = svgEl("text", { class: "packv", x: lx, y: ly, "text-anchor": vertical ? "middle" : "start" }, parts);
+        t.textContent = "3×AA 4.5V";
+        text(vertical ? x + w / 2 : x + L + 0.6, vertical ? y - 0.5 : y + 1, "BT1", "ref", vertical ? "middle" : "start");
+      };
+
       if (narrow) {
         // a 1x7 header for the rows, and a 2-pin header for the shift registers' clock and data
         svgEl("rect", { class: "ic", x: -6.6, y: -0.6, width: 1.2, height: 13.2, rx: 0.15 }, parts);
@@ -562,8 +586,15 @@
         svgEl("rect", { class: "ic", x: -6.6, y: 15.4, width: 1.2, height: 3.2, rx: 0.15 }, parts);
         pin(-6, 16); pin(-6, 18); text(-6, 20.3, "J2");
         jump([-6, 16], [5, 19], "ylw", 0.12); jump([-6, 18], [6, 19], "grn", 0.12);
+        // power: the pack under the second line; both lines' rails run out to x = -8 and -7 and down to it
+        const Y2 = (lines.length - 1) * LINE_H;
+        for (const y0 of [0, Y2]) { bare([[-8, y0 + 21], [-4, y0 + 21]]); bare([[-7, y0 + 22], [-4, y0 + 22]]); }
+        if (Y2) { jump([-8, 21], [-8, Y2 + 21], "red", 0.05); jump([-7, 22], [-7, Y2 + 22], "blk", 0.05); }
+        pack(-8.4, Y2 + 25, false);
+        svgEl("path", { class: "lead red", d: `M-7.6,${Y2 + 25.6} C-8.8,${Y2 + 24.5} -8.6,${Y2 + 22.4} -8,${Y2 + 21}` }, parts);
+        svgEl("path", { class: "lead blk", d: `M-6.3,${Y2 + 25.2} C-6.6,${Y2 + 24} -7.1,${Y2 + 23.2} -7,${Y2 + 22}` }, parts);
       } else {
-        // ---- the controller, left of the letters. Rails: +5 V at x = -24, ground at x = -22.
+        // ---- the controller, left of the letters. Rails: +4.5 V at x = -24, ground at x = -22.
         for (let r = 0; r < 7; r++) { res(-9, -5, 2 * r, "220"); bare([[-11, 2 * r], [-9, 2 * r]]); bare([[-5, 2 * r], [-4, 2 * r]]); }
         text(-7, -1.2, "R1–R7", "val");
         dipV(-14, 0, 14, "ATMEGA328P", "U1");
@@ -573,10 +604,11 @@
         svgEl("rect", { class: "term", x: -31.3, y: -0.6, width: 2.6, height: 4.2, rx: 0.2 }, parts);
         svgEl("circle", { class: "screw", cx: -30, cy: 0, r: 0.62 }, parts);
         svgEl("circle", { class: "screw", cx: -30, cy: 2, r: 0.62 }, parts);
-        svgEl("path", { class: "lead red", d: `M${left - 2},-0.4 C${left + 0.5},-0.4 ${left + 0.5},0 -31.3,0` }, parts);
-        svgEl("path", { class: "lead blk", d: `M${left - 2},2.8 C${left + 0.5},2.8 ${left + 0.5},2 -31.3,2` }, parts);
+        pack(-33.2, 14, true);
+        svgEl("path", { class: "lead red", d: "M-32.3,14.4 C-33.4,11 -33.2,1.2 -31.3,0" }, parts);
+        svgEl("path", { class: "lead blk", d: "M-27.6,14.4 C-28.6,9 -32.4,3.2 -31.3,2" }, parts);
         pin(-28, 0); pin(-28, 2);
-        text(-30, -1.3, "J1"); text(-30, 4.6, "5V IN", "val");
+        text(-30, -1.3, "J1"); text(-30, 4.6, "4.5V IN", "val");
         bare([[-28, 0], [-24, 0]]);
         jump([-28, 2], [-22, 3], "blk", 0.3);
         ecap(-24, -22, 7, 1.15); text(-25.6, 7.25, "C1", "ref", "end"); text(-25.6, 8.1, "100µ", "val", "end");

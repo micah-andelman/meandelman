@@ -1668,3 +1668,8 @@ html.snapping { scroll-snap-type: y proximity; }
 @media screen and (max-width: 760px) { .bf-certs { grid-template-columns: 1fr; } .bf-cert, .bf-cert + .bf-cert { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .bf-cert { transition: none; } }
 @media print { .bf-cert, .bf-cert + .bf-cert { transform: none; } }
+
+/* Projects dropdown: an invisible bridge over the gap between "Projects" and the list, so moving the
+   mouse down to the list never leaves the menu. */
+.pmenu-list::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; }
+@media screen and (max-width: 760px) { .pmenu-list::before { top: -10px; height: 10px; } }

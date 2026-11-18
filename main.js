@@ -796,8 +796,12 @@ const lenis = (() => {
   });
   btn.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); set(true, true); } });
   const hover = matchMedia("(hover: hover) and (pointer: fine)");
-  box.addEventListener("pointerenter", (e) => { if (hover.matches && e.pointerType === "mouse" && !box.classList.contains("open")) { byHover = true; set(true); } });
-  box.addEventListener("pointerleave", (e) => { if (hover.matches && e.pointerType === "mouse" && byHover) closeT = setTimeout(() => set(false), 220); });
+  box.addEventListener("pointerenter", (e) => {
+    if (!hover.matches || e.pointerType !== "mouse") return;
+    clearTimeout(closeT); // back over the button or the list before it closed: stay open
+    if (!box.classList.contains("open")) { byHover = true; set(true); }
+  });
+  box.addEventListener("pointerleave", (e) => { if (hover.matches && e.pointerType === "mouse" && byHover) closeT = setTimeout(() => set(false), 350); });
   document.addEventListener("click", (e) => { if (!box.contains(e.target)) set(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && box.classList.contains("open")) { set(false); btn.focus(); } });
   box.addEventListener("focusout", (e) => { if (!box.contains(e.relatedTarget)) set(false); });
