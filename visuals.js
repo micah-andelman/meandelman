@@ -235,6 +235,41 @@
     new IntersectionObserver(([e]) => (e.isIntersecting ? svg.unpauseAnimations() : svg.pauseAnimations())).observe(svg);
   });
 
+  // ------------------------------------------------------------ BuildFest: the 3D screenshot ring
+  // Screenshots stand on a ring that turns one step every few seconds while it's on screen. Hovering
+  // or focusing holds it; the arrows step it by hand. Reduced motion, or no JS, leaves a plain grid.
+  $$(".bf-show").forEach((show) => {
+    if (REDUCED) return;
+    const ring = $(".bf-ring", show), panels = $$(".bf-panel", show), n = panels.length;
+    const cap = $(".bf-cap", show), [capT, capS] = [$("b", cap), $("span", cap)];
+    let k = 0, timer = 0, held = false, visible = false;
+    const show_ = () => {
+      ring.style.setProperty("--rot", `${(-k * 360) / n}deg`);
+      const front = ((k % n) + n) % n;
+      panels.forEach((p, i) => {
+        const d = Math.min((i - front + n) % n, (front - i + n) % n);
+        p.classList.toggle("far", d === 1);
+        p.classList.toggle("back", d > 1);
+        p.setAttribute("aria-hidden", d === 0 ? "false" : "true");
+      });
+      capT.textContent = panels[front].dataset.title;
+      capS.textContent = panels[front].dataset.cap;
+    };
+    const step = (d) => { k += d; show_(); };
+    const tick = () => { clearTimeout(timer); if (visible && !held) timer = setTimeout(() => { step(1); tick(); }, 3600); };
+    $(".bf-prev", show).addEventListener("click", () => { step(-1); tick(); });
+    $(".bf-next", show).addEventListener("click", () => { step(1); tick(); });
+    const stage = $(".bf-stage", show);
+    stage.addEventListener("pointerenter", () => { held = true; clearTimeout(timer); });
+    stage.addEventListener("pointerleave", () => { held = false; tick(); });
+    show.addEventListener("focusin", () => { held = true; clearTimeout(timer); });
+    show.addEventListener("focusout", (e) => { if (!show.contains(e.relatedTarget)) { held = false; tick(); } });
+    stage.addEventListener("click", () => { step(1); tick(); });
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; tick(); }, { threshold: 0.25 }).observe(show);
+    show.classList.add("on");
+    show_();
+  });
+
   // ------------------------------------------------------------ Pluto: typed brief
   $$(".brief").forEach((brief) => {
     if (REDUCED) return;

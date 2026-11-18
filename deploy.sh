@@ -8,6 +8,7 @@ mkdir -p dist
 python photos.py
 cp styles.css layout.js main.js extras.js visuals.js otv3d.js favicon.svg resume.pdf og.png sitemap.xml robots.txt _headers dist/
 cp -r fonts dist/
+cp -r img dist/
 [ -d photos ] && cp -r photos dist/
 cp -r vendor dist/
 cp -r models dist/
