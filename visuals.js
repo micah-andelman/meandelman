@@ -378,7 +378,10 @@
     const cvLit = document.createElement("canvas");
     cvLit.className = "pb-lit";
     litWrap.appendChild(cvLit);
-    core.prepend(cvBoard, litWrap);
+    const cvHeat = document.createElement("canvas");
+    cvHeat.className = "pb-heat";
+    cvHeat.setAttribute("aria-hidden", "true");
+    core.prepend(cvBoard, litWrap, cvHeat);
     const PB_CSS = `
       text { font-family: "Barlow", "Arial Narrow", Arial, sans-serif; }
       .pad { fill: #c8834a; } .hole { fill: #0a1f15; } .mh { fill: #0a1f15; stroke: #c8834a; stroke-width: 3; }
@@ -427,6 +430,44 @@
         cv.height = Math.round(h * k);
         cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
       } finally { URL.revokeObjectURL(url); }
+    };
+    // Thermal view (the thermometer in the header): the board as a heat camera would see it.
+    const RAMP = [[0, [22, 11, 54]], [0.3, [96, 18, 110]], [0.55, [190, 55, 82]], [0.78, [240, 120, 32]], [1, [250, 222, 92]]];
+    const ramp = (t) => {
+      for (let i = 1; i < RAMP.length; i++) if (t <= RAMP[i][0]) {
+        const [a, ca] = RAMP[i - 1], [b, cb] = RAMP[i], f = (t - a) / (b - a);
+        return ca.map((v, j) => Math.round(v + (cb[j] - v) * f));
+      }
+      return RAMP[RAMP.length - 1][1];
+    };
+    const LUT = Array.from({ length: 256 }, (_, i) => ramp(i / 255));
+    const paintHeat = (hot, W, H, ox, oy, p) => {
+      const s = 0.5, w = Math.round(W * s), h = Math.round(H * s); // heat is soft: half resolution is plenty
+      const acc = document.createElement("canvas"); acc.width = w; acc.height = h;
+      const a = acc.getContext("2d", { willReadFrequently: true });
+      a.fillStyle = "#000"; a.fillRect(0, 0, w, h);
+      a.globalCompositeOperation = "lighten"; // overlapping parts take the hotter value instead of adding up
+      hot.forEach(([x, y, r, q]) => {
+        const cx = (ox + x * p) * s, cy = (oy + y * p) * s, R = r * p * s * 2.2;
+        const g = a.createRadialGradient(cx, cy, 0, cx, cy, R);
+        const v = Math.round(255 * q);
+        g.addColorStop(0, `rgb(${v},${v},${v})`);
+        g.addColorStop(0.45, `rgb(${Math.round(v * 0.45)},${Math.round(v * 0.45)},${Math.round(v * 0.45)})`);
+        g.addColorStop(1, "rgb(0,0,0)");
+        a.fillStyle = g; a.fillRect(cx - R, cy - R, R * 2, R * 2);
+      });
+      const img = a.getImageData(0, 0, w, h), d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const c = LUT[Math.min(255, Math.round(d[i] * 0.92 + 8))];
+        d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+      }
+      a.putImageData(img, 0, 0);
+      cvHeat.width = w; cvHeat.height = h;
+      const out = cvHeat.getContext("2d");
+      out.save();
+      out.beginPath(); out.roundRect ? out.roundRect(3 * s, 3 * s, w - 6 * s, h - 6 * s, 14 * s) : out.rect(0, 0, w, h); out.clip();
+      out.drawImage(acc, 0, 0);
+      out.restore();
     };
     let built = "", job = 0;
     const buildPB = async () => {
@@ -480,7 +521,11 @@
       const route = (pts, col) => { wire(poly(pts), col); pin(...pts[0]); pin(...pts[pts.length - 1]); };
       const text = (x, y, s, cls = "ref", anchor = "middle") => { const t = svgEl("text", { x, y, class: cls, "text-anchor": anchor }, parts); t.textContent = s; };
       const BANDS = { "220": ["#d1352b", "#d1352b", "#6b3a1e"], "10k": ["#6b3a1e", "#111", "#e07a1f"] };
+      // Heat sources for the thermal view, in grid units. Estimated from what each part dissipates
+      // (the 220 ohm LED resistors and the lit LEDs most), like the site's other thermal diagrams.
+      const hot = [];
       const res = (x1, x2, y, val) => { // horizontal resistor, leads at (x1, y) and (x2, y)
+        hot.push([(x1 + x2) / 2, y, 1.7, val === "220" ? 0.78 : 0.14]);
         svgEl("path", { class: "leg", d: `M${x1},${y} L${x2},${y}` }, parts);
         const mx = (x1 + x2) / 2;
         svgEl("rect", { class: "res", x: mx - 1.2, y: y - 0.42, width: 2.4, height: 0.84, rx: 0.38 }, parts);
@@ -488,6 +533,7 @@
         pin(x1, y); pin(x2, y);
       };
       const ecap = (x1, x2, y, r) => { // radial electrolytic lying across two rails
+        hot.push([(x1 + x2) / 2, y, 1.6, 0.12]);
         const cx = (x1 + x2) / 2;
         svgEl("path", { class: "leg", d: `M${x1},${y} L${x2},${y}` }, parts);
         svgEl("circle", { class: "ecap", cx, cy: y, r }, parts);
@@ -501,6 +547,7 @@
         pin(x1, y); pin(x2, y);
       };
       const dipH = (x0, yt, n, name, ref) => { // DIP-2n lying across: pins x0..x0+n-1 at yt and yt+3
+        hot.push([x0 + (n - 1) / 2, yt + 1.5, n * 0.55, 0.5]);
         for (let i = 0; i < n; i++) { pin(x0 + i, yt); pin(x0 + i, yt + 3); }
         svgEl("rect", { class: "ic", x: x0 - 0.55, y: yt + 0.35, width: n - 1 + 1.1, height: 2.3, rx: 0.12 }, parts);
         svgEl("path", { class: "notch", d: `M${x0 - 0.55},${yt + 1.1} a0.4,0.4 0 0 1 0,0.8` }, parts);
@@ -508,6 +555,7 @@
         text(x0 - 0.6, yt + 4.3, ref, "ref", "start");
       };
       const dipV = (x0, y0, n, name, ref) => { // DIP-2n standing up: pins y0..y0+n-1 at x0 and x0+3
+        hot.push([x0 + 1.5, y0 + (n - 1) / 2, n * 0.42, 0.62]);
         for (let i = 0; i < n; i++) { pin(x0, y0 + i); pin(x0 + 3, y0 + i); }
         svgEl("rect", { class: "ic", x: x0 + 0.35, y: y0 - 0.55, width: 2.3, height: n - 1 + 1.1, rx: 0.12 }, parts);
         svgEl("path", { class: "notch", d: `M${x0 + 1.1},${y0 - 0.55} a0.4,0.4 0 0 0 0.8,0` }, parts);
@@ -549,6 +597,7 @@
             svgEl("circle", { cx: x, cy: y, r: 2.1, fill: "url(#glow)" }, lg);
             svgEl("circle", { class: "rim", cx: x, cy: y, r: 0.82 }, lg);
             svgEl("circle", { class: "lens-on", cx: x, cy: y, r: 0.64 }, lg);
+            hot.push([x, y, 1.25, 0.42]);
             svgEl("circle", { class: "hot-on", cx: x - 0.22, cy: y - 0.24, r: 0.22 }, lg);
           });
         }
@@ -559,6 +608,7 @@
       // the power source: a 3xAA holder (4.5 V), drawn standing (vertical) or lying down
       const pack = (x, y, vertical) => {
         const L = 10.2, T = 7.2, w = vertical ? T : L, h = vertical ? L : T;
+        hot.push([x + w / 2, y + h / 2, 4.2, 0.32]);
         svgEl("rect", { class: "pack", x, y, width: w, height: h, rx: 0.4 }, parts);
         for (let i = 0; i < 3; i++) {
           const o = 0.5 + i * 2.25;
@@ -619,6 +669,7 @@
         bare([[-22, 7], [-14, 7]]);
         // 16 MHz crystal on XTAL1/XTAL2 (pins 9 and 10) and its load caps
         svgEl("rect", { class: "xtal", x: -17.65, y: 7.6, width: 1.3, height: 2.8, rx: 0.65 }, parts);
+        hot.push([-17, 9, 1.4, 0.18]);
         pin(-17, 8); pin(-17, 10);
         disc(-22, -20, 8); disc(-22, -20, 10);
         bare([[-20, 8], [-14, 8]]); bare([[-20, 10], [-17, 10]]);
@@ -639,6 +690,7 @@
       await Promise.all([paint(svg, cvBoard, W, H, k), paint(lit, cvLit, bw, bh, k)]).catch(() => { built = ""; });
       if (my !== job) return;
       Object.assign(litWrap.style, { left: bx + "px", top: by + "px", width: bw + "px", height: bh + "px" });
+      paintHeat(hot, W, H, ox, oy, p);
     };
     buildPB();
     addEventListener("resize", () => { if (!hero.classList.contains("exploding")) buildPB(); });

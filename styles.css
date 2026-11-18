@@ -1673,3 +1673,8 @@ html.snapping { scroll-snap-type: y proximity; }
    mouse down to the list never leaves the menu. */
 .pmenu-list::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; }
 @media screen and (max-width: 760px) { .pmenu-list::before { top: -10px; height: 10px; } }
+
+/* Thermal view on the hero protoboard: the heat map (visuals.js) fades in over the board. */
+.pb-heat { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+html.thermal .pb-heat { opacity: .9; }
+@media print { .pb-heat { display: none; } }

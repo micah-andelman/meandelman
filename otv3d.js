@@ -1885,9 +1885,9 @@ async function plutoScene(sec, opts = {}) {
 }
 
 // ---------------------------------------------------------------- BuildFest card: the dashboard in 3D
-// For the home page card: five real screenshots of the team's tool stand as thin panels. They start
-// stacked like a deck, fan out into an arc and sway, then fold back, and a gold "1st" medal drops in
-// on its ribbon while they're open. Runs on a clock while the card is on screen, like the other cards.
+// For the home page card: five real screenshots of the team's tool stand on a turning ring. The one in
+// front is big enough to read; every few seconds the ring brings the next one round, and a gold "1st"
+// medal swings at its corner. Runs on a clock while the card is on screen, like the other cards.
 async function buildfestScene(sec, opts = {}) {
   const K = await kit();
   const { THREE } = K;
@@ -1902,68 +1902,90 @@ async function buildfestScene(sec, opts = {}) {
   const tex = (await Promise.all(SHOTS.map((n) => loader.loadAsync(`img/buildfest/${n}.jpg`).catch(() => null)))).filter(Boolean);
   if (tex.length < 2) throw new Error("buildfest card: screenshots did not load");
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
-  tex.forEach((t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; t.generateMipmaps = true; });
-
-  // the panels: a thin dark slab with the screenshot on its face (unlit, so the colours stay true)
-  const edge = new Std({ color: "#1d2124", roughness: 0.6 });
-  const deck = new Group(); scene.add(deck);
-  const panels = tex.map((t, i) => {
-    const w = 1.15, h = Math.min(1.05, (w * t.image.height) / t.image.width);
-    const face = new Basic({ map: t, toneMapped: false });
-    const slab = new Mesh(new THREE.BoxGeometry(w + 0.03, h + 0.03, 0.02), [edge, edge, edge, edge, edge, edge]);
-    const img = new Mesh(new THREE.PlaneGeometry(w, h), face); img.position.z = 0.0105; slab.add(img);
-    const g = new Group(); g.add(slab); deck.add(g);
-    return { g, i };
+  tex.forEach((t) => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; t.generateMipmaps = true;
+    t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
   });
-  const N = panels.length, mid = (N - 1) / 2;
 
-  // the medal: a gold disc with "1st" on it, hanging from a two-colour ribbon
+  // The panels stand on a ring (a carousel). The one facing the camera is large enough to read; every
+  // few seconds the ring turns to the next. Faces are unlit so the screenshots keep their true colours;
+  // panels turned away are dimmed a little for depth.
+  const PH = 0.74, MAXW = 1.3;
+  const edge = new Std({ color: "#1d2124", roughness: 0.55, metalness: 0.1 });
+  const ring = new Group(); scene.add(ring);
+  const N = tex.length, R = N > 3 ? 1.45 : 1.1, step = (Math.PI * 2) / N;
+  const panels = tex.map((t, i) => {
+    const asp = t.image.width / t.image.height;
+    const w = Math.min(MAXW, PH * asp), h = w / asp;
+    const face = new Basic({ map: t, toneMapped: false });
+    const slab = new Mesh(new THREE.BoxGeometry(w + 0.024, h + 0.024, 0.018), edge);
+    const img = new Mesh(new THREE.PlaneGeometry(w, h), face); img.position.z = 0.0095; slab.add(img);
+    // the same screenshot on the back, so panels across the ring show a picture, not a dark slab
+    const back = new Mesh(new THREE.PlaneGeometry(w, h), face); back.position.z = -0.0095; back.rotation.y = Math.PI; slab.add(back);
+    const g = new Group(); g.add(slab); ring.add(g);
+    const a = i * step; // around the ring, each panel facing out
+    g.position.set(Math.sin(a) * R, h / 2 - PH / 2, Math.cos(a) * R);
+    g.rotation.y = a;
+    return { g, face, a };
+  });
+
+  // a soft shadow on the floor under the ring
+  { const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d");
+    const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, "rgba(20,30,26,.28)"); gr.addColorStop(1, "rgba(20,30,26,0)");
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    const sh = new Mesh(new THREE.PlaneGeometry(R * 3.2, R * 1.6), new Basic({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, toneMapped: false }));
+    sh.rotation.x = -Math.PI / 2; sh.position.set(0, -PH / 2 - 0.06, R * 0.35); scene.add(sh); }
+
+  // the medal: a gold disc with "1st" on it, hanging from a two-colour ribbon at the front panel's corner
   const medal = new Group(); scene.add(medal);
-  const gold = new Std({ color: "#d9a441", metalness: 0.85, roughness: 0.28 });
-  const disc = new Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 64), gold); disc.rotation.x = Math.PI / 2; medal.add(disc);
-  const rim = new Mesh(new THREE.TorusGeometry(0.2, 0.014, 12, 64), new Std({ color: "#a8741f", metalness: 0.9, roughness: 0.35 })); medal.add(rim);
-  const c = document.createElement("canvas"); c.width = c.height = 256;
-  { const x = c.getContext("2d"); x.fillStyle = "#3a2606"; x.font = "700 120px 'Barlow Condensed', Arial Narrow, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("1st", 128, 136); }
+  const gold = new Std({ color: "#d9a441", metalness: 0.85, roughness: 0.26 });
+  const disc = new Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 64), gold); disc.rotation.x = Math.PI / 2; medal.add(disc);
+  const rim = new Mesh(new THREE.TorusGeometry(0.15, 0.011, 12, 64), new Std({ color: "#a8741f", metalness: 0.9, roughness: 0.3 })); medal.add(rim);
+  const c = document.createElement("canvas"); c.width = c.height = 512;
+  { const x = c.getContext("2d"); x.fillStyle = "#3a2606"; x.font = "700 240px 'Barlow Condensed', Arial Narrow, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("1st", 256, 272); }
   const label = new THREE.CanvasTexture(c); label.colorSpace = THREE.SRGBColorSpace; label.anisotropy = maxAniso;
-  const face = new Mesh(new THREE.CircleGeometry(0.17, 48), new Basic({ map: label, transparent: true, toneMapped: false })); face.position.z = 0.0215; medal.add(face);
+  const mface = new Mesh(new THREE.CircleGeometry(0.128, 48), new Basic({ map: label, transparent: true, toneMapped: false })); mface.position.z = 0.0162; medal.add(mface);
   const ribbonMat = (col) => new Std({ color: col, roughness: 0.7, side: THREE.DoubleSide });
   [[-1, "#b8692a"], [1, "#0e6a4c"]].forEach(([s, col]) => {
-    const r = new Mesh(new THREE.PlaneGeometry(0.11, 0.42), ribbonMat(col));
-    r.position.set(s * 0.06, 0.3, -0.03); r.rotation.z = s * 0.28; medal.add(r);
+    const r = new Mesh(new THREE.PlaneGeometry(0.085, 0.3), ribbonMat(col));
+    r.position.set(s * 0.045, 0.21, -0.02); r.rotation.z = s * 0.28; medal.add(r);
   });
 
   let W = 0, H = 0;
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight;
     if (!W || !H) return;
+    // a small canvas: render at the screen's full density (up to 3x on phones) so the screenshots stay crisp
+    renderer.setPixelRatio(Math.min(devicePixelRatio, W < 600 ? 3 : 2));
     renderer.setSize(W, H, false);
     cam.aspect = W / H; cam.updateProjectionMatrix();
   };
   new ResizeObserver(resize).observe(stage);
 
-  const T = 10; // seconds per loop: stacked, fan out, hold and sway, fold back
+  const HOLD = 2.6, TURN = 1.1, T = HOLD + TURN; // seconds each panel faces front, and to turn to the next
+  const tan = Math.tan(THREE.MathUtils.degToRad(15));
   let t0 = 0;
   const frame = (time) => {
     if (!W) return;
-    const t = ((time - (t0 ||= time)) / 1000) % T;
-    const open = t < 1.2 ? 0 : t < 3 ? smoother((t - 1.2) / 1.8) : t < 8 ? 1 : t < 9.6 ? 1 - smoother((t - 8) / 1.6) : 0;
-    const R = 2.4;
-    panels.forEach(({ g, i }) => {
-      const a = (i - mid) * 0.53 * open;                       // place on an arc around a point behind the deck
-      g.position.set(Math.sin(a) * R, (i - mid) * -0.012 * (1 - open), (Math.cos(a) - 1) * R + (mid - i) * 0.035 * (1 - open));
-      g.rotation.set(0, a, (i - mid) * 0.035 * (1 - open));    // a slight hand-of-cards splay while stacked
+    const t = (time - (t0 ||= time)) / 1000;
+    const k = Math.floor(t / T), f = t - k * T;
+    const turn = f < HOLD ? 0 : smoother((f - HOLD) / TURN);
+    const rot = -(k + turn) * step;
+    ring.rotation.y = rot + 0.06 * Math.sin(t * 0.7);   // a slow breath while it holds
+    ring.position.z = -R;                              // the front panel sits at the origin
+    panels.forEach(({ face, a }) => {                  // dim panels by how far they face away
+      const facing = Math.cos(a + rot);
+      face.color.setScalar(0.7 + 0.3 * Math.abs(facing));
     });
-    deck.rotation.y = 0.22 * Math.sin((time / 1000) * 0.6) * open - 0.08;
-    deck.position.y = 0.03 * Math.sin(time / 900);
-    // the medal drops in as the fan opens, swings a little, and leaves as it folds
-    const m = t < 2.6 ? 0 : t < 3.6 ? smoother((t - 2.6) / 1) : t < 8.2 ? 1 : t < 9 ? 1 - smoother((t - 8.2) / 0.8) : 0;
-    medal.visible = m > 0.01;
-    medal.position.set(0.98, 0.54 - (1 - m) * 0.8, 0.55);
-    medal.rotation.set(0, Math.sin(time / 700) * 0.35 * m, Math.sin(time / 520) * 0.12 * m);
-    medal.scale.setScalar(0.55 + 0.3 * m);
-    const narrow = cam.aspect < 1.4 ? 1.4 / cam.aspect : 1;
-    cam.position.set(Math.sin(time / 4200) * 0.25, 0.55, 3.75 * narrow);
-    cam.lookAt(0, 0.3, -0.45);
+    // the medal hangs at the front panel's top-right corner and swings; it ducks out while the ring turns
+    const m = 1 - Math.sin(Math.PI * turn) * 0.85;
+    medal.position.set(0.6, 0.2 - (1 - m) * 0.08, 0.12);
+    medal.rotation.set(0, Math.sin(t * 1.4) * 0.4, Math.sin(t * 1.9) * 0.1);
+    medal.scale.setScalar(0.72 * (0.45 + 0.55 * m));
+    // frame the front panel plus the medal, wide or narrow
+    const d = Math.max(1.12 / (2 * tan), (MAXW + 1.0) / (2 * tan * cam.aspect));
+    cam.position.set(Math.sin(t / 4.2) * 0.12, 0.2, d);
+    cam.lookAt(0, 0.02, -0.2);
     renderer.render(scene, cam);
   };
 
