@@ -482,7 +482,7 @@ html.scope-pending .hero h1 { color: transparent; }
   a { text-decoration: none; }
 }
 
-@media screen and (max-width: 420px) { .top nav a[href$="#work"] { display: none; } }
+@media screen and (max-width: 420px) { .top nav > a[href$="resume.pdf"] { display: none; } }
 
 /* Signal scenes: pinned diagrams whose traces light up as you scroll through them. */
 html.lenis, html.lenis body { height: auto; }
@@ -1541,3 +1541,32 @@ html.snapping { scroll-snap-type: y proximity; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --copper-ink: var(--copper); } }
 :root[data-theme="dark"] { --copper-ink: var(--copper); }
 @media print { :root { --copper-ink: #9a5622; } }
+
+/* ---------- Projects dropdown in the top bar (main.js opens and closes it) ---------- */
+.top nav { align-items: center; }
+.pmenu { position: relative; }
+.pmenu-btn { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 16px; color: var(--ink-2); border-radius: 4px; }
+.pmenu-btn:hover, .pmenu-btn[aria-expanded="true"] { color: var(--ink); }
+.pmenu-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.pmenu-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.pmenu-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.pmenu-list { position: absolute; top: calc(100% + 14px); left: 50%; z-index: 20; width: 300px; margin: 0; padding: 6px; list-style: none; translate: -50% 0;
+  background: var(--paper); border-radius: 12px; box-shadow: 0 0 0 1px var(--rule), 0 18px 40px rgb(0 0 0 / .22);
+  opacity: 0; transform: translateY(-6px); transition: opacity .16s ease, transform .16s ease; }
+.pmenu-list[hidden] { display: block; visibility: hidden; pointer-events: none; }
+.pmenu.open .pmenu-list { opacity: 1; transform: none; }
+.top .pmenu-list a { display: grid; grid-template-columns: 30px 1fr; column-gap: 8px; align-items: baseline; padding: 10px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+.top .pmenu-list a:hover, .top .pmenu-list a:focus-visible { background: var(--board); outline: none; }
+.pmenu-list small { grid-row: span 2; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--copper-ink); }
+.pmenu-list span { font-weight: 600; }
+.pmenu-list em { grid-column: 2; font-style: normal; font-size: 13px; line-height: 1.35; color: var(--ink-3); }
+.top .pmenu-list a[aria-current="page"] { background: var(--board); box-shadow: inset 3px 0 0 var(--copper); }
+.pmenu-all { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--rule); }
+.top .pmenu-all a { display: block; font-weight: 600; color: var(--copper-ink); }
+@media screen and (max-width: 760px) {
+  /* phones: the menu drops under the whole bar, full width */
+  .pmenu { position: static; }
+  .pmenu-list { left: var(--gutter); right: var(--gutter); width: auto; top: calc(100% + 6px); translate: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pmenu-list, .pmenu-btn svg { transition: none; } }
+@media print { .pmenu { display: none; } }

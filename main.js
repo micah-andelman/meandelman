@@ -770,3 +770,42 @@ const lenis = (() => {
   // Printing shows every trace lit.
   addEventListener("beforeprint", () => scenes.forEach((sc) => sc.traces.forEach((t) => { t.s.style.strokeDashoffset = 0; t.f = 1; })));
 })();
+
+// Projects dropdown in the top bar: a disclosure button. Click (or tap) to open; it also opens on
+// hover with a mouse. Escape, a click elsewhere or tabbing out closes it.
+(() => {
+  const box = document.querySelector(".pmenu");
+  if (!box) return;
+  const btn = box.querySelector(".pmenu-btn"), list = box.querySelector(".pmenu-list");
+  // closeT: the short delay before closing when the mouse leaves; hideT: hiding the list once it has faded
+  let closeT = 0, hideT = 0, byHover = false;
+  const set = (on, focus) => {
+    clearTimeout(closeT);
+    if (on === box.classList.contains("open")) return;
+    clearTimeout(hideT);
+    btn.setAttribute("aria-expanded", on);
+    if (on) { list.hidden = false; void list.offsetWidth; box.classList.add("open"); if (focus) list.querySelector("a")?.focus(); }
+    else { box.classList.remove("open"); hideT = setTimeout(() => { list.hidden = true; }, 170); }
+  };
+  // If a hover opened it, the first click on "Projects" just keeps it open; the next one closes it.
+  btn.addEventListener("click", () => {
+    const open = box.classList.contains("open");
+    if (open && byHover) { byHover = false; return; }
+    byHover = false;
+    set(!open);
+  });
+  btn.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); set(true, true); } });
+  const hover = matchMedia("(hover: hover) and (pointer: fine)");
+  box.addEventListener("pointerenter", (e) => { if (hover.matches && e.pointerType === "mouse" && !box.classList.contains("open")) { byHover = true; set(true); } });
+  box.addEventListener("pointerleave", (e) => { if (hover.matches && e.pointerType === "mouse" && byHover) closeT = setTimeout(() => set(false), 220); });
+  document.addEventListener("click", (e) => { if (!box.contains(e.target)) set(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && box.classList.contains("open")) { set(false); btn.focus(); } });
+  box.addEventListener("focusout", (e) => { if (!box.contains(e.relatedTarget)) set(false); });
+  // arrow keys move between the links
+  list.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const links = [...list.querySelectorAll("a")], i = links.indexOf(document.activeElement);
+    links[(i + (e.key === "ArrowDown" ? 1 : -1) + links.length) % links.length].focus();
+  });
+})();

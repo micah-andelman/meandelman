@@ -34,7 +34,15 @@
   <a class="mark" href="./">Micah Andelman</a>
   <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" /></svg><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" /></svg></span></span></button>
   <nav aria-label="Sections">
-    <a href="./#work">Work</a>
+    <div class="pmenu">
+      <button class="pmenu-btn" type="button" aria-expanded="false" aria-controls="pmenu-list">Projects<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" /></svg></button>
+      <ul class="pmenu-list" id="pmenu-list" hidden>
+        <li><a href="otv.html"><small aria-hidden="true">U1</small><span>ENES100 OTV</span><em>Autonomous water-sampling robot</em></a></li>
+        <li><a href="brimcam.html" aria-current="page"><small aria-hidden="true">U2</small><span>Brimcam</span><em>Camera cap that logs dining-hall macros</em></a></li>
+        <li><a href="pluto.html"><small aria-hidden="true">U3</small><span>Pluto</span><em>Personal agent on Telegram</em></a></li>
+        <li class="pmenu-all"><a href="./#work">All projects <span aria-hidden="true">&rarr;</span></a></li>
+      </ul>
+    </div>
     <a href="./#experience">Experience</a>
     <a href="resume.pdf">Résumé</a>
     <a href="./#contact">Contact</a>
