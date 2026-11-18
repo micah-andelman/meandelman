@@ -1,0 +1,22 @@
+# Cloudflare Pages response headers (copied into dist/ by deploy.sh).
+
+# Security, every response. The site has no logins or forms; this is defence in depth.
+# - script-src: the small inline theme/intro scripts need 'unsafe-inline'; the model's meshopt
+#   decoder runs WebAssembly, which needs 'wasm-unsafe-eval'. Nothing is loaded from other sites.
+# - img/connect blob: and data: are for the hero board (an SVG painted into a canvas) and three.js
+#   textures. frame-ancestors 'none' stops other sites from framing the page.
+/*
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+
+# Versioned or never-changing files: keep them for a year.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The robot model's name doesn't change when it's updated, so a day rather than a year.
+/models/*
+  Cache-Control: public, max-age=86400

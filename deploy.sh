@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p dist
 python photos.py
-cp styles.css layout.js main.js extras.js visuals.js otv3d.js favicon.svg resume.pdf og.png 404.html sitemap.xml robots.txt dist/
+cp styles.css layout.js main.js extras.js visuals.js otv3d.js favicon.svg resume.pdf og.png sitemap.xml robots.txt _headers dist/
 cp -r fonts dist/
 [ -d photos ] && cp -r photos dist/
 cp -r vendor dist/
@@ -17,13 +17,15 @@ xjs=$(md5sum extras.js | cut -c1-8)
 vjs=$(md5sum visuals.js | cut -c1-8)
 ljs=$(md5sum layout.js | cut -c1-8)
 ojs=$(md5sum otv3d.js models/otv.glb | md5sum | cut -c1-8)
-sed -e "s#href=\"styles.css\"#href=\"styles.css?v=$css\"#" \
-    -e "s#src=\"main.js\"#src=\"main.js?v=$js\"#"     -e "s#src=\"extras.js\"#src=\"extras.js?v=$xjs\"#" -e "s#src=\"visuals.js\"#src=\"visuals.js?v=$vjs\"#" -e "s#src=\"layout.js\"#src=\"layout.js?v=$ljs\"#" -e "s#src=\"otv3d.js\"#src=\"otv3d.js?v=$ojs\"#" index.html > dist/index.html
-# Attach each photos/<part>.jpg to the diagram note with the same key.
-for f in photos/*.jpg; do
-  [ -e "$f" ] || continue
-  k=$(basename "$f" .jpg)
-  sed -i "s#<template data-k=\"$k\">#<template data-k=\"$k\" data-photo=\"$f\">#" dist/index.html
+# Every page gets the same hashed links and photo hookups.
+for page in index.html otv.html brimcam.html pluto.html 404.html; do
+  sed -e "s#href=\"\(/\?\)styles.css\"#href=\"\1styles.css?v=$css\"#" -e "s#src=\"\(/\?\)main.js\"#src=\"\1main.js?v=$js\"#" -e "s#src=\"\(/\?\)extras.js\"#src=\"\1extras.js?v=$xjs\"#" -e "s#src=\"\(/\?\)visuals.js\"#src=\"\1visuals.js?v=$vjs\"#" -e "s#src=\"\(/\?\)layout.js\"#src=\"\1layout.js?v=$ljs\"#" -e "s#src=\"\(/\?\)otv3d.js\"#src=\"\1otv3d.js?v=$ojs\"#" "$page" > "dist/$page"
+  # Attach each photos/<part>.jpg to the diagram note with the same key.
+  for f in photos/*.jpg; do
+    [ -e "$f" ] || continue
+    k=$(basename "$f" .jpg)
+    sed -i "s#<template data-k=\"$k\">#<template data-k=\"$k\" data-photo=\"$f\">#" "dist/$page"
+  done
 done
 # Minify the shipped CSS and JS (sources stay readable in the repo).
 for f in layout.js main.js extras.js visuals.js otv3d.js styles.css; do npx -y esbuild@0.24.2 "$f" --minify --log-level=warning --outfile="dist/$f" --allow-overwrite; done

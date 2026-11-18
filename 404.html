@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Open circuit | Micah Andelman</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#101614">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <script>
@@ -16,31 +17,29 @@
   } catch (e) {}
 </script>
 <link rel="stylesheet" href="/styles.css">
-<style>
-  .oc { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 48px var(--gutter); }
-  .oc .code { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(120px, 30vw, 360px); line-height: .8; letter-spacing: -.02em; color: var(--ink); }
-  .oc .brk { display: flex; align-items: center; margin: clamp(20px, 4vh, 40px) 0; }
-  .oc .brk i { flex: 1; height: 3px; background: var(--copper); }
-  .oc .brk svg { flex: none; overflow: visible; }
-  .oc .t { stroke: var(--copper); stroke-width: 3; stroke-linecap: round; fill: none; }
-  .oc .end { fill: var(--copper); }
-  .oc .spark { stroke: var(--copper); stroke-width: 2; stroke-linecap: round; opacity: 0; animation: spark 1.6s infinite; }
-  .oc .spark:nth-of-type(2n) { animation-delay: .35s; }
-  .oc .spark:nth-of-type(3n) { animation-delay: .8s; }
-  .oc .gap { fill: var(--ink-3); font: 500 14px var(--text); }
-  @keyframes spark { 0%, 62% { opacity: 0; } 64% { opacity: 1; } 70% { opacity: .2; } 72% { opacity: 1; } 80%, 100% { opacity: 0; } }
-  .oc h1 { margin: 0 0 8px; font-family: var(--display); font-weight: 700; font-size: clamp(36px, 6vw, 64px); line-height: 1; }
-  .oc p { margin: 0 0 24px; color: var(--ink-2); max-width: 46ch; }
-  .oc a.home { color: var(--mask); font-size: 19px; }
-  @media (prefers-reduced-motion: reduce) { .oc .spark { animation: none; opacity: .8; } }
-</style>
 </head>
-<body>
+<body class="subpage">
+<!-- Every link here is absolute: this page is served at whatever address was broken, however deep. -->
+<header class="top">
+  <a class="mark" href="/">Micah Andelman</a>
+  <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" /></svg><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" /></svg></span></span></button>
+  <nav aria-label="Sections">
+    <a href="/#work">Work</a>
+    <a href="/#experience">Experience</a>
+    <a href="/resume.pdf">Résumé</a>
+    <a href="/#contact">Contact</a>
+  </nav>
+  <div class="tools">
+    <button class="heat" type="button" aria-pressed="false" aria-label="Thermal view" title="Thermal view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0Z" /><circle cx="12" cy="17" r="1.7" /><path class="lvl" d="M12 15.3V9" /></svg></button>
+    <button class="egg" type="button" aria-expanded="false" aria-controls="eggs" aria-label="Things to find" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.3 0 6 5.2 6 9.5a6 6 0 0 1-12 0c0-4.3 2.7-9.5 6-9.5Z" /></svg></button>
+  </div>
+</header>
+
 <main class="oc">
-  <p class="code" aria-hidden="true">404</p>
-  <div class="brk" aria-hidden="true">
+  <p class="oc-code" aria-hidden="true">404</p>
+  <div class="oc-brk" aria-hidden="true">
     <i></i>
-    <svg viewBox="0 0 120 60" width="120" height="60">
+    <svg viewBox="0 0 120 60">
       <circle class="end" cx="12" cy="30" r="4" /><circle class="end" cx="108" cy="30" r="4" />
       <path class="t" d="M0,30 H12 M108,30 H120" />
       <path class="spark" d="M18,26 L28,16" /><path class="spark" d="M19,33 L31,40" /><path class="spark" d="M16,22 L19,8" />
@@ -49,8 +48,34 @@
     <i></i>
   </div>
   <h1>Open circuit</h1>
-  <p>Nothing is connected at this address. The link may be broken, or the page may have moved.</p>
-  <a class="home" href="/">Back to meandelman.com</a>
+  <p class="oc-lede">Nothing is connected at this address. The link may be broken, or the page may have moved. You found one of the easter eggs, though.</p>
+  <p class="oc-path">Requested: <code id="oc-path"></code></p>
+  <nav class="oc-go" aria-label="Where to go instead">
+    <a class="oc-home" href="/"><small>Home</small><b>meandelman.com</b></a>
+    <a href="/otv.html"><small>U1</small><b>ENES100 OTV</b></a>
+    <a href="/brimcam.html"><small>U2</small><b>Brimcam</b></a>
+    <a href="/pluto.html"><small>U3</small><b>Pluto</b></a>
+  </nav>
+  <p class="oc-tip">Tip: press the backtick key ( ` ) for the serial monitor, and try <code>open otv</code>.</p>
 </main>
+
+<footer class="foot">
+  <p>Micah Andelman, College Park and Bedford.</p>
+  <dl class="titleblock">
+    <div class="tb-title"><dt>Title</dt><dd>Micah Andelman, portfolio</dd></div>
+    <div><dt>Drawn by</dt><dd>M. Andelman</dd></div>
+    <div><dt>Rev</dt><dd class="rev">C</dd></div>
+    <div><dt>Date</dt><dd>Nov 2026</dd></div>
+    <div><dt>Sheet</dt><dd>404 of 4</dd></div>
+  </dl>
+</footer>
+
+<script>
+  // Show which address was broken (as text, never as HTML).
+  document.getElementById("oc-path").textContent = decodeURIComponent(location.pathname);
+</script>
+<script src="/vendor/lenis-1.1.20.min.js" defer></script>
+<script src="/main.js" defer></script>
+<script src="/extras.js" defer></script>
 </body>
 </html>

@@ -341,9 +341,9 @@ onScroll();
 (() => {
   const hero = document.querySelector(".hero");
   const line = document.querySelector(".hero-trace .line");
-  const stops = [...document.querySelectorAll(".project h2, .experience h2, .contact h2")];
+  const stops = [...document.querySelectorAll(".project :is(h1, h2), .work h2, .experience h2, .contact h2")];
   if (!hero || !line || !stops.length) return;
-  const sections = [...document.querySelectorAll(".project, .experience, .contact")];
+  const sections = [...document.querySelectorAll(".project, .work, .experience, .contact")];
   let svg, base, drawn, len = 0, vias = [], pts = [], branches = [];
 
   const build = () => {
@@ -384,13 +384,22 @@ onScroll();
     update();
   };
 
+  // y along the trace, sampled once per build (the path only runs down), then searched per frame
+  let ys = null, ysFor = null;
   const lengthAtY = (y) => {
-    let lo = 0, hi = len;
-    for (let i = 0; i < 22; i++) {
-      const mid = (lo + hi) / 2;
-      if (base.getPointAtLength(mid).y < y) lo = mid; else hi = mid;
+    if (ysFor !== base) {
+      ysFor = base;
+      const n = Math.max(2, Math.ceil(len / 4) + 1);
+      ys = new Float32Array(n);
+      for (let i = 0; i < n; i++) ys[i] = base.getPointAtLength((i / (n - 1)) * len).y;
     }
-    return lo;
+    const n = ys.length;
+    let lo = 0, hi = n - 1;
+    if (y <= ys[0]) return 0;
+    if (y >= ys[hi]) return len;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ys[mid] < y) lo = mid; else hi = mid; }
+    const f = (y - ys[lo]) / Math.max(1e-6, ys[hi] - ys[lo]);
+    return ((lo + f) / (n - 1)) * len;
   };
 
   let queued = false;
@@ -483,6 +492,11 @@ onScroll();
     svg.remove();
   };
 
+  // the easter egg list (or the serial monitor) on another page sends you here with ?intro
+  if (new URLSearchParams(location.search).has("intro")) {
+    history.replaceState(null, "", location.pathname + location.hash);
+    if (!REDUCED) { scrollTo(0, 0); setTimeout(() => trace().catch(() => root.classList.remove("scope-pending")), 400); }
+  }
   if (root.classList.contains("scope-pending") && scrollY < 80) {
     try { localStorage.setItem("scopeSeen", "1"); } catch (e) {}
     trace().catch(() => root.classList.remove("scope-pending"));
@@ -493,13 +507,73 @@ onScroll();
 })();
 
 // Smooth scrolling (Lenis). The page still scrolls natively underneath; Lenis just eases the wheel.
+// Every scroll-driven animation registers its chapter positions (absolute scroll Y values) in
+// window.scrollStops, so a fast flick can't skip through one:
+//   - with a wheel or trackpad, each event is capped so the speed stays even, and a single gesture
+//     (including a trackpad's coasting) stops at the next chapter. Keep scrolling and it moves on
+//     after a short beat; a fresh gesture moves on at once.
+//   - on touch screens (Lenis leaves touch scrolling native), the same positions become CSS snap
+//     points with scroll-snap-stop, so a fling stops at the next chapter too.
+const scrollStops = () => (window.scrollStops || [])
+  .flatMap((f) => { try { return f() || []; } catch (e) { return []; } })
+  .filter(Number.isFinite).map(Math.round).sort((a, b) => a - b);
 const lenis = (() => {
   if (REDUCED || !window.Lenis) return null;
   const head = document.querySelector(".top");
-  const l = new Lenis({ lerp: 0.11, anchors: { offset: -(head ? head.offsetHeight : 0) - 8 } });
+  const MAX = 120; // px per wheel event: a hard flick moves no faster than a steady roll
+  let last = 0, gate = null, gateDir = 0, heldAt = 0;
+  const govern = (t) => {
+    const ev = t.event;
+    if (!ev.type.includes("wheel") || ev.ctrlKey) return true;
+    let d = Math.max(-MAX, Math.min(MAX, t.deltaY));
+    const dir = Math.sign(d), now = performance.now();
+    if (!dir) return true;
+    if (now - last > 240 || dir !== gateDir) { gate = null; heldAt = 0; } // a new gesture
+    last = now;
+    if (gate == null) {
+      const pos = l.targetScroll, S = scrollStops();
+      gate = (dir > 0 ? S.find((s) => s > pos + 3) : S.reverse().find((s) => s < pos - 3)) ?? null;
+      gateDir = dir;
+    }
+    if (gate != null) {
+      const room = gate - l.targetScroll;
+      if (Math.abs(room) < 1) { // parked on a chapter
+        heldAt ||= now;
+        // only a long, still-strong push carries on; a fling and its fading coast stop here
+        if (now - heldAt > 1200 && Math.abs(t.deltaY) >= 40) { gate = null; heldAt = 0; }
+        return false;
+      }
+      if (dir > 0 ? d > room : d < room) d = room;
+    }
+    t.deltaY = d;
+    return true;
+  };
+  const l = new Lenis({ lerp: 0.1, virtualScroll: govern, anchors: { offset: -(head ? head.offsetHeight : 0) - 8 } });
   const raf = (t) => { l.raf(t); requestAnimationFrame(raf); };
   requestAnimationFrame(raf);
   return l;
+})();
+// Touch screens: the chapter positions as native snap points.
+(() => {
+  if (REDUCED || !matchMedia("(pointer: coarse)").matches) return;
+  const box = document.createElement("div");
+  box.className = "snapstops";
+  box.setAttribute("aria-hidden", "true");
+  document.body.appendChild(box);
+  let key = "";
+  const place = () => {
+    const S = scrollStops(), k = S.join(",");
+    if (k === key) return;
+    key = k;
+    box.replaceChildren(...S.map((y) => { const i = document.createElement("i"); i.style.top = y + "px"; return i; }));
+    document.documentElement.classList.toggle("snapping", S.length > 0);
+  };
+  let t = 0;
+  const later = () => { clearTimeout(t); t = setTimeout(place, 300); };
+  addEventListener("load", later);
+  addEventListener("resize", later);
+  new ResizeObserver(later).observe(document.body);
+  later();
 })();
 
 // Signal scenes. Each diagram with groups sits in a tall section and stays pinned while you scroll
@@ -580,6 +654,13 @@ const lenis = (() => {
     return { fig, svg, wrap, steps, traces, T, mcu: svg.querySelector(".blk.mcu"), extra: 0, p: -1, onScreen: false };
   });
 
+  // Each pinned diagram stops at the start, after the copper comes in, after it goes out, and at the end.
+  (window.scrollStops ||= []).push(() => scenes.flatMap((sc) => {
+    if (!sc.wrap || !sc.extra) return [];
+    const base = sc.wrap.getBoundingClientRect().top + scrollY - sc.pin;
+    return [0, sc.T.a[1], sc.T.b[1], 1].map((f) => base + sc.extra * f);
+  }));
+
   // Size each scene: the pinned diagram plus about two screens of scroll to play through.
   const layout = () => {
     const h = head ? head.offsetHeight : 0;
@@ -607,9 +688,21 @@ const lenis = (() => {
     if (scenes.some((sc) => sc.onScreen)) requestAnimationFrame(render);
     else running = false;
   };
+  // Points along each trace, sampled once: getPointAtLength on every dot every frame was the
+  // biggest cost while scrolling past a diagram.
+  const ptAt = (t, d) => {
+    if (!t.pts) {
+      const n = Math.max(2, Math.ceil(t.len / 2) + 1);
+      t.pts = new Float32Array(n * 2);
+      for (let i = 0; i < n; i++) { const q = t.tr.getPointAtLength((i / (n - 1)) * t.len); t.pts[2 * i] = q.x; t.pts[2 * i + 1] = q.y; }
+    }
+    const n = t.pts.length / 2, x = Math.min(n - 1, Math.max(0, (d / t.len) * (n - 1))), i = Math.min(n - 2, Math.floor(x)), f = x - i;
+    return { x: t.pts[2 * i] + (t.pts[2 * i + 2] - t.pts[2 * i]) * f, y: t.pts[2 * i + 1] + (t.pts[2 * i + 3] - t.pts[2 * i + 1]) * f };
+  };
   const frame = (sc, now) => {
     {
       if (!sc.onScreen || !sc.svg.getClientRects().length) return;
+      const moving = !!lenis && Math.abs(lenis.velocity) > 0.3;
       let p;
       if (sc.wrap && sc.extra) {
         const top = sc.wrap.getBoundingClientRect().top;
@@ -623,16 +716,18 @@ const lenis = (() => {
         if (f !== t.f) { t.s.style.strokeDashoffset = t.len * (1 - f); t.f = f; }
         // A bright dot rides the leading edge while the trace is filling.
         if (f > 0.001 && f < 0.999) {
-          const pt = t.tr.getPointAtLength(f * t.len);
+          const pt = ptAt(t, f * t.len);
           t.lead.setAttribute("cx", pt.x); t.lead.setAttribute("cy", pt.y);
           t.lead.style.opacity = 1;
         } else t.lead.style.opacity = 0;
-        // Once lit, dots keep flowing toward the sink.
+        // Once lit, dots keep flowing toward the sink. They hold still while the page is moving, so
+        // repainting the diagram never competes with the scroll.
+        if (moving && f >= 0.999) return;
         const period = Math.max(900, t.len * 6);
         t.flow.forEach((d, i) => {
           if (f < 0.999) { d.style.opacity = 0; return; }
           const u = ((now / period) + i / t.flow.length + t.k * 0.37) % 1;
-          const pt = t.tr.getPointAtLength(u * t.len);
+          const pt = ptAt(t, u * t.len);
           d.setAttribute("cx", pt.x); d.setAttribute("cy", pt.y);
           d.style.opacity = Math.min(1, u * 6, (1 - u) * 6);
         });

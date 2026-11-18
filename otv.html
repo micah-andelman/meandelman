@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENES100 OTV, Micah Andelman</title>
+<meta name="description" content="An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.">
+<link rel="canonical" href="https://meandelman.com/otv">
+<meta property="og:url" content="https://meandelman.com/otv">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ENES100 OTV, Micah Andelman">
+<meta property="og:description" content="An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.">
+<meta property="og:image" content="https://meandelman.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Micah Andelman, electrical engineering, University of Maryland. meandelman.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#101614">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  // Theme choice, set before first paint.
+  (function () {
+    try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="subpage">
+<a class="skip" href="#otv">Skip to the project</a>
+
+<header class="top">
+  <a class="mark" href="./">Micah Andelman</a>
+  <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" /></svg><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" /></svg></span></span></button>
+  <nav aria-label="Sections">
+    <a href="./#work">Work</a>
+    <a href="./#experience">Experience</a>
+    <a href="resume.pdf">Résumé</a>
+    <a href="./#contact">Contact</a>
+  </nav>
+  <div class="tools">
+    <button class="heat" type="button" aria-pressed="false" aria-label="Thermal view" title="Thermal view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0Z" /><circle cx="12" cy="17" r="1.7" /><path class="lvl" d="M12 15.3V9" /></svg></button>
+    <button class="egg" type="button" aria-expanded="false" aria-controls="eggs" aria-label="Things to find" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.3 0 6 5.2 6 9.5a6 6 0 0 1-12 0c0-4.3 2.7-9.5 6-9.5Z" /></svg></button>
+  </div>
+</header>
+
+<main>
+  <nav class="ptabs" aria-label="Projects">
+    <a href="otv.html" aria-current="page"><small aria-hidden="true">U1</small>ENES100 OTV</a>
+    <a href="brimcam.html"><small aria-hidden="true">U2</small>Brimcam</a>
+    <a href="pluto.html"><small aria-hidden="true">U3</small>Pluto</a>
+    <a class="home" href="./#work"><span aria-hidden="true">&larr;</span> <span>All projects</span></a>
+  </nav>
+
+  <!-- ================= OTV ================= -->
+  <article class="project" id="otv" aria-labelledby="otv-t">
+    <div class="p-head">
+      <h1 id="otv-t">ENES100 OTV</h1>
+      <dl class="meta">
+        <div><dt>Class</dt><dd>ENES100, Introduction to Engineering Design</dd></div>
+        <div><dt>When</dt><dd>Fall 2026</dd></div>
+        <div><dt>Role</dt><dd>Electrical and software lead on an eight-person team</dd></div>
+        <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
+      <p>I'm the only electrical engineer on the team. I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
+      <dl class="specs">
+        <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
+        <div><dt>1,620</dt><dd>lines of firmware</dd></div>
+        <div><dt>7</dt><dd>bench tests, one per subsystem</dd></div>
+      </dl>
+    </div>
+
+    <section class="o3" id="otv-3d" aria-labelledby="o3-t">
+      <h3 class="sr" id="o3-t">The OTV in 3D</h3>
+      <div class="o3-stage">
+        <canvas aria-hidden="true"></canvas>
+        <div class="o3-tags" aria-hidden="true"></div>
+        <p class="o3-src">From the team's Onshape CAD. Arduino, breadboard and wiring added from photos.</p>
+        <ol class="o3-steps">
+          <li><span class="o3-n">01 / 06</span><h4>The robot</h4><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and 12.8 cm tall. It has to stay under 3 kg and fit under the limbo.</p></li>
+          <li><span class="o3-n">02 / 06</span><h4>Drive</h4><p>Two JGY370 worm-gear motors, 6 V and 30 RPM, each turning an 8 cm wheel directly, with a caster at the back. Running the sides at different speeds steers it and lets it turn in place.</p></li>
+          <li><span class="o3-n">03 / 06</span><h4>Brains</h4><p>An Arduino UNO R4 WiFi. The overhead vision system tracks the ArUco marker on top and sends position and heading over Wi-Fi. It has to stop within 150 mm of the pool.</p></li>
+          <li><span class="o3-n">04 / 06</span><h4>Arm</h4><p>A printed arm between two SG90 servos. One motion swings it down over the pool, so the sensors at the tip face the water and the intake tube dips in.</p></li>
+          <li><span class="o3-n">05 / 06</span><h4>Depth</h4><p>The HC-SR04 at the tip times a ping off the water to measure how deep it is. The reading has to be right within 4 mm.</p></li>
+          <li><span class="o3-n">06 / 06</span><h4>Sample</h4><p>A peristaltic pump, switched by a MOSFET on D10, pulls at least 20 mL up the tube. The sample has to stay on board until the end of the run.</p></li>
+        </ol>
+        <div class="o3-bar" aria-hidden="true"><span>Robot</span><span>Drive</span><span>Brains</span><span>Arm</span><span>Depth</span><span>Sample</span></div>
+        <p class="o3-load" aria-hidden="true">Loading the CAD&hellip;</p>
+      </div>
+    </section>
+
+    <figure class="diagram" data-diagram data-schem data-groups="Sensors|Controller and power|Outputs">
+      <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
+        <defs>
+          <pattern id="grid-a" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" /></pattern>
+          <pattern id="pf" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2.6" /></pattern>
+        </defs>
+        <rect class="grid" width="960" height="440" fill="url(#grid-a)" />
+        <g class="fid" aria-hidden="true"><circle class="fc" cx="20" cy="20" r="7" /><circle cx="20" cy="20" r="3.5" /><circle class="fc" cx="940" cy="20" r="7" /><circle cx="940" cy="20" r="3.5" /><circle class="fc" cx="20" cy="420" r="7" /><circle cx="20" cy="420" r="3.5" /></g>
+
+
+        <!-- traces (drawn under blocks) -->
+        <path class="tr" data-k="vision"  d="M240,68 H300 V150 H380" />
+        <path class="tr" data-k="front"   d="M240,158 H320 V190 H380" />
+        <path class="tr" data-k="depth"   d="M240,248 H320 V230 H380" />
+        <path class="tr" data-k="color"   d="M240,338 H300 V270 H380" />
+        <path class="tr" data-k="drive"   d="M580,150 H660 V68 H720" />
+        <path class="tr" data-k="drive"   d="M580,190 H640 V158 H720" />
+        <path class="tr" data-k="arm"     d="M580,230 H640 V248 H720" />
+        <path class="tr" data-k="pump"    d="M580,270 H660 V338 H720" />
+        <path class="tr power" data-k="power" d="M580,398 H690 V68 H720" />
+        <path class="tr power" data-k="power" d="M690,158 H720" />
+        <path class="tr power" data-k="power" d="M480,370 V320" />
+
+        <!-- pin labels at the MCU -->
+        <g class="pins" aria-hidden="true">
+          <text x="372" y="145" text-anchor="end">Wi-Fi</text>
+          <text x="372" y="185" text-anchor="end">D2 A4</text>
+          <text x="372" y="225" text-anchor="end">D7 D8</text>
+          <text x="372" y="265" text-anchor="end">×6</text>
+          <text x="588" y="145">D3 D5</text>
+          <text x="588" y="185">D6 D9</text>
+          <text x="588" y="225">D11 A2</text>
+          <text x="588" y="265">D10</text>
+          <text x="488" y="350">VIN</text>
+        </g>
+
+        <!-- blocks -->
+        <g class="blk" data-k="vision" data-pins="Wi-Fi" tabindex="0" role="button" aria-label="Overhead vision">
+          <rect x="40" y="40" width="200" height="56" /><text x="56" y="64">Overhead vision</text><text class="sub" x="56" y="84">ArUco marker, over Wi-Fi</text><text class="ref" x="230" y="57" text-anchor="end" aria-hidden="true">ANT1</text></g>
+        <g class="blk" data-k="front" data-pins="D2 A4" tabindex="0" role="button" aria-label="Front ultrasonic sensor">
+          <rect x="40" y="130" width="200" height="56" /><text x="56" y="154">Front ultrasonic</text><text class="sub" x="56" y="174">HC-SR04, obstacles</text><text class="ref" x="230" y="147" text-anchor="end" aria-hidden="true">U2</text></g>
+        <g class="blk" data-k="depth" data-pins="D7 D8" tabindex="0" role="button" aria-label="Arm ultrasonic sensor">
+          <rect x="40" y="220" width="200" height="56" /><text x="56" y="244">Arm ultrasonic</text><text class="sub" x="56" y="264">HC-SR04, water depth</text><text class="ref" x="230" y="237" text-anchor="end" aria-hidden="true">U3</text></g>
+        <g class="blk" data-k="color" data-pins="6 pins" tabindex="0" role="button" aria-label="Color sensor">
+          <rect x="40" y="310" width="200" height="56" /><text x="56" y="334">Color sensor</text><text class="sub" x="56" y="354">Pollution check</text><text class="ref" x="230" y="327" text-anchor="end" aria-hidden="true">U4</text></g>
+
+        <g class="blk mcu" data-k="mcu" tabindex="0" role="button" aria-label="Arduino UNO R4 WiFi">
+          <rect x="380" y="120" width="200" height="200" /><text x="396" y="148">Arduino</text><text x="396" y="170">UNO R4 WiFi</text><text class="sub" x="396" y="300">1,620 lines of C++</text><text class="ref" x="570" y="137" text-anchor="end" aria-hidden="true">U1</text></g>
+
+        <g class="blk" data-k="drive" tabindex="0" role="button" data-pins="D3 D5" aria-label="Motor drivers">
+          <rect x="720" y="40" width="200" height="56" /><text x="736" y="64">DRV8871, left</text><text class="sub" x="736" y="84">Drive motor</text><text class="ref" x="910" y="57" text-anchor="end" aria-hidden="true">U5</text></g>
+        <g class="blk" data-k="drive" tabindex="0" role="button" data-pins="D6 D9" aria-label="Motor drivers">
+          <rect x="720" y="130" width="200" height="56" /><text x="736" y="154">DRV8871, right</text><text class="sub" x="736" y="174">Drive motor</text><text class="ref" x="910" y="147" text-anchor="end" aria-hidden="true">U6</text></g>
+        <g class="blk" data-k="arm" data-pins="D11 A2" tabindex="0" role="button" aria-label="Sampling arm">
+          <rect x="720" y="220" width="200" height="56" /><text x="736" y="244">Sampling arm</text><text class="sub" x="736" y="264">2 × SG90 servo</text><text class="ref" x="910" y="237" text-anchor="end" aria-hidden="true">M1, M2</text></g>
+        <g class="blk" data-k="pump" data-pins="D10" tabindex="0" role="button" aria-label="Pump">
+          <rect x="720" y="310" width="200" height="56" /><text x="736" y="334">Pump</text><text class="sub" x="736" y="354">MOSFET switched</text><text class="ref" x="910" y="327" text-anchor="end" aria-hidden="true">Q1</text></g>
+
+        <g class="blk power" data-k="power" data-pins="VIN" tabindex="0" role="button" aria-label="Battery">
+          <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Main power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
+      </svg>
+      <figcaption>
+        <p class="cap" data-default="Select a part to see what it does, how it's wired and the code that runs it.">Select a part to see what it does, how it's wired and the code that runs it.</p>
+        <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and sends its position and heading over Wi-Fi. Every navigation decision uses that position.</template>
+        <template data-k="front">Watches for obstacles ahead so the robot can steer around them. Each reading is the median of several pings, so a single bad echo won't stop the robot.</template>
+        <template data-k="depth">Points down at the water from a known height. The depth is that height minus the distance to the surface.</template>
+        <template data-k="color">Reads the water's color through filtered channels to check for pollution. It uses six pins, more than any other part.</template>
+        <template data-k="mcu">The same C++ runs on the real robot and in ENES100's browser simulator, chosen by a build flag. GitHub Actions compiles both versions on every push.</template>
+        <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
+        <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
+        <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
+        <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V.</template>
+        <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
+// heading error, clamped to MIN_TURN_PWM..MAX_PWM.
+// Positive error = counter-clockwise = left wheel back, right forward.
+bool turnTo(float heading) {
+  unsigned long start = millis();
+  while (true) {
+    if (!waitForVision(VISION_LOST_MS)) {
+      stopDrive();
+      logMsg(&quot;turnTo: vision lost&quot;);
+      return false;
+    }
+    if (millis() - start &gt;= MOVE_TIMEOUT_MS) {
+      stopDrive();
+      logMsg(&quot;turnTo: timeout&quot;);
+      return false;
+    }
+
+    float err = wrapAngle(heading - Enes100.getTheta());
+    if (fabs(err) &lt;= TURN_TOL_RAD) {
+      stopDrive();
+      return true;
+    }
+
+    int pwm = constrain((int)(TURN_GAIN * fabs(err)), MIN_TURN_PWM, MAX_PWM);
+    if (err &gt; 0) setDrive(-pwm, pwm);
+    else setDrive(pwm, -pwm);
+    delay(LOOP_MS);
+  }
+}</code></template>
+        <template data-code="front"><code data-file="otv/nav.ino" data-start="128">  // Front HC-SR04: ping at most every US_PING_GAP_MS (old echoes), and
+  // only report an obstacle after FRONT_HITS_NEEDED close pings in a row.
+  // No echo (-1) = nothing in range = clear.
+  if (millis() - gFrontPingMs &lt; US_PING_GAP_MS) return false;
+  gFrontPingMs = millis();
+  float mm = pingMM(PIN_FRONT_US_TRIG, PIN_FRONT_US_ECHO);
+  if (mm &gt;= 0 &amp;&amp; mm &lt; FRONT_OBSTACLE_MM) gFrontHits++;
+  else gFrontHits = 0;
+  if (gFrontHits &lt; FRONT_HITS_NEEDED) return false;
+  gFrontHits = 0;  // consumed: the next stop needs fresh close pings
+  return true;</code><code data-file="otv/mission.ino" data-start="93">float pingMM(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  unsigned long duration = pulseIn(echoPin, HIGH, US_TIMEOUT_US);
+  if (duration == 0) return -1;
+  return US_MM_PER_US * duration / 2.0;
+}</code></template>
+        <template data-code="depth"><code data-file="otv/mission.ino" data-start="104">float readDistanceMM() {
+  float readings[US_SAMPLES];
+  int valid = 0;
+  for (int i = 0; i &lt; US_SAMPLES; i++) {
+    float mm = pingMM(PIN_US_TRIG, PIN_US_ECHO);
+    if (mm &gt;= 0) readings[valid++] = mm;
+    delay(US_PING_GAP_MS);
+  }
+  if (valid == 0) return -1;
+  return medianOf(readings, valid);
+}</code><code data-file="otv/mission.ino" data-start="70">// Median of the first n values (sorts v in place). Ignores outliers that
+// would drag an average off.
+static float medianOf(float *v, int n) {
+  for (int i = 1; i &lt; n; i++) {
+    float key = v[i];
+    int j = i - 1;
+    while (j &gt;= 0 &amp;&amp; v[j] &gt; key) {
+      v[j + 1] = v[j];
+      j--;
+    }
+    v[j + 1] = key;
+  }
+  if (n % 2 == 1) return v[n / 2];
+  return (v[n / 2 - 1] + v[n / 2]) / 2.0;
+}</code></template>
+        <template data-code="color"><code data-file="otv/mission.ino" data-start="131">static int readColorPW(int s2, int s3) {
+  digitalWrite(PIN_COLOR_S2, s2);
+  digitalWrite(PIN_COLOR_S3, s3);
+  float pws[COLOR_SAMPLES];
+  int valid = 0;
+  for (int i = 0; i &lt; COLOR_SAMPLES; i++) {
+    unsigned long pw = pulseIn(PIN_COLOR_OUT, LOW, COLOR_TIMEOUT_US);
+    if (pw &gt; 0) pws[valid++] = pw;
+  }
+  delay(COLOR_SETTLE_MS);
+  if (valid == 0) return 0;
+  return (int)medianOf(pws, valid);
+}</code><code data-file="otv/mission.ino" data-start="151">// Adiel&#x27;s rule: polluted if ANY channel&#x27;s pulse width is below the
+// threshold (a strong non-black color). Threshold is uncalibrated.
+// 0 = no reading on that channel, so it never counts as a color.
+static bool pwSeesColor(int pw) { return pw &gt; 0 &amp;&amp; pw &lt; COLOR_POLLUTED_THRESH; }</code></template>
+        <template data-code="mcu"><code data-file="otv/drive.ino" data-start="1">// Drive layer: the ONLY code that touches motor pins or Tank.
+// Navigation calls setDrive()/stopDrive() and nothing else, so this
+// file is the single switch point between simulator and robot.
+// PWM is -255..255 per side (+ = forward), clamped to +/-MAX_PWM.</code><code data-file="otv/drive.ino" data-start="6">#if SIM</code><code data-file="otv/drive.ino" data-start="14">void setDrive(int left, int right) {
+  Tank.setLeftMotorPWM(constrain(left, -MAX_PWM, MAX_PWM));
+  Tank.setRightMotorPWM(constrain(right, -MAX_PWM, MAX_PWM));
+}</code><code data-file="otv/drive.ino" data-start="23">#else</code><code data-file="otv/drive.ino" data-start="53">void setDrive(int left, int right) {
+  writeMotor(PIN_LEFT_IN1, PIN_LEFT_IN2, constrain(left, -MAX_PWM, MAX_PWM), LEFT_INVERT);
+  writeMotor(PIN_RIGHT_IN1, PIN_RIGHT_IN2, constrain(right, -MAX_PWM, MAX_PWM), RIGHT_INVERT);
+}</code></template>
+        <template data-code="drive"><code data-file="otv/drive.ino" data-start="24">// ---------------- Robot: one DRV8871 per motor ----------------
+// Forward = PWM on IN1, 0 on IN2. Reverse = the opposite.
+// Stop = both 0 (coast).
+//
+// analogWrite is used on BOTH pins in every state, including writing 0.
+// On the UNO R4, mixing digitalWrite and analogWrite on the same pin can
+// leave it stuck in PWM mode, so these pins never see digitalWrite.
+static void writeMotor(int in1, int in2, int pwm, bool invert) {
+  if (invert) pwm = -pwm;
+  if (pwm &gt; 0) {
+    analogWrite(in1, pwm);
+    analogWrite(in2, 0);
+  } else if (pwm &lt; 0) {
+    analogWrite(in1, 0);
+    analogWrite(in2, -pwm);
+  } else {
+    analogWrite(in1, 0);
+    analogWrite(in2, 0);
+  }
+}</code></template>
+        <template data-code="arm"><code data-file="otv/mission.ino" data-start="40">static void writeArm(int angle) {
+  armServo1.write(angle);
+  armServo2.write(SERVO2_MIRRORED ? 180 - angle : angle);
+}</code><code data-file="otv/mission.ino" data-start="45">// Sweep 1 degree at a time to limit current spikes on the shared 5 V rail.
+static void moveArmTo(int target) {
+  while (armAngle != target) {
+    armAngle += (target &gt; armAngle) ? 1 : -1;
+    writeArm(armAngle);
+    delay(SERVO_STEP_MS);
+  }
+}</code></template>
+        <template data-code="pump"><code data-file="otv/mission.ino" data-start="57">// ---- Pump (from Walter&#x27;s Arduino_Pump.ino) ----
+// Fixes: D10 MOSFET gate (D6 is the right motor); no fake trigger on D2
+// (D2 is the front ultrasonic TRIG). PUMP_ML_PER_S is still unmeasured.
+void pumpRunMs(unsigned long ms) {
+  digitalWrite(PIN_PUMP_GATE, HIGH);
+  delay(ms);
+  digitalWrite(PIN_PUMP_GATE, LOW);
+}</code><code data-file="otv/mission.ino" data-start="66">void pumpDispenseML(float ml) {
+  pumpRunMs((unsigned long)(ml / PUMP_ML_PER_S * 1000.0));
+}</code></template>
+        <template data-code="power"><code data-file="otv/config.h" data-start="121">// ---- Drive (DO NOT RAISE MAX_PWM without asking Micah) ----
+// 6 V motors on a 9.6 V pack: cap at 60% (0.60 * 255 = 153).
+const int  MAX_PWM      = 153;</code></template>
+      </figcaption>
+    </figure>
+
+    <section class="o3 o3r" id="otv-run" aria-labelledby="o3r-t">
+      <h3 class="sr" id="o3r-t">The course run in 3D</h3>
+      <div class="o3-stage">
+        <canvas aria-hidden="true"></canvas>
+        <div class="o3-tags" aria-hidden="true"></div>
+        <p class="o3r-hud" aria-hidden="true"></p>
+        <ol class="o3-steps">
+          <li><span class="o3-n">01 / 08</span><h4>Start</h4><p>It starts in a random square, A or B, facing a random way. An overhead camera finds the ArUco marker on top and sends position and heading over Wi-Fi. If that signal drops out, the robot stops and waits for it.</p></li>
+          <li><span class="o3-n">02 / 08</span><h4>To the pool</h4><p>It turns in place to face the pool, with wheel speed proportional to how far off its heading is, then drives at it. It has to stop within 150 mm of the edge.</p></li>
+          <li><span class="o3-n">03 / 08</span><h4>Sample</h4><p>The arm comes down one degree at a time. The HC-SR04 pings the water several times and keeps the median for the depth. The color sensor calls the water polluted if any channel sees a strong non-black color. The pump pulls at least 20 mL up the hose.</p></li>
+          <li><span class="o3-n">04 / 08</span><h4>Back off</h4><p>Arm up. It backs away from the pool and turns toward the top wall.</p></li>
+          <li><span class="o3-n">05 / 08</span><h4>To the wall</h4><p>Up to the top wall, then along it, 12.5 cm off. The front HC-SR04 watches ahead the whole way.</p></li>
+          <li><span class="o3-n">06 / 08</span><h4>Obstacles</h4><p>Along the wall past both obstacle rows. Underneath: a worm-gear motor for each wheel in a printed mount, the rear caster and the front HC-SR04, which only calls an obstacle after several close pings in a row.</p></li>
+          <li><span class="o3-n">07 / 08</span><h4>Limbo</h4><p>Down into the 56 cm limbo lane and under the bar, which clears the floor by 18.4 cm.</p></li>
+          <li><span class="o3-n">08 / 08</span><h4>Goal</h4><p>In the goal zone. In 40 randomized simulator runs it never went more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p></li>
+        </ol>
+        <div class="o3-bar" aria-hidden="true"><span>Start</span><span>Pool</span><span>Sample</span><span>Back off</span><span>Wall</span><span>Obstacles</span><span>Limbo</span><span>Goal</span></div>
+        <button type="button" class="o3r-replay">Replay, other start</button>
+        <button type="button" class="o3r-skip">Skip the run</button>
+        <p class="o3r-hint" aria-live="polite"></p>
+        <p class="o3-load" aria-hidden="true">Loading the arena&hellip;</p>
+      </div>
+    </section>
+    <p class="o3r-note"></p>
+    <figure class="arena" id="otv-route">
+      <svg viewBox="0 0 880 476" role="img" aria-labelledby="arena-t">
+        <title id="arena-t">Top-down map of the 4 by 2 meter ENES100 arena with the route the OTV drives: start square, mission site, up to the top wall, along it past two obstacle rows, then down through the limbo to the goal.</title>
+        <defs>
+          <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" /></pattern>
+          <marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="10" markerHeight="10" orient="auto"><line x1="5" y1="0" x2="5" y2="10" /></marker>
+        </defs>
+        <g transform="translate(30 20)">
+          <rect class="floor" x="0" y="0" width="800" height="400" />
+          <g class="major"><path d="M100,0V400M200,0V400M300,0V400M400,0V400M500,0V400M600,0V400M700,0V400M0,100H800M0,200H800M0,300H800" /></g>
+
+          <g class="zone">
+            <rect x="0" y="0" width="200" height="200" /><rect x="0" y="200" width="200" height="200" />
+            <rect class="goalz" x="700" y="0" width="100" height="400" />
+          </g>
+          <g class="pool">
+            <g class="site"><circle class="ring" cx="100" cy="100" r="34" /><circle class="rip" cx="100" cy="100" r="34" /><circle class="rip two" cx="100" cy="100" r="34" /><circle class="dot" cx="100" cy="100" r="3" /></g>
+            <g class="site"><circle class="ring" cx="100" cy="300" r="34" /><circle class="rip" cx="100" cy="300" r="34" /><circle class="rip two" cx="100" cy="300" r="34" /><circle class="dot" cx="100" cy="300" r="3" /></g>
+          </g>
+          <g class="keepout">
+            <rect x="280" y="50" width="40" height="300" /><rect x="440" y="50" width="40" height="300" />
+            <rect x="652" y="0" width="16" height="44" /><rect x="652" y="156" width="16" height="244" />
+          </g>
+          <g class="posts"><rect x="649" y="40" width="22" height="8" rx="2" /><rect x="649" y="152" width="22" height="8" rx="2" /></g>
+
+          <g class="dimn" aria-hidden="true">
+            <path d="M380,2 V48" marker-start="url(#tick)" marker-end="url(#tick)" />
+            <text x="388" y="46">25 cm</text>
+            <path d="M630,44 V156" marker-start="url(#tick)" marker-end="url(#tick)" />
+            <text x="624" y="140" text-anchor="end">56 cm</text>
+          </g>
+
+          <path class="route ghost" id="route-a" d="M100,310 V160 V180 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
+          <path class="route ghost" id="route-b" d="M100,90 V240 V220 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
+          <path class="route glow" />
+          <path class="route trail" />
+
+          <g class="alabel" aria-hidden="true">
+            <text x="12" y="22">A</text>
+            <text x="12" y="390">B</text>
+            <text x="300" y="372" text-anchor="middle">Obstacles</text>
+            <text x="460" y="372" text-anchor="middle">Obstacles</text>
+            <text x="660" y="420" text-anchor="middle" class="below">Limbo</text>
+            <text x="750" y="390" text-anchor="middle">Goal</text>
+          </g>
+
+          <g class="bot" aria-hidden="true">
+            <rect class="tread" x="-18" y="-20" width="36" height="7" rx="2" />
+            <rect class="tread" x="-18" y="13" width="36" height="7" rx="2" />
+            <rect class="body" x="-15" y="-14" width="31" height="28" rx="3" />
+            <rect class="aruco" x="-11" y="-7" width="14" height="14" />
+            <path class="aruco-in" d="M-9,-5h4v4h-4zM-3,-1h4v4h-4zM-9,1h2v4h-2z" />
+            <rect class="sonar" x="16" y="-7" width="4" height="14" rx="1" />
+            <path class="nose" d="M7,-5 L12,0 L7,5" />
+          </g>
+          <rect class="wall" x="0" y="0" width="800" height="400" />
+        </g>
+
+        <g class="dim" aria-hidden="true">
+          <path d="M30,446 H830" marker-start="url(#tick)" marker-end="url(#tick)" />
+          <rect class="dimbg" x="404" y="436" width="52" height="20" />
+          <text x="430" y="451" text-anchor="middle">4.0 m</text>
+          <path d="M852,20 V420" marker-start="url(#tick)" marker-end="url(#tick)" />
+          <rect class="dimbg" x="842" y="194" width="20" height="52" />
+          <text x="0" y="0" text-anchor="middle" transform="translate(857 220) rotate(-90)">2.0 m</text>
+        </g>
+      </svg>
+      <figcaption>
+        <p>The route my code drives in ENES100's simulator, drawn to scale on the 4 × 2 m arena. The robot starts in a random square and samples the pool in the other one. It then drives up to the top wall, follows it through the 25 cm gap past both rows of obstacles, and cuts down to the limbo lane to reach the goal. I checked 40 randomized runs against the robot's footprint. It never went more than 1 mm past a wall, and it cleared the obstacles by 1.6 to 2 cm.</p>
+        <button type="button" class="replay">Replay</button>
+      </figcaption>
+    </figure>
+  </article>
+
+
+  <nav class="pnext" aria-label="More projects">
+    <a class="next" href="brimcam.html"><span>Next project</span><b>Brimcam</b></a>
+  </nav>
+  <section class="pcontact" aria-label="Contact">
+    <p>Questions about this project, or looking for an intern? <a href="mailto:micah@meandelman.com">micah@meandelman.com</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Micah Andelman, College Park and Bedford.</p>
+  <dl class="titleblock">
+    <div class="tb-title"><dt>Title</dt><dd>Micah Andelman, portfolio</dd></div>
+    <div><dt>Drawn by</dt><dd>M. Andelman</dd></div>
+    <div><dt>Rev</dt><dd class="rev">C</dd></div>
+    <div><dt>Date</dt><dd>Nov 2026</dd></div>
+    <div><dt>Sheet</dt><dd>2 of 4</dd></div>
+  </dl>
+</footer>
+
+<script src="vendor/lenis-1.1.20.min.js" defer></script>
+<script src="layout.js" defer></script>
+<script src="main.js" defer></script>
+<script src="extras.js" defer></script>
+<script src="visuals.js" defer></script>
+<script type="module" src="otv3d.js"></script>
+</body>
+</html>

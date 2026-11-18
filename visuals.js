@@ -23,7 +23,7 @@
     e.target.classList.toggle("inview", e.isIntersecting);
     if (e.isIntersecting) e.target.dispatchEvent(new CustomEvent("inview"));
   }), { threshold: 0.15 });
-  $$(".hero, .project, .arena, .experience, .contact, .brief, .capdraw").forEach((el) => inview.observe(el));
+  $$(".hero, .project, .work, .arena, .experience, .contact, .brief, .capdraw").forEach((el) => inview.observe(el));
 
   // ------------------------------------------------------------ Component artwork
   // Each block keeps its layout but gains the outline of the real part: pins on chips,
@@ -161,6 +161,7 @@
   // Each project in the index gets a net: a pad by its row, a trace up to the copper bus under
   // the name, and a via where it lands. Pointing at a project lights its net.
   const hero = $(".hero");
+  if (hero) (() => { // only the home page has the hero
   const wide = matchMedia("(min-width: 761px)");
   const silk = document.createElement("div");
   silk.className = "silk";
@@ -224,6 +225,15 @@
     hero.addEventListener("inview", () => setTimeout(sheen, 400), { once: true });
   };
   waitIntro();
+  })();
+
+  // ------------------------------------------------------------ Card art (home page)
+  // The OTV card's robot runs on SMIL: pause it off screen, and freeze it mid-route when
+  // motion is reduced. (The CSS-animated cards pause through .work:not(.inview).)
+  $$(".art-otv svg").forEach((svg) => {
+    if (REDUCED) { svg.pauseAnimations(); svg.setCurrentTime(6); return; }
+    new IntersectionObserver(([e]) => (e.isIntersecting ? svg.unpauseAnimations() : svg.pauseAnimations())).observe(svg);
+  });
 
   // ------------------------------------------------------------ Pluto: typed brief
   $$(".brief").forEach((brief) => {
@@ -392,7 +402,10 @@
       const LINE_H = 24; // a line of letters (rows 0..12) and its shift registers (16..19)
       const cols = lines.map((s) => s.length * 6 - 1);
       const right = Math.max(...cols) * 2;
-      const top = -4, bottom = (lines.length - 1) * LINE_H + 24, left = -33;
+      // Phones: the letters get the width. The controller is left off and the row lines come in on a
+      // header (J1), as if the sign plugs into a controller board elsewhere.
+      const narrow = lines.length > 1;
+      const top = -4, bottom = (lines.length - 1) * LINE_H + 24, left = narrow ? -9 : -33;
       const p = Math.min((W - 40) / (right - left + 6), (H - 40) / (bottom - top + 8));
       const ox = Math.round((W - (right + left) * p) / 2 / p) * p, oy = Math.round((H - (bottom + top) * p) / 2 / p) * p;
 
@@ -505,42 +518,52 @@
         if (li > 0) for (let r = 0; r < 7; r++) jump([-4, 2 * r], [-4, y0 + 2 * r], ["red", "org", "ylw", "grn", "blu", "vio", "wht"][r], 0.06 + r * 0.025);
       });
 
-      // ---- the controller, left of the letters. Rails: +5 V at x = -24, ground at x = -22.
-      for (let r = 0; r < 7; r++) { res(-9, -5, 2 * r, "220"); bare([[-11, 2 * r], [-9, 2 * r]]); bare([[-5, 2 * r], [-4, 2 * r]]); }
-      text(-7, -1.2, "R1–R7", "val");
-      dipV(-14, 0, 14, "ATMEGA328P", "U1");
-      bare([[-24, -1], [-24, 20]]);
-      bare([[-22, 3], [-22, 22]]);
-      // 5 V in through a screw terminal
-      svgEl("rect", { class: "term", x: -31.3, y: -0.6, width: 2.6, height: 4.2, rx: 0.2 }, parts);
-      svgEl("circle", { class: "screw", cx: -30, cy: 0, r: 0.62 }, parts);
-      svgEl("circle", { class: "screw", cx: -30, cy: 2, r: 0.62 }, parts);
-      svgEl("path", { class: "lead red", d: `M${left - 2},-0.4 C${left + 0.5},-0.4 ${left + 0.5},0 -31.3,0` }, parts);
-      svgEl("path", { class: "lead blk", d: `M${left - 2},2.8 C${left + 0.5},2.8 ${left + 0.5},2 -31.3,2` }, parts);
-      pin(-28, 0); pin(-28, 2);
-      text(-30, -1.3, "J1"); text(-30, 4.6, "5V IN", "val");
-      bare([[-28, 0], [-24, 0]]);
-      jump([-28, 2], [-22, 3], "blk", 0.3);
-      ecap(-24, -22, 7, 1.15); text(-25.6, 7.25, "C1", "ref", "end"); text(-25.6, 8.1, "100µ", "val", "end");
-      disc(-24, -22, 12); text(-25.6, 12.25, "C2", "ref", "end"); text(-25.6, 13.1, "100n", "val", "end");
-      // reset pull-up, power and ground
-      res(-20, -16, 0, "10k"); bare([[-24, 0], [-20, 0]]); bare([[-16, 0], [-14, 0]]);
-      jump([-14, 6], [-24, 5], "red", 0.18);
-      bare([[-22, 7], [-14, 7]]);
-      // 16 MHz crystal on XTAL1/XTAL2 (pins 9 and 10) and its load caps
-      svgEl("rect", { class: "xtal", x: -17.65, y: 7.6, width: 1.3, height: 2.8, rx: 0.65 }, parts);
-      pin(-17, 8); pin(-17, 10);
-      disc(-22, -20, 8); disc(-22, -20, 10);
-      bare([[-20, 8], [-14, 8]]); bare([[-20, 10], [-17, 10]]);
-      jump([-17, 10], [-14, 9], "wht", 0.3);
-      text(-17, 12.3, "Y1", "ref"); text(-17, 13.1, "16M", "val");
-      // supply for the shift registers
-      jump([-24, 20], [-4, 21], "red", 0.06);
-      bare([[-22, 22], [-4, 22]]);
-      // data, clock and latch out to the first shift register
-      jump([-11, 9], [5, 19], "ylw", 0.1);
-      jump([-11, 11], [6, 19], "grn", 0.1);
-      jump([-11, 13], [7, 19], "vio", 0.1);
+      if (narrow) {
+        // a 1x7 header for the rows, and a 2-pin header for the shift registers' clock and data
+        svgEl("rect", { class: "ic", x: -6.6, y: -0.6, width: 1.2, height: 13.2, rx: 0.15 }, parts);
+        for (let r = 0; r < 7; r++) { pin(-6, 2 * r); bare([[-6, 2 * r], [-4, 2 * r]]); }
+        text(-6, -1.3, "J1");
+        svgEl("rect", { class: "ic", x: -6.6, y: 15.4, width: 1.2, height: 3.2, rx: 0.15 }, parts);
+        pin(-6, 16); pin(-6, 18); text(-6, 20.3, "J2");
+        jump([-6, 16], [5, 19], "ylw", 0.12); jump([-6, 18], [6, 19], "grn", 0.12);
+      } else {
+        // ---- the controller, left of the letters. Rails: +5 V at x = -24, ground at x = -22.
+        for (let r = 0; r < 7; r++) { res(-9, -5, 2 * r, "220"); bare([[-11, 2 * r], [-9, 2 * r]]); bare([[-5, 2 * r], [-4, 2 * r]]); }
+        text(-7, -1.2, "R1–R7", "val");
+        dipV(-14, 0, 14, "ATMEGA328P", "U1");
+        bare([[-24, -1], [-24, 20]]);
+        bare([[-22, 3], [-22, 22]]);
+        // 5 V in through a screw terminal
+        svgEl("rect", { class: "term", x: -31.3, y: -0.6, width: 2.6, height: 4.2, rx: 0.2 }, parts);
+        svgEl("circle", { class: "screw", cx: -30, cy: 0, r: 0.62 }, parts);
+        svgEl("circle", { class: "screw", cx: -30, cy: 2, r: 0.62 }, parts);
+        svgEl("path", { class: "lead red", d: `M${left - 2},-0.4 C${left + 0.5},-0.4 ${left + 0.5},0 -31.3,0` }, parts);
+        svgEl("path", { class: "lead blk", d: `M${left - 2},2.8 C${left + 0.5},2.8 ${left + 0.5},2 -31.3,2` }, parts);
+        pin(-28, 0); pin(-28, 2);
+        text(-30, -1.3, "J1"); text(-30, 4.6, "5V IN", "val");
+        bare([[-28, 0], [-24, 0]]);
+        jump([-28, 2], [-22, 3], "blk", 0.3);
+        ecap(-24, -22, 7, 1.15); text(-25.6, 7.25, "C1", "ref", "end"); text(-25.6, 8.1, "100µ", "val", "end");
+        disc(-24, -22, 12); text(-25.6, 12.25, "C2", "ref", "end"); text(-25.6, 13.1, "100n", "val", "end");
+        // reset pull-up, power and ground
+        res(-20, -16, 0, "10k"); bare([[-24, 0], [-20, 0]]); bare([[-16, 0], [-14, 0]]);
+        jump([-14, 6], [-24, 5], "red", 0.18);
+        bare([[-22, 7], [-14, 7]]);
+        // 16 MHz crystal on XTAL1/XTAL2 (pins 9 and 10) and its load caps
+        svgEl("rect", { class: "xtal", x: -17.65, y: 7.6, width: 1.3, height: 2.8, rx: 0.65 }, parts);
+        pin(-17, 8); pin(-17, 10);
+        disc(-22, -20, 8); disc(-22, -20, 10);
+        bare([[-20, 8], [-14, 8]]); bare([[-20, 10], [-17, 10]]);
+        jump([-17, 10], [-14, 9], "wht", 0.3);
+        text(-17, 12.3, "Y1", "ref"); text(-17, 13.1, "16M", "val");
+        // supply for the shift registers
+        jump([-24, 20], [-4, 21], "red", 0.06);
+        bare([[-22, 22], [-4, 22]]);
+        // data, clock and latch out to the first shift register
+        jump([-11, 9], [5, 19], "ylw", 0.1);
+        jump([-11, 11], [6, 19], "grn", 0.1);
+        jump([-11, 13], [7, 19], "vio", 0.1);
+      }
       g.append(joints); // solder over the wires
       g.append(leds);
 
@@ -554,6 +577,8 @@
     // the sign lights once the layers above have cleared, and goes dark again on the way back
     const lamp = () => hero.classList.toggle("pb-on", last > (hero.classList.contains("pb-on") ? 0.5 : 0.66));
 
+    // one stop: the board fully apart with the sign lit
+    (window.scrollStops ||= []).push(() => [innerHeight * 0.79 + 2]);
     addEventListener("scroll", run, { passive: true });
     run();
     addEventListener("scroll", lamp, { passive: true });

@@ -49,13 +49,23 @@ const kit = () => kitP ||= (async () => {
 })();
 
 const lazy = (sec, start, fail) => {
+  // Built a screen and a half early, in an idle moment, so the work doesn't land mid-scroll.
+  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1200 }) : setTimeout(fn, 200));
   const io = new IntersectionObserver((es) => {
     if (!es.some((e) => e.isIntersecting)) return;
     io.disconnect();
-    start().catch((err) => { console.warn("otv3d", err); fail(); });
+    idle(() => start().catch((err) => { console.warn("otv3d", err); fail(); }));
   }, { rootMargin: "150% 0px" });
   io.observe(sec);
 };
+
+// A pinned 3D section's chapters as scroll stops (see main.js): fractions of the scroll through it.
+const stopsFor = (sec, fr) => (window.scrollStops ||= []).push(() => {
+  if (!sec.classList.contains("o3-live")) return [];
+  const stage = sec.querySelector(".o3-stage");
+  const top = sec.getBoundingClientRect().top + scrollY, travel = sec.offsetHeight - stage.offsetHeight;
+  return travel > 0 ? fr.map((f) => top + travel * f) : [];
+});
 
 const makeRenderer = (K, canvas) => {
   const { THREE } = K;
@@ -74,8 +84,10 @@ const makeRenderer = (K, canvas) => {
   return { renderer, scene };
 };
 
-// Render only while a section is on screen.
+// Render only while a section is on screen. One frame is drawn straight away (scenes are built in an
+// idle moment, ahead of time) so shaders compile then, not as the section scrolls into view.
 const loopWhileVisible = (sec, frame) => {
+  try { frame(performance.now()); } catch (e) { console.warn("otv3d", e); }
   let visible = false, raf = 0;
   const loop = (t) => { raf = visible ? requestAnimationFrame(loop) : 0; frame(t); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(loop); }).observe(sec);
@@ -343,11 +355,12 @@ if (tourSec) {
   else {
     tourSec.classList.add(REDUCED ? "o3-still" : "o3-live");
     if (!REDUCED) dispatchEvent(new Event("resize"));
+    stopsFor(tourSec, [0, 0.2, 0.4, 0.6, 0.8, 1]);
     lazy(tourSec, () => tour(tourSec), () => { tourSec.classList.remove("o3-live", "o3-still"); tourSec.classList.add("o3-off"); dispatchEvent(new Event("resize")); });
   }
 }
 
-async function tour(sec) {
+async function tour(sec, opts = {}) {
   const K = await kit();
   const { THREE } = K;
   const { Vector3, Mesh, MeshStandardMaterial: Std } = THREE;
@@ -429,6 +442,7 @@ async function tour(sec) {
 
   const tmpP = new Vector3(), tmpT = new Vector3(), v = new Vector3();
   const progress = () => {
+    if (opts.clock) return opts.clock(performance.now());
     if (REDUCED) return 0;
     const r = sec.getBoundingClientRect();
     const travel = sec.offsetHeight - stage.offsetHeight;
@@ -446,7 +460,7 @@ async function tour(sec) {
     lastT = time;
     const t = smoother(clamp((f - 0.12) / 0.76));
     const A = shots[i], B = shots[i + 1];
-    const k = 1.45 * (cam.aspect < 1.25 ? Math.min(2.1, 1.25 / cam.aspect) : 1); // narrow screens: back off
+    const k = 1.45 * (cam.aspect < 1.25 ? Math.min(2.1, 1.25 / cam.aspect) : 1) * (opts.zoom || 1); // narrow screens: back off
     const drift = REDUCED ? 0 : 1;
     tmpT.lerpVectors(A.tgt, B.tgt, t);
     const az = A.az + angDiff(A.az, B.az) * t + drift * 0.09 * Math.sin(time / 4200);
@@ -478,6 +492,7 @@ async function tour(sec) {
     Object.values(nets).forEach((m) => { m.emissiveIntensity = m.userData.on ? 0.55 + 0.35 * Math.sin(sec_ * 5) : 0; });
     renderer.render(scene, cam);
 
+    if (opts.card) return; // the project cards have no labels
     // labels for the current stop, faded by how close we are to it
     const near = clamp(1 - Math.abs(s - on) * 3.2);
     const placed = [];
@@ -511,13 +526,13 @@ async function tour(sec) {
 
   resize();
   sec.classList.add("o3-ready");
-  if (REDUCED) {
+  if (REDUCED && !opts.card) {
     const draw = () => { resize(); frame(0); };
     new ResizeObserver(draw).observe(stage);
     draw();
     return;
   }
-  loopWhileVisible(sec, frame);
+  (opts.loop || loopWhileVisible)(sec, frame);
 }
 
 // ---------------------------------------------------------------- the course
@@ -539,6 +554,13 @@ if (runSec && map2d) {
     const noteEl = document.querySelector(".o3r-note");
     if (note && noteEl) noteEl.textContent = note.textContent;
     runSec.classList.add("o3-live", RUN_MODE === "scrub" ? "o3r-scrub" : "o3r-lockmode");
+    // scroll stops: the start, just into each moment that plays on its own (the pool, the underside,
+    // the limbo), the goal and the end. Same chapter weights as course() below.
+    if (RUN_MODE === "scrub") {
+      const Wt = [0.5, 0.7, 1.4, 0.5, 0.5, 1.6, 1.1, 0.8], sum = Wt.reduce((x, y) => x + y, 0);
+      const at = (k, f = 0) => (Wt.slice(0, k).reduce((x, y) => x + y, 0) + Wt[k] * f) / sum;
+      stopsFor(runSec, [0, at(2, 0.08), at(3), at(5, 0.08), at(6, 0.08), at(7), 1]);
+    }
     document.documentElement.classList.add("o3r-on");
     dispatchEvent(new Event("resize"));
     lazy(runSec, () => course(runSec, routes), () => {
@@ -1149,6 +1171,7 @@ if (capSec) {
     capSec.classList.add("o3-live");
     document.documentElement.classList.add("o3c-on");
     dispatchEvent(new Event("resize"));
+    stopsFor(capSec, [0, 0.45, 0.81, 1]); // assembled, apart, back together, the shot
     lazy(capSec, () => capScene(capSec), () => {
       capSec.classList.remove("o3-live"); capSec.classList.add("o3-off");
       document.documentElement.classList.remove("o3c-on"); dispatchEvent(new Event("resize"));
@@ -1156,7 +1179,7 @@ if (capSec) {
   }
 }
 
-async function capScene(sec) {
+async function capScene(sec, opts = {}) {
   const K = await kit();
   const { THREE } = K;
   const { Vector3, Group, Mesh, MeshStandardMaterial: Std } = THREE;
@@ -1426,6 +1449,7 @@ async function capScene(sec) {
   new ResizeObserver(resize).observe(stage);
 
   const progress = () => {
+    if (opts.clock) return opts.clock(performance.now());
     const r = sec.getBoundingClientRect();
     const travel = sec.offsetHeight - stage.offsetHeight;
     return travel > 0 ? clamp(-r.top / travel) : 0;
@@ -1465,7 +1489,7 @@ async function capScene(sec) {
     const az = 0.7 + spin * Math.PI * 2 + 0.08 * Math.sin(time / 4200) + view * 0.9;
     const el = 0.38 + 0.12 * Math.sin(spin * Math.PI) - view * 0.18;
     const narrow = cam.aspect < 1 ? Math.min(1.9, 1.05 / cam.aspect) : 1;
-    const r = (0.5 + 0.42 * e + 0.45 * view) * narrow;
+    const r = (0.5 + 0.42 * e + 0.45 * view) * narrow * (opts.zoom || 1);
     tgt.set(0.02 * view, 0.03 + 0.015 * e - 0.14 * view, 0.03 + 0.07 * e + 0.12 * view);
     const st = ocam.to(az, el, r, tgt, dt, 0.4);
     ocam.place(cam, cam.position); cam.lookAt(st.tgt);
@@ -1474,6 +1498,7 @@ async function capScene(sec) {
     const ch = p < 0.15 ? 0 : p < 0.6 ? 1 : p < 0.82 ? 2 : 3;
     if (ch !== cur) { cur = ch; steps.forEach((li, j) => li.classList.toggle("on", j === ch)); bar.forEach((b, j) => b.classList.toggle("on", j === ch)); }
 
+    if (opts.card) return; // the project cards have no labels
     // labels while it's apart: flip at the screen edges, never overlap
     const show = smoother(clamp((e - 0.7) / 0.3)) * (1 - view);
     const placed = [];
@@ -1505,7 +1530,7 @@ async function capScene(sec) {
 
   resize();
   sec.classList.add("o3-ready");
-  loopWhileVisible(sec, frame);
+  (opts.loop || loopWhileVisible)(sec, frame);
 }
 
 // ---------------------------------------------------------------- Pluto in 3D
@@ -1517,11 +1542,12 @@ if (plutoSec) {
   else {
     plutoSec.classList.add("o3-live");
     dispatchEvent(new Event("resize"));
+    stopsFor(plutoSec, [0, ...[0, 1, 2, 3, 4, 5, 6].map((k) => (k + 0.92) / 7)]); // each message once it has arrived
     lazy(plutoSec, () => plutoScene(plutoSec), () => { plutoSec.classList.remove("o3-live"); plutoSec.classList.add("o3-off"); dispatchEvent(new Event("resize")); });
   }
 }
 
-async function plutoScene(sec) {
+async function plutoScene(sec, opts = {}) {
   // One command as a 3D sequence diagram. Five lanes (my phone, Telegram, Pluto on Fly.io, Canvas, Calendar)
   // stand at the back and time runs toward you. Each message is an arrow that shoots from one lane to the
   // next as you scroll, with what it carries written on it (replies are dashed). The lane heads are screens
@@ -1770,8 +1796,9 @@ async function plutoScene(sec) {
   const frame = (time) => {
     if (!W) return;
     const dt = lastT ? Math.min(0.1, (time - lastT) / 1000) : 0; lastT = time;
-    const r_ = sec.getBoundingClientRect(), travel = sec.offsetHeight - stage.offsetHeight;
-    const want = travel > 0 ? clamp(-r_.top / travel) : 0;
+    let want;
+    if (opts.clock) want = opts.clock(time);
+    else { const r_ = sec.getBoundingClientRect(), travel = sec.offsetHeight - stage.offsetHeight; want = travel > 0 ? clamp(-r_.top / travel) : 0; }
     p += (want - p) * (dt ? 1 - Math.exp(-dt / 0.18) : 1);
     const s = p * (N - 0.001), ch = Math.floor(s);
 
@@ -1845,7 +1872,7 @@ async function plutoScene(sec) {
     az += (0.1 - az) * wPhone; el += (0.16 - el) * wPhone; r += (1.25 * Math.min(narrow, 1.4) - r) * wPhone;
     tmp.set(0.1, 0, LAST / 2 - 0.15); tgt.lerp(tmp, doneW);
     az += (0.12 - az) * doneW; el += (1.02 - el) * doneW; r += (11.5 * narrow - r) * doneW;
-    const st = ocam.to(az + 0.04 * Math.sin(time / 4100), el, r, tgt, dt, 0.4);
+    const st = ocam.to(az + 0.04 * Math.sin(time / 4100), el, r * (opts.zoom || 1), tgt, dt, 0.4);
     ocam.place(cam, cam.position); cam.lookAt(st.tgt);
     renderer.render(scene, cam);
 
@@ -1854,5 +1881,48 @@ async function plutoScene(sec) {
 
   resize();
   sec.classList.add("o3-ready");
-  loopWhileVisible(sec, frame);
+  (opts.loop || loopWhileVisible)(sec, frame);
+}
+
+// ---------------------------------------------------------------- the home page cards
+// Each project card on the home page plays its project's 3D scene on its own, on a clock instead of
+// scroll: the OTV tour, the cap coming apart and taking its shot, and one message to Pluto. Nothing
+// here is tied to scrolling. three.js and the model load in idle time after the page settles; each card
+// renders only while it's on screen. Without WebGL, or with reduced motion, the cards keep their 2D drawings.
+const cardEls = [...document.querySelectorAll(".card3d")];
+if (cardEls.length && GL && !REDUCED) {
+  // Full frame rate while on screen, nothing off screen. One frame is drawn right away, in the idle
+  // slot the card is built in, so shaders compile then instead of when the card scrolls into view.
+  const cardLoop = loopWhileVisible;
+  // a looping 0..1 progress: play forward, hold, then the scene's own way back to the start
+  const clockOf = (play, hold, back = 0, backTo = 0) => {
+    const T = play + hold + back + 0.6;
+    let t0 = 0;
+    return (now) => {
+      const t = ((now - (t0 ||= now)) / 1000) % T;
+      if (t < play) return t / play;
+      if (t < play + hold) return 1;
+      if (t < play + hold + back) return 1 - (1 - backTo) * ((t - play - hold) / back);
+      return 0;
+    };
+  };
+  const SCENES = {
+    otv: (sec) => tour(sec, { card: true, zoom: 1.45, loop: cardLoop, clock: (() => { // forward through the six stops, then back
+      const f = clockOf(15, 1.5, 7, 0); return (now) => f(now);
+    })() }),
+    brimcam: (sec) => capScene(sec, { card: true, zoom: 1.12, loop: cardLoop, clock: clockOf(11, 1.6, 1.2, 0.8) }),
+    pluto: (sec) => plutoScene(sec, { card: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
+  };
+  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
+  const start = () => idle(async () => {
+    try { await kit(); } catch (e) { console.warn("cards3d", e); return; }
+    for (const sec of cardEls) {
+      await new Promise((r) => idle(r)); // one scene per idle slot
+      const make = SCENES[sec.dataset.scene];
+      if (!make) continue;
+      try { await make(sec); sec.closest(".card")?.classList.add("card-3d-on"); }
+      catch (e) { console.warn("cards3d", e); }
+    }
+  });
+  if (document.readyState === "complete") start(); else addEventListener("load", start, { once: true });
 }

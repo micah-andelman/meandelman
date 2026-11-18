@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluto, Micah Andelman</title>
+<meta name="description" content="A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.">
+<link rel="canonical" href="https://meandelman.com/pluto">
+<meta property="og:url" content="https://meandelman.com/pluto">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pluto, Micah Andelman">
+<meta property="og:description" content="A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.">
+<meta property="og:image" content="https://meandelman.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Micah Andelman, electrical engineering, University of Maryland. meandelman.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#101614">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  // Theme choice, set before first paint.
+  (function () {
+    try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="subpage">
+<a class="skip" href="#pluto">Skip to the project</a>
+
+<header class="top">
+  <a class="mark" href="./">Micah Andelman</a>
+  <button class="power" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Dark mode"><span class="track"><span class="knob"><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" /></svg><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z" /></svg></span></span></button>
+  <nav aria-label="Sections">
+    <a href="./#work">Work</a>
+    <a href="./#experience">Experience</a>
+    <a href="resume.pdf">Résumé</a>
+    <a href="./#contact">Contact</a>
+  </nav>
+  <div class="tools">
+    <button class="heat" type="button" aria-pressed="false" aria-label="Thermal view" title="Thermal view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0Z" /><circle cx="12" cy="17" r="1.7" /><path class="lvl" d="M12 15.3V9" /></svg></button>
+    <button class="egg" type="button" aria-expanded="false" aria-controls="eggs" aria-label="Things to find" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.3 0 6 5.2 6 9.5a6 6 0 0 1-12 0c0-4.3 2.7-9.5 6-9.5Z" /></svg></button>
+  </div>
+</header>
+
+<main>
+  <nav class="ptabs" aria-label="Projects">
+    <a href="otv.html"><small aria-hidden="true">U1</small>ENES100 OTV</a>
+    <a href="brimcam.html"><small aria-hidden="true">U2</small>Brimcam</a>
+    <a href="pluto.html" aria-current="page"><small aria-hidden="true">U3</small>Pluto</a>
+    <a class="home" href="./#work"><span aria-hidden="true">&larr;</span> <span>All projects</span></a>
+  </nav>
+
+  <!-- ================= PLUTO ================= -->
+  <article class="project minor" id="pluto" aria-labelledby="pluto-t">
+    <div class="p-head">
+      <h1 id="pluto-t">Pluto</h1>
+      <dl class="meta">
+        <div><dt>When</dt><dd>2026 to now</dd></div>
+        <div><dt>Role</dt><dd>Solo</dd></div>
+        <div><dt>Built with</dt><dd>Python, Claude Code, Telegram, Google APIs, Fly.io</dd></div>
+        <div class="status"><dt>Status</dt><dd><i class="led" aria-hidden="true"></i>Checking</dd></div>
+      </dl>
+    </div>
+    <div class="p-body">
+      <p class="lede">A personal agent I text on Telegram. It's Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.</p>
+      <p>Most of my time went into the tools. Each one does one job and is careful about what it doesn't know. If it guessed an exam date, it says so. If it can't find a room, it says that too. It only suggests a bus when the bus beats walking by at least five minutes.</p>
+      <div class="briefs">
+      <div class="brief" role="group" aria-label="Example of a morning brief">
+        <p class="brief-head"><i aria-hidden="true"></i>Pluto <span>7:02 AM</span></p>
+        <p class="msg" data-keys="calendar schedule">Morning. Two classes today: ENES100 at 10:00 and Calc III at 2:00.</p>
+        <p class="msg" data-keys="canvas planner">Your physics problem set is due at 11:59 PM and isn't on your calendar, so I blocked 4:00 to 5:30.</p>
+        <p class="msg" data-keys="transit">Bus 104 leaves in 6 minutes, but walking to class is faster today.</p>
+        <p class="brief-note">An example of a morning brief.</p>
+      </div>
+      <div class="brief ask" role="group" aria-label="Example of asking Pluto a question">
+        <p class="brief-head"><i aria-hidden="true"></i>Pluto <span>3:41 PM</span></p>
+        <p class="msg me" data-keys="phone">When's my next Calc III exam, where is it, and what do I need on it to keep an A?</p>
+        <p class="msg" data-keys="canvas">Exam 2 is Thursday at 2:00. That date is from the syllabus on Canvas, not your calendar, so check it in class.</p>
+        <p class="msg" data-keys="places">I couldn't find a room for it. Canvas and the schedule don't list one yet.</p>
+        <p class="msg" data-keys="grades">To stay at an A you need about an 84 on it, assuming the final is weighted the way the syllabus says.</p>
+        <p class="brief-note">An example of asking Pluto a question.</p>
+      </div>
+      </div>
+      <dl class="specs">
+        <div><dt>36</dt><dd>tool modules</dd></div>
+        <div><dt>24</dt><dd>offline test suites, run on every push</dd></div>
+        <div><dt>82</dt><dd>commits</dd></div>
+      </dl>
+    </div>
+
+    <section class="o3 o3p" id="pluto-3d" aria-labelledby="o3p-t">
+      <h3 class="sr" id="o3p-t">One message to Pluto, start to finish, in 3D</h3>
+      <div class="o3-stage">
+        <canvas aria-hidden="true"></canvas>
+        <div class="o3-tags" aria-hidden="true"></div>
+        <ol class="o3-steps">
+          <li><span class="o3-n">01 / 07</span><h4>Ask</h4><p>I text Pluto the way I'd text a person: find time for my physics problem set today.</p></li>
+          <li><span class="o3-n">02 / 07</span><h4>Telegram</h4><p>The message goes to Telegram's servers like any other chat.</p></li>
+          <li><span class="o3-n">03 / 07</span><h4>Pluto</h4><p>Telegram hands it to my bot on Fly.io. Pluto is Claude Code running headless there, with the official Telegram channel plugin.</p></li>
+          <li><span class="o3-n">04 / 07</span><h4>Canvas</h4><p>It checks the assignment on Canvas: the problem set is due at 11:59 PM.</p></li>
+          <li><span class="o3-n">05 / 07</span><h4>Calendar</h4><p>It finds free time after my classes and blocks 4:00 to 5:30, within my daily study limit.</p></li>
+          <li><span class="o3-n">06 / 07</span><h4>Reply</h4><p>The answer goes back the same way: from the bot to Telegram to my phone.</p></li>
+          <li><span class="o3-n">07 / 07</span><h4>Done</h4><p>One message, and the time is on my calendar.</p></li>
+        </ol>
+        <div class="o3-bar" aria-hidden="true"><span>Ask</span><span>Telegram</span><span>Pluto</span><span>Canvas</span><span>Calendar</span><span>Reply</span><span>Done</span></div>
+        <p class="o3-load" aria-hidden="true">Loading&hellip;</p>
+      </div>
+    </section>
+
+    <div class="pluto-parts" aria-label="What Pluto is made of">
+      <div class="pp-col">
+        <h4>Coming in</h4>
+        <dl>
+          <div><dt>Telegram, from my iPhone</dt><dd>I text it the way I'd text a person, and everything it sends comes back in the same Telegram chat.</dd></div>
+          <div><dt>Location</dt><dd>My phone posts its location to the one inbound route the bot has. If the token isn't set up, that route refuses every request.</dd></div>
+          <div><dt>Schedule</dt><dd>The bot messages me on its own each morning and evening, plus a longer review on Sundays.</dd></div>
+        </dl>
+      </div>
+      <div class="pp-col">
+        <h4>Pluto</h4>
+        <dl>
+          <div><dt>Claude Code, headless, on Fly.io</dt><dd>Claude Code runs headless on my subscription with the official Telegram channel plugin. When I hit the subscription limit it switches to an API key, and it switches back once the limit resets.</dd></div>
+        </dl>
+      </div>
+      <div class="pp-col pp-tools">
+        <h4>Its tools</h4>
+        <dl>
+          <div><dt>Calendar</dt><dd>Creates, moves and searches events, and finds free time between classes.</dd></div>
+          <div><dt>Email</dt><dd>It sorts my inbox and sends digests. It also pulls dates out of emails, so a rescheduled exam or an extension that never made it onto my calendar still shows up.</dd></div>
+          <div><dt>Canvas sync</dt><dd>Every six hours it copies new Canvas assignments onto my calendar, moves any whose deadline changed, and sends me one summary.</dd></div>
+          <div><dt>Grade projection</dt><dd>Works out my grade by category weight, leaving out categories with nothing graded yet, and tells me what I need on the rest of the work.</dd></div>
+          <div><dt>Study planner</dt><dd>Fits study blocks into the free time on my calendar, up to a daily limit. If something doesn't fit, it tells me.</dd></div>
+          <div><dt>Campus buses</dt><dd>Compares walking, biking and the Shuttle-UM buses, using live bus positions instead of the posted schedule.</dd></div>
+          <div><dt>Campus map</dt><dd>Looks up building codes and coordinates from UMD's facilities map. If a name could mean two buildings, it returns both.</dd></div>
+        </dl>
+      </div>
+    </div>
+  </article>
+
+
+  <nav class="pnext" aria-label="More projects">
+    <a class="prev" href="brimcam.html"><span>Previous project</span><b>Brimcam</b></a>
+    <a class="next" href="otv.html"><span>Next project</span><b>ENES100 OTV</b></a>
+  </nav>
+  <section class="pcontact" aria-label="Contact">
+    <p>Questions about this project, or looking for an intern? <a href="mailto:micah@meandelman.com">micah@meandelman.com</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Micah Andelman, College Park and Bedford.</p>
+  <dl class="titleblock">
+    <div class="tb-title"><dt>Title</dt><dd>Micah Andelman, portfolio</dd></div>
+    <div><dt>Drawn by</dt><dd>M. Andelman</dd></div>
+    <div><dt>Rev</dt><dd class="rev">C</dd></div>
+    <div><dt>Date</dt><dd>Nov 2026</dd></div>
+    <div><dt>Sheet</dt><dd>4 of 4</dd></div>
+  </dl>
+</footer>
+
+<script src="vendor/lenis-1.1.20.min.js" defer></script>
+<script src="layout.js" defer></script>
+<script src="main.js" defer></script>
+<script src="extras.js" defer></script>
+<script src="visuals.js" defer></script>
+<script type="module" src="otv3d.js"></script>
+</body>
+</html>

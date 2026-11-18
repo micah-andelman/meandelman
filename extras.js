@@ -104,6 +104,7 @@
     else if (id === "open") location.href = "/open-circuit";
   });
   const replayIntro = () => {
+    if (!$("#name")) { location.href = "/?intro"; return; } // the name (and its intro) is on the home page
     glide(0);
     setTimeout(() => $("#name")?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })), REDUCED ? 0 : 1000);
   };
@@ -280,7 +281,14 @@
     }
     inp.focus({ preventScroll: true });
   };
-  const go = (sel) => { openMonitor(false); scrollToEl($(sel)); };
+  // Sections live on different pages now: scroll if it's here, otherwise go to the page that has it.
+  const go = (sel) => {
+    openMonitor(false);
+    const [page, hash] = sel.includes("#") ? sel.split("#") : [sel, ""];
+    const el = hash && $("#" + hash);
+    if (el) return scrollToEl(el);
+    location.href = (page || "/") + (hash ? "#" + hash : "");
+  };
   const CMDS = {
     help: () => [
       "help              this list",
@@ -300,7 +308,7 @@
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
     projects: () => ["ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
     open: (a) => {
-      const map = { otv: "#otv", pluto: "#pluto", brimcam: "#brimcam", glasses: "#brimcam", route: "#otv-route", experience: "#experience", contact: "#contact" };
+      const map = { otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", contact: "/#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
       print_(`Opening ${a}.`);
       setTimeout(() => go(map[a]), 250);
@@ -336,7 +344,7 @@
     },
     replay: (a) => {
       if (a === "intro") { print_("Replaying the intro."); openMonitor(false); replayIntro(); }
-      else if (a === "route") { print_("Replaying the route."); go("#otv-route"); setTimeout(() => $("#otv-route .replay")?.click(), 600); }
+      else if (a === "route") { print_("Replaying the route."); if (!$("#otv-route")) return go("/otv.html#otv-route"); go("#otv-route"); setTimeout(() => $("#otv-route .replay")?.click(), 600); }
       else print_("replay: intro or route", "err");
     },
     eggs: () => { openMonitor(false); openPop(true); },
@@ -364,7 +372,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { if (!mon.hidden) openMonitor(false); if (!pop.hidden) openPop(false); return; }
     if (e.key !== "`" || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.target.closest("input, textarea, select, [contenteditable]") && e.target !== inp) return;
+    if (e.target.closest?.("input, textarea, select, [contenteditable]") && e.target !== inp) return;
     e.preventDefault();
     openMonitor(mon.hidden);
   });
