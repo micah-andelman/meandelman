@@ -1689,3 +1689,47 @@ html.thermal .pb-heat { opacity: .9; }
 /* The BuildFest screenshot ring takes sideways swipes; vertical ones still scroll the page. */
 .bf-show .bf-stage { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .bf-show .bf-stage img { -webkit-user-drag: none; pointer-events: none; }
+
+/* ---------- skills: each skill drawn as a DIP chip ---------- */
+.skills { padding: clamp(64px, 12vh, 140px) var(--gutter); border-top: 1px solid var(--rule); }
+.skills h2 { margin: 0 0 clamp(16px, 3vh, 28px); font-family: var(--display); font-weight: 700; font-size: clamp(44px, 6.5vw, 104px); line-height: .9; letter-spacing: -.015em; }
+.skills-lede { margin: 0 0 clamp(28px, 5vh, 48px); max-width: var(--measure); color: var(--ink-2); font-size: clamp(17px, 1.4vw, 20px); }
+.bin { display: grid; grid-template-columns: 28% 1fr; gap: 12px 24px; padding: 20px 0; border-top: 1px solid var(--rule); }
+.bin:last-child { border-bottom: 1px solid var(--rule); }
+.bin h3 { margin: 6px 0 0; font-size: 17px; font-weight: 600; }
+.bin ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 18px 14px; }
+.chip {
+  position: relative; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px;
+  padding: 9px 14px 9px 22px; background: var(--board); border: 1px solid var(--rule); border-radius: 4px;
+  transition: border-color .2s, transform .2s;
+}
+/* pin-1 notch */
+.chip::before { content: ""; position: absolute; left: -1px; top: 50%; width: 7px; height: 12px; margin-top: -6px; border: 1px solid var(--rule); border-left: 0; border-radius: 0 7px 7px 0; background: var(--paper); }
+/* legs along the top and bottom edges */
+.chip::after { content: ""; position: absolute; left: 14px; right: 10px; top: -5px; bottom: -5px; pointer-events: none; opacity: .55;
+  background: repeating-linear-gradient(90deg, var(--ink-3) 0 3px, transparent 3px 12px) top / 100% 4px no-repeat,
+              repeating-linear-gradient(90deg, var(--ink-3) 0 3px, transparent 3px 12px) bottom / 100% 4px no-repeat; }
+.chip-name { font-weight: 600; color: var(--ink); }
+.chip-note { color: var(--ink-3); font-size: 14px; }
+.chip-refs { display: inline-flex; gap: 6px; }
+.chip-refs > * { font-size: 12px; letter-spacing: .04em; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--rule); color: var(--ink-3); text-decoration: none; }
+.chip-refs a { color: var(--copper-ink); border-color: currentColor; }
+.chip-refs a:hover, .chip-refs a:focus-visible { background: var(--copper); border-color: var(--copper); color: var(--paper); }
+.chip:hover { border-color: var(--copper); }
+.chip:hover::before { border-color: var(--copper); }
+@media (prefers-reduced-motion: no-preference) { .chip:hover { transform: translateY(-2px); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip-refs a { color: var(--copper); } }
+:root[data-theme="dark"] .chip-refs a { color: var(--copper); }
+@media screen and (max-width: 760px) {
+  .skills { padding-top: 72px; padding-bottom: 72px; }
+  .bin { grid-template-columns: 1fr; }
+  .bin h3 { margin: 0; }
+}
+@media print {
+  .skills { padding: 10px 0 6px; }
+  .skills h2 { font-size: 20pt; line-height: 1; margin: 0 0 6px; }
+  .skills-lede { display: none; }
+  .bin { padding: 4px 0; grid-template-columns: 26% 1fr; }
+  .bin h3, .chip { font-size: 9pt; }
+  .chip { padding: 2px 8px; } .chip::before, .chip::after { display: none; }
+}
