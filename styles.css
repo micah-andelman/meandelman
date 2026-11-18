@@ -324,7 +324,7 @@ a:hover { color: var(--mask); }
 @media screen and (max-width: 760px) {
   body { font-size: 17px; }
   .top { padding-top: 12px; padding-bottom: 12px; }
-  .top nav a[href$="#experience"] { display: none; }
+  .top nav a[href$="#experience"], .top nav a[href$="#skills"] { display: none; }
   .mark { white-space: nowrap; }
   .top { gap: 16px; }
   .top nav { gap: 16px; }

@@ -308,7 +308,7 @@
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
     projects: () => ["BuildFest         1st place: 988-training insights tool for EveryMind", "ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
     open: (a) => {
-      const map = { buildfest: "/buildfest.html#buildfest", otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", contact: "/#contact" };
+      const map = { buildfest: "/buildfest.html#buildfest", otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", skills: "/#skills", contact: "/#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
       print_(`Opening ${a}.`);
       setTimeout(() => go(map[a]), 250);
