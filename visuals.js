@@ -384,7 +384,7 @@
     core.prepend(cvBoard, litWrap, cvHeat);
     const PB_CSS = `
       text { font-family: "Barlow", "Arial Narrow", Arial, sans-serif; }
-      .pad { fill: #c8834a; } .hole { fill: #0a1f15; } .mh { fill: #0a1f15; stroke: #c8834a; stroke-width: 3; }
+      .pad { fill: #a9afb4; } .hole { fill: #0a1f15; } .mh { fill: #0a1f15; stroke: #a9afb4; stroke-width: 3; } /* tinned (silver) pads */
       .j { fill: #d4d7da; stroke: #8d9196; stroke-width: .06; }
       .bare { fill: none; stroke: #c4c8cc; stroke-width: .18; stroke-linecap: round; stroke-linejoin: round; }
       .ins, .core { fill: none; stroke-linecap: round; stroke-linejoin: round; }

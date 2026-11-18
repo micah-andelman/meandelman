@@ -1507,10 +1507,6 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 @media print { .card3d { display: none; } }
 
 /* ---------- Scroll stops on touch screens (main.js): one invisible snap point per chapter ---------- */
-.snapstops { position: absolute; left: 0; top: 0; width: 1px; height: 0; pointer-events: none; visibility: hidden; }
-.snapstops i { position: absolute; left: 0; width: 1px; height: 1px; scroll-snap-align: start; scroll-snap-stop: always; }
-html.snapping { scroll-snap-type: y proximity; }
-@media print { .snapstops { display: none; } html.snapping { scroll-snap-type: none; } }
 
 /* ---------- 404: Open circuit ---------- */
 .oc { min-height: calc(100svh - 160px); display: flex; flex-direction: column; justify-content: center; padding: clamp(32px, 8vh, 80px) var(--gutter); }

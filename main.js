@@ -506,87 +506,88 @@ onScroll();
   h1.addEventListener("dblclick", () => { if (!REDUCED && !h1.querySelector(".scope")) trace(); });
 })();
 
-// Smooth scrolling (Lenis). The page still scrolls natively underneath; Lenis just eases the wheel.
-// Every scroll-driven animation registers its chapter positions (absolute scroll Y values) in
-// window.scrollStops, so a fast flick can't skip through one:
-//   - with a wheel or trackpad, scrolling is paced so the speed stays even, and a single gesture
-//     (including a trackpad's coasting) stops at the next chapter. Keep scrolling and it moves on
-//     after a short beat; a fresh gesture moves on at once.
-//   - on touch screens (Lenis leaves touch scrolling native), the same positions become CSS snap
-//     points with scroll-snap-stop, so a fling stops at the next chapter too.
+// Scrolling by swipes. Every swipe (a trackpad or touch-screen swipe, or a mouse-wheel roll) moves the
+// page one step: half a screen, or exactly to the next chapter of a scroll-driven animation if one is
+// that close. How hard you swipe doesn't matter and a trackpad's coasting adds nothing, so the page
+// never runs away; holding a long push (or rolling the wheel on) keeps stepping at an even pace.
+// Chapters register their scroll positions in window.scrollStops, and a step never skips one.
+// Keys, the scrollbar and links scroll as usual. With reduced motion the page scrolls natively.
 const scrollStops = () => (window.scrollStops || [])
   .flatMap((f) => { try { return f() || []; } catch (e) { return []; } })
   .filter(Number.isFinite).map(Math.round).sort((a, b) => a - b);
 const lenis = (() => {
   if (REDUCED || !window.Lenis) return null;
   const head = document.querySelector(".top");
-  let last = 0, gate = null, gateDir = 0, heldAt = 0;
+  const DUR = 0.8, ease = (t) => 1 - Math.pow(1 - t, 3);
+  let busyUntil = 0, dest = 0;
+  const step = (dir) => {
+    // while a step is still running, the next one starts from where that one is going
+    const pos = performance.now() < busyUntil ? dest : l.animatedScroll, S = scrollStops(), size = Math.round(innerHeight * 0.5);
+    const stop = dir > 0 ? S.find((s) => s > pos + 3) : S.reverse().find((s) => s < pos - 3);
+    let to = pos + dir * size;
+    if (stop != null && Math.abs(stop - pos) <= size * 1.35) to = stop; // land on a nearby chapter exactly
+    to = Math.max(0, Math.min(l.limit, to));
+    if (Math.abs(to - pos) < 1) return;
+    dest = to;
+    l.scrollTo(to, { duration: DUR, easing: ease });
+    busyUntil = performance.now() + DUR * 1000;
+  };
+  // an element on the path that scrolls on its own (a menu, a code box) keeps its native scrolling
+  const ownScroller = (ev, vertical) => ev.composedPath().some((n) => n instanceof HTMLElement && n !== document.body && n !== document.documentElement && (() => {
+    const cs = getComputedStyle(n), o = vertical ? cs.overflowY : cs.overflowX;
+    return (o === "auto" || o === "scroll") && (vertical ? n.scrollHeight > n.clientHeight + 1 : n.scrollWidth > n.clientWidth + 1);
+  })());
+
+  // wheel and trackpad: one gesture is a run of events with no pause over 220 ms. A new swipe that
+  // starts while the last one is still coasting shows up as the deltas rising again after they fell.
+  let wLast = 0, wDir = 0, wFired = false, wAt = 0, wMin = Infinity, wAcc = 0, wPrev = 0, wPeak = 0, wFalling = false;
+  const wheel = (t, ev) => {
+    if (ev.ctrlKey) return true; // pinch zoom
+    const raw = t.deltaY, a = Math.abs(raw), dir = Math.sign(raw), now = performance.now();
+    if (!dir || Math.abs(t.deltaX) > a) return true;
+    if (ownScroller(ev, true)) return false;
+    if (ev.cancelable) ev.preventDefault();
+    // A pause starts a new swipe, unless it comes right after a step (the page was busy for a moment)
+    // or the deltas are still fading (a coast across a busy moment).
+    const coasting = wFired && (now - wAt < 450 || (now - wAt < 1500 && wPrev && a <= wPrev * 1.05));
+    const fresh = dir !== wDir || (now - wLast > 220 && !coasting) || (wFired && wFalling && now - wAt > 180 && a >= 12 && a > wMin * 1.8 + 6);
+    wLast = now;
+    if (fresh) { wDir = dir; wFired = false; wAcc = 0; wPrev = 0; wPeak = 0; wFalling = false; }
+    wPeak = Math.max(wPeak, a);
+    if (a < wPeak * 0.8) wFalling = true; // fading from its peak: a coast, not a push
+    if (wFalling) wMin = Math.min(wMin, a);
+    wPrev = a;
+    const fire = () => { wFired = true; wAt = now; wMin = Infinity; wPeak = a; wFalling = false; step(dir); };
+    if (!wFired) { wAcc += a; if (wAcc >= 12) fire(); }
+    else if (now > busyUntil && !wFalling && a >= 40) fire(); // a long push that isn't fading (a rolled wheel) keeps going
+    return false;
+  };
+
+  // touch: one finger, one swipe, one step, once the finger has moved 24 px up or down
+  let tAxis = "", tAcc = 0, tFired = false, tX = 0;
+  const touch = (t, ev) => {
+    if (ev.type === "touchstart") { tAxis = ""; tAcc = 0; tFired = false; tX = 0; return false; }
+    if (ev.type !== "touchmove" || (ev.touches && ev.touches.length > 1)) return false; // pinch: native
+    tAcc += t.deltaY; tX += t.deltaX;
+    if (!tAxis && Math.max(Math.abs(tAcc), Math.abs(tX)) > 6) {
+      tAxis = Math.abs(tX) > Math.abs(tAcc) || ownScroller(ev, true) ? "native" : "y";
+    }
+    if (tAxis === "native") return false;
+    if (ev.cancelable) ev.preventDefault();
+    if (tAxis === "y" && !tFired && Math.abs(tAcc) >= 24) { tFired = true; step(Math.sign(tAcc)); }
+    return false;
+  };
+
   const govern = (t) => {
     const ev = t.event;
-    if (!ev.type.includes("wheel") || ev.ctrlKey) return true;
-    // Anything swallowed here must also cancel the wheel event: Lenis only cancels the events it
-    // scrolls, and an uncancelled one scrolls the page natively, in a raw jump.
-    const swallow = () => { if (ev.cancelable) ev.preventDefault(); return false; };
-    const raw = t.deltaY, dir = Math.sign(raw), now = performance.now();
-    if (!dir) return true;
-    // Even speed: the scroll target never runs more than half a screen ahead of the page, so a hard
-    // flick and a steady roll move at the same pace. Nothing is thrown away, it's just paced.
-    const LEAD = innerHeight * 0.5, ahead = l.targetScroll - l.animatedScroll;
-    let d = dir > 0 ? Math.min(raw, Math.max(0, LEAD - ahead)) : Math.max(raw, Math.min(0, -LEAD - ahead));
-    if (now - last > 240 || dir !== gateDir) { gate = null; heldAt = 0; } // a new gesture
-    last = now;
-    if (gate != null && (gate - l.targetScroll) * dir < -1) gate = null; // already past it (keys, scrollbar)
-    if (gate == null) {
-      const pos = l.targetScroll, S = scrollStops();
-      gate = (dir > 0 ? S.find((s) => s > pos + 3) : S.reverse().find((s) => s < pos - 3)) ?? null;
-      gateDir = dir;
-    }
-    if (gate != null) {
-      const room = gate - l.targetScroll;
-      if (Math.abs(room) < 1) { // parked on a chapter
-        heldAt ||= now;
-        // only a long, still-strong push carries on; a fling and its fading coast stop here
-        if (now - heldAt > 1200 && Math.abs(raw) >= 40) { gate = null; heldAt = 0; }
-        return swallow();
-      }
-      if (dir > 0 ? d > room : d < room) d = room;
-    }
-    if (Math.abs(d) < 0.5) return swallow();
-    t.deltaY = d;
+    if (ev.type.includes("wheel")) return wheel(t, ev);
+    if (ev.type.includes("touch")) return touch(t, ev);
     return true;
   };
   const l = new Lenis({ lerp: 0.1, virtualScroll: govern, anchors: { offset: -(head ? head.offsetHeight : 0) - 8 } });
   const raf = (t) => { l.raf(t); requestAnimationFrame(raf); };
   requestAnimationFrame(raf);
   return l;
-})();
-// Touch screens: the chapter positions as native snap points.
-(() => {
-  if (REDUCED || !matchMedia("(pointer: coarse)").matches) return;
-  const box = document.createElement("div");
-  box.className = "snapstops";
-  box.setAttribute("aria-hidden", "true");
-  document.body.appendChild(box);
-  let key = "";
-  const place = () => {
-    const S = scrollStops(), k = S.join(",");
-    if (k === key) return;
-    key = k;
-    box.replaceChildren(...S.map((y) => { const i = document.createElement("i"); i.style.top = y + "px"; return i; }));
-    document.documentElement.classList.toggle("snapping", S.length > 0);
-  };
-  // Moving snap points mid-scroll makes Safari jump, so they're only placed again when the width
-  // changes or the page's length really changes, not when the toolbar slides in and out.
-  let t = 0, lastW = 0, lastLen = 0;
-  const later = () => { clearTimeout(t); t = setTimeout(place, 300); };
-  addEventListener("load", later);
-  addEventListener("resize", () => { if (innerWidth !== lastW) { lastW = innerWidth; later(); } });
-  new ResizeObserver(() => {
-    const len = document.documentElement.scrollHeight;
-    if (Math.abs(len - lastLen) > 150) { lastLen = len; later(); }
-  }).observe(document.body);
-  lastW = innerWidth; lastLen = document.documentElement.scrollHeight;
-  later();
 })();
 
 // Signal scenes. Each diagram with groups sits in a tall section and stays pinned while you scroll
