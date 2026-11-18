@@ -20,3 +20,10 @@
 # The robot model's name doesn't change when it's updated, so a day rather than a year.
 /models/*
   Cache-Control: public, max-age=86400
+
+# The Cloudflare Pages copies of the site (the project address and each deploy's preview address)
+# stay out of search results, so Google indexes only meandelman.com.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex

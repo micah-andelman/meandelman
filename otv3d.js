@@ -1886,8 +1886,7 @@ async function plutoScene(sec, opts = {}) {
 
 // ---------------------------------------------------------------- BuildFest card: the dashboard in 3D
 // For the home page card: five real screenshots of the team's tool stand on a turning ring. The one in
-// front is big enough to read; every few seconds the ring brings the next one round. Each carries a
-// first-place rosette pinned to its corner. Runs on a clock while the card is on screen, like the other cards.
+// front is big enough to read; every few seconds the ring brings the next one round. Runs on a clock while the card is on screen, like the other cards.
 async function buildfestScene(sec, opts = {}) {
   const K = await kit();
   const { THREE } = K;
@@ -1910,40 +1909,6 @@ async function buildfestScene(sec, opts = {}) {
   // The panels stand on a ring (a carousel). The one facing the camera is large enough to read; every
   // few seconds the ring turns to the next. Faces are unlit so the screenshots keep their true colours;
   // panels turned away are dimmed a little for depth.
-  // A first-place rosette (pleated gold ring, "1st" in the middle, two notched tails), drawn once on
-  // a canvas and pinned flat to each panel's top-right corner, so it turns with the panel.
-  const rosette = (() => {
-    const c = document.createElement("canvas"); c.width = 512; c.height = 704;
-    const x = c.getContext("2d"), cx = 256, cy = 236;
-    const tail = (dx, rot, col, dark) => {
-      x.save(); x.translate(cx + dx, cy + 60); x.rotate(rot);
-      x.beginPath(); x.moveTo(-58, 0); x.lineTo(58, 0); x.lineTo(58, 400); x.lineTo(0, 340); x.lineTo(-58, 400); x.closePath();
-      const g = x.createLinearGradient(-58, 0, 58, 0); g.addColorStop(0, dark); g.addColorStop(0.5, col); g.addColorStop(1, dark);
-      x.fillStyle = g; x.fill(); x.restore();
-    };
-    tail(-44, 0.22, "#c97a34", "#9a5520");
-    tail(44, -0.22, "#16805c", "#0b5a40");
-    const N = 28; // the pleats
-    for (let i = 0; i < N; i++) {
-      const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2, am = (a0 + a1) / 2;
-      x.beginPath(); x.moveTo(cx, cy);
-      x.lineTo(cx + Math.cos(a0) * 196, cy + Math.sin(a0) * 196);
-      x.lineTo(cx + Math.cos(am) * 228, cy + Math.sin(am) * 228);
-      x.lineTo(cx + Math.cos(a1) * 196, cy + Math.sin(a1) * 196);
-      x.closePath(); x.fillStyle = i % 2 ? "#c8902e" : "#e6b54e"; x.fill();
-    }
-    x.beginPath(); x.arc(cx, cy, 150, 0, Math.PI * 2); x.fillStyle = "#0e6a4c"; x.fill();
-    x.beginPath(); x.arc(cx, cy, 128, 0, Math.PI * 2);
-    const g = x.createRadialGradient(cx - 40, cy - 50, 10, cx, cy, 130); g.addColorStop(0, "#fbe7a6"); g.addColorStop(1, "#d9a441");
-    x.fillStyle = g; x.fill();
-    x.lineWidth = 6; x.strokeStyle = "#a8741f"; x.stroke();
-    x.fillStyle = "#3a2606"; x.textAlign = "center"; x.textBaseline = "middle";
-    x.font = "700 128px 'Barlow Condensed', Arial Narrow, sans-serif"; x.fillText("1st", cx, cy - 8);
-    x.font = "700 34px 'Barlow Condensed', Arial Narrow, sans-serif"; x.fillText("PLACE", cx, cy + 66);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso;
-    return { mat: new Basic({ map: t, transparent: true, depthWrite: false, toneMapped: false }), asp: c.width / c.height };
-  })();
-
   const PH = 0.74, MAXW = 1.3;
   const edge = new Std({ color: "#1d2124", roughness: 0.55, metalness: 0.1 });
   const ring = new Group(); scene.add(ring);
@@ -1956,8 +1921,6 @@ async function buildfestScene(sec, opts = {}) {
     const img = new Mesh(new THREE.PlaneGeometry(w, h), face); img.position.z = 0.0095; slab.add(img);
     // the same screenshot on the back, so panels across the ring show a picture, not a dark slab
     const back = new Mesh(new THREE.PlaneGeometry(w, h), face); back.position.z = -0.0095; back.rotation.y = Math.PI; slab.add(back);
-    const rw = 0.3, pin = new Mesh(new THREE.PlaneGeometry(rw, rw / rosette.asp), rosette.mat);
-    pin.position.set(w / 2 - 0.07, h / 2 - 0.2, 0.014); pin.rotation.z = -0.14; pin.renderOrder = 2; slab.add(pin);
     const g = new Group(); g.add(slab); ring.add(g);
     const a = i * step; // around the ring, each panel facing out
     g.position.set(Math.sin(a) * R, h / 2 - PH / 2, Math.cos(a) * R);

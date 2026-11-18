@@ -1678,3 +1678,14 @@ html.snapping { scroll-snap-type: y proximity; }
 .pb-heat { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .5s ease; pointer-events: none; }
 html.thermal .pb-heat { opacity: .9; }
 @media print { .pb-heat { display: none; } }
+
+/* The BuildFest card's first-place rosette, pinned over the card's top-right corner. */
+.rosette { position: absolute; z-index: 2; top: -16px; right: -12px; width: clamp(58px, 6vw, 74px); height: auto; transform: rotate(9deg); transform-origin: 50% 30%;
+  filter: drop-shadow(0 3px 4px rgba(30, 24, 10, .28)); pointer-events: none; transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
+.card > a:hover .rosette { transform: rotate(4deg) scale(1.04); }
+.rosette .rz-p0 { fill: #e6b54e; } .rosette .rz-p1 { fill: #c08a2c; }
+.rosette .rz-t1 { fill: #b8692a; } .rosette .rz-t2 { fill: #0e6a4c; }
+.rosette text { text-anchor: middle; fill: #3a2606; font-family: var(--display, 'Barlow Condensed', sans-serif); font-weight: 700; }
+.rosette .rz-1 { font-size: 21px; } .rosette .rz-2 { font-size: 7px; letter-spacing: .08em; }
+.card-win .card-ref { right: auto; left: 14px; } /* the rosette has the right corner */
+@media (prefers-reduced-motion: reduce) { .rosette { transition: none; } }
