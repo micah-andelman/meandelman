@@ -1591,16 +1591,16 @@ async function plutoScene(sec, opts = {}) {
   const ROW0 = 0.8, ROWS = 0.5, rowZ = (k) => ROW0 + k * ROWS;
   //       from, to, start, end, what it carries, a reply (dashed)
   const MSGS = [
-    [0, 1, 1.12, 1.55, `“${ASK}”`],
+    [0, 1, 1.12, 1.55, `"${ASK}"`],
     [1, 2, 2.1, 2.5, "New message, through the Telegram channel plugin"],
     [2, 3, 3.05, 3.32, "What's due today?"],
     [3, 2, 3.42, 3.72, "Physics problem set · due 11:59 PM", true],
     [2, 4, 4.03, 4.22, "When am I free today?"],
     [4, 2, 4.27, 4.46, "Free after Calc III: 4:00 to 5:30", true],
-    [2, 4, 4.52, 4.7, "Add “Physics problem set”, 4:00 to 5:30"],
+    [2, 4, 4.52, 4.7, 'Add "Physics problem set", 4:00 to 5:30'],
     [4, 2, 4.75, 4.92, "Added ✓", true],
     [2, 1, 5.08, 5.3, "Reply"],
-    [1, 0, 5.38, 5.7, `“${REPLY}”`],
+    [1, 0, 5.38, 5.7, `"${REPLY}"`],
   ];
   const LAST = rowZ(MSGS.length - 1);
 
@@ -1741,8 +1741,8 @@ async function plutoScene(sec, opts = {}) {
     [3.05, "canvas   › assignments due today"],
     [3.72, "           physics PS · 11:59 PM"],
     [4.03, "calendar › free time today"],
-    [4.46, "           free 4:00–5:30"],
-    [4.92, "calendar › added 4:00–5:30 ✓"],
+    [4.46, "           free 4:00-5:30"],
+    [4.92, "calendar › added 4:00-5:30 ✓"],
     [5.08, "telegram › reply sent"],
   ];
   const termPanel = panel(2, (c, W_, H_, n = 0) => {

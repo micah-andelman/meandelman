@@ -80,7 +80,7 @@
     </div>
     <div class="p-body">
       <p class="lede">A camera in the brim of a baseball cap that estimates the calories and macros in my dining-hall meals. It photographs the tray, a Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p>
-      <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The cap does the seeing and the bot does the thinking: the hardware only has to take a good photo of the tray, and everything else happens on the Telegram side.</p>
+      <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The hardware only has to take a good photo of the tray, and everything else, from naming the food to adding up the macros, happens on the Telegram side.</p>
     </div>
     <div class="brimviz">
       <section class="o3 o3c" id="cap-3d" aria-labelledby="o3c-t">
@@ -91,7 +91,7 @@
           <p class="o3-src">Exploded view, not to scale: the small parts are drawn larger as they come out. Placement follows the build; sizes are approximate.</p>
           <ol class="o3-steps">
             <li><span class="o3-n">01 / 04</span><h4>The cap</h4><p>Everything rides in a baseball cap: the battery, the controls, the camera and its antenna.</p></li>
-            <li><span class="o3-n">02 / 04</span><h4>Apart</h4><p>The 500 mAh LiPo is a protected cell, tucked under the crown where it can't get crushed. The touch pad is on the side of the crown and the slide switch is on the band.</p></li>
+            <li><span class="o3-n">02 / 04</span><h4>Apart</h4><p>The 500 mAh LiPo is a protected cell, tucked under the crown where it cannot get crushed. The touch pad is on the side of the crown and the slide switch is on the band.</p></li>
             <li><span class="o3-n">03 / 04</span><h4>Under the brim</h4><p>The XIAO ESP32S3 Sense sits under the front of the brim, camera angled down at the tray. The Wi-Fi antenna faces away from my head and the recording LED is under the brim tip. The mic stays off, because Maryland requires everyone on an audio recording to consent.</p></li>
             <li><span class="o3-n">04 / 04</span><h4>The shot</h4><p>It photographs the tray. A Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p></li>
           </ol>
@@ -183,7 +183,7 @@
       </div>
       <ol class="capkey">
         <li><b>Crown.</b> The battery hides underneath it.</li>
-        <li><b>500 mAh LiPo.</b> A protected cell, tucked under the crown where it can't get crushed.</li>
+        <li><b>500 mAh LiPo.</b> A protected cell, tucked under the crown where it cannot get crushed.</li>
         <li><b>Touch pad.</b> On the side of the crown.</li>
         <li><b>Slide switch.</b> On the band.</li>
         <li><b>Brim.</b> The camera board sits under its front edge.</li>
@@ -204,7 +204,7 @@
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a step.">Select a step.</p>
-        <template data-k="cap">A Seeed XIAO ESP32S3 Sense sits at the front of the brim, angled down at the tray, with its Wi-Fi antenna facing away from my head. A 500 mAh protected LiPo is tucked under the crown where it can't get crushed, with a slide switch, a touch pad and a recording LED. The onboard mic stays off, because Maryland requires everyone on an audio recording to consent.</template>
+        <template data-k="cap">A Seeed XIAO ESP32S3 Sense sits at the front of the brim, angled down at the tray, with its Wi-Fi antenna facing away from my head. A 500 mAh protected LiPo is tucked under the crown where it cannot get crushed, with a slide switch, a touch pad and a recording LED. The onboard mic stays off, because Maryland requires everyone on an audio recording to consent.</template>
         <template data-k="herald">Photos go to Herald, a Telegram bot my friend Ben built (<a href="https://github.com/benmross/herald" target="_blank" rel="noopener">source on GitHub</a>). My code runs as a Herald extension, so the results show up in a Telegram chat instead of a separate app.</template>
         <template data-k="gemini">The Gemini API only has to name each item and estimate how much of it there is. It combines cues like scoop counts and how much of the plate the food covers.</template>
         <template data-k="macros">Calories and macros come from UMD Dining's published nutrition facts, so the model never has to guess the numbers.</template>

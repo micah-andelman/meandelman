@@ -81,7 +81,7 @@
     </div>
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
-      <p>I'm the only electrical engineer on the team. I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first. A single build flag switches the same code between the simulator and the real robot.</p>
+      <p>I am the only electrical engineer on the team, so I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first, and a single build flag switches the same code between the simulator and the real robot.</p>
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>
@@ -170,9 +170,9 @@
           <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Main power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
       </svg>
       <figcaption>
-        <p class="cap" data-default="Select a part to see what it does, how it's wired and the code that runs it.">Select a part to see what it does, how it's wired and the code that runs it.</p>
+        <p class="cap" data-default="Select a part to see what it does, how it is wired and the code that runs it.">Select a part to see what it does, how it is wired and the code that runs it.</p>
         <template data-k="vision">The arena's overhead camera reads an ArUco marker on top of the robot and sends its position and heading over Wi-Fi. Every navigation decision uses that position.</template>
-        <template data-k="front">Watches for obstacles ahead so the robot can steer around them. Each reading is the median of several pings, so a single bad echo won't stop the robot.</template>
+        <template data-k="front">Watches for obstacles ahead so the robot can steer around them. Each reading is the median of several pings, so a single bad echo will not stop the robot.</template>
         <template data-k="depth">Points down at the water from a known height. The depth is that height minus the distance to the surface.</template>
         <template data-k="color">Reads the water's color through filtered channels to check for pollution. It uses six pins, more than any other part.</template>
         <template data-k="mcu">The same C++ runs on the real robot and in ENES100's browser simulator, chosen by a build flag. GitHub Actions compiles both versions on every push.</template>

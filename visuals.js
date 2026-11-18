@@ -704,7 +704,7 @@
       } else {
         // ---- the controller, left of the letters. Rails: +4.5 V at x = -24, ground at x = -22.
         for (let r = 0; r < 7; r++) { res(-9, -5, 2 * r, "220"); bare([[-11, 2 * r], [-9, 2 * r]]); bare([[-5, 2 * r], [-4, 2 * r]]); }
-        text(-7, -1.2, "R1–R7", "val");
+        text(-7, -1.2, "R1-R7", "val");
         dipV(-14, 0, 14, "ATMEGA328P", "U1");
         bare([[-24, -1], [-24, 20]]);
         bare([[-22, 3], [-22, 22]]);
