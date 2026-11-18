@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p dist
 python photos.py
-cp styles.css layout.js main.js extras.js visuals.js otv3d.js favicon.svg favicon.ico favicon-48.png favicon-96.png favicon-192.png favicon-512.png apple-touch-icon.png resume.pdf og.png sitemap.xml robots.txt _headers dist/
+cp styles.css layout.js main.js extras.js visuals.js otv3d.js favicon.svg og-v2.png favicon.ico favicon-48.png favicon-96.png favicon-192.png favicon-512.png apple-touch-icon.png resume.pdf og.png sitemap.xml robots.txt _headers dist/
 cp -r fonts dist/
 cp -r img dist/
 [ -d photos ] && cp -r photos dist/
