@@ -1898,7 +1898,9 @@ async function buildfestScene(sec, opts = {}) {
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 30);
   const loader = new THREE.TextureLoader();
   const SHOTS = ["card-overview", "card-explore", "card-funder", "card-links", "card-phones"];
-  const tex = await Promise.all(SHOTS.map((n) => loader.loadAsync(`img/buildfest/${n}.jpg`)));
+  // a screenshot that fails to load (a slow network, a cache still filling) is left out, not fatal
+  const tex = (await Promise.all(SHOTS.map((n) => loader.loadAsync(`img/buildfest/${n}.jpg`).catch(() => null)))).filter(Boolean);
+  if (tex.length < 2) throw new Error("buildfest card: screenshots did not load");
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   tex.forEach((t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; t.generateMipmaps = true; });
 
