@@ -1685,3 +1685,7 @@ html.thermal .pb-heat { opacity: .9; }
 .rosette .rz-1 { font-size: 21px; } .rosette .rz-2 { font-size: 7px; letter-spacing: .08em; }
 .card-win .card-ref { right: auto; left: 14px; } /* the rosette has the right corner */
 @media (prefers-reduced-motion: reduce) { .rosette { transition: none; } }
+
+/* The BuildFest screenshot ring takes sideways swipes; vertical ones still scroll the page. */
+.bf-show .bf-stage { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.bf-show .bf-stage img { -webkit-user-drag: none; pointer-events: none; }

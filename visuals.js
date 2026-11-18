@@ -264,7 +264,31 @@
     stage.addEventListener("pointerleave", () => { held = false; tick(); });
     show.addEventListener("focusin", () => { held = true; clearTimeout(timer); });
     show.addEventListener("focusout", (e) => { if (!show.contains(e.relatedTarget)) { held = false; tick(); } });
-    stage.addEventListener("click", () => { step(1); tick(); });
+    // Swipe sideways to turn it: a finger or a mouse drag, a trackpad's two-finger swipe, or the arrow keys.
+    // Vertical swipes still scroll the page (touch-action: pan-y). A drag never counts as a click.
+    let sx = null, sy = 0, dragged = false;
+    stage.addEventListener("pointerdown", (e) => { if (e.button === 0) { sx = e.clientX; sy = e.clientY; dragged = false; } });
+    stage.addEventListener("pointermove", (e) => {
+      if (sx == null || dragged) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) { dragged = true; step(dx < 0 ? 1 : -1); tick(); }
+    });
+    addEventListener("pointerup", () => { sx = null; });
+    addEventListener("pointercancel", () => { sx = null; });
+    let wAcc = 0, wLast = 0, wFired = false;
+    stage.addEventListener("wheel", (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; // vertical: let the page scroll
+      e.preventDefault(); // and keep the browser from treating it as back/forward
+      const now = performance.now();
+      if (now - wLast > 260) { wAcc = 0; wFired = false; } // a new swipe
+      wLast = now; wAcc += e.deltaX;
+      if (!wFired && Math.abs(wAcc) > 50) { wFired = true; step(wAcc > 0 ? 1 : -1); tick(); }
+    }, { passive: false });
+    show.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault(); step(e.key === "ArrowRight" ? 1 : -1); tick();
+    });
+    stage.addEventListener("click", () => { if (dragged) { dragged = false; return; } step(1); tick(); });
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; tick(); }, { threshold: 0.25 }).observe(show);
     show.classList.add("on");
     show_();
