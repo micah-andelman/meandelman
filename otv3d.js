@@ -783,6 +783,7 @@ async function course(sec, routes) {
     }
   };
   const stopClock = {}; // seconds played into each stop
+  let slow = 1, autoK = -1; // slow: time runs slower while the camera flies out of the barrel roll
   let lastSp = 0, lastK = -1;
   let which = 0, Rt = routes[0];
   // where the run is at time t: distance along the route, and seconds into the pool stop (-1 = not there)
@@ -970,11 +971,20 @@ async function course(sec, routes) {
         // by exactly as much as you scroll, in either direction (so smooth-scroll wobble cancels out), and
         // the clock also runs on its own while the stage is on screen.
         if (k !== lastK || stopClock[k] === undefined) stopClock[k] = dur * f;
-        else stopClock[k] += ((sp - lastSp) / w) * dur;
-        if (r_.top <= 1 && r_.bottom >= innerHeight - 1) stopClock[k] += dt;
+        else stopClock[k] += ((sp - lastSp) / w) * dur * slow;
+        if (r_.top <= 1 && r_.bottom >= innerHeight - 1) stopClock[k] += dt * slow;
         stopClock[k] = clamp(stopClock[k], 0, dur);
         tt = t0 + stopClock[k];
+        // Once the stop has played out, the rest of its scroll would do nothing: the next scroll down
+        // glides straight on to the next chapter instead of needing several swipes through dead space.
+        const site = typeof lenis !== "undefined" ? lenis : null;
+        if (stopClock[k] >= dur - 0.05 && sp > lastSp + 1e-5 && autoK !== k && site && f < 0.97) {
+          autoK = k;
+          const secY = r_.top + scrollY;
+          site.scrollTo(secY + travel * (chapterAt(sp).acc + w) + 2, { duration: 0.9, lock: true }); // lock: the swipe's coast can't cut it short
+        }
       }
+      if (k !== lastK && autoK !== k) autoK = -1;
       STOPS.forEach((st) => { if (st !== k) delete stopClock[st]; }); // a stop plays again next time you reach it
       lastSp = sp; lastK = k;
       p += (tt / T - p) * (dt ? 1 - Math.exp(-dt / 0.22) : 1); // eased, so scroll steps don't jolt it
@@ -1065,6 +1075,7 @@ async function course(sec, routes) {
       rollUp.crossVectors(kC, side).normalize().applyAxisAngle(kC, Math.PI * smoother(clamp(u)));
       rollMix = into * (1 - outof);
     }
+    slow = rolling && u > 0.5 ? 0.4 : 1; // the fly-out from under the robot plays at 40% speed
     // the wide shot: overview of the arena, from above on tall phone screens
     // (set by the run's time, not eased frame by frame, so it's right wherever the run is)
     wideW = Math.max(1 - smoother(clamp((t - INTRO + 0.3) / 2)), smoother(clamp((t - (T - OUTRO - 0.4)) / 2)));
