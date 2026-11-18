@@ -1689,6 +1689,9 @@ html.thermal .pb-heat { opacity: .9; }
 /* The BuildFest screenshot ring takes sideways swipes; vertical ones still scroll the page. */
 .bf-show .bf-stage { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .bf-show .bf-stage img { -webkit-user-drag: none; pointer-events: none; }
+.bf-show .bf-stage { cursor: grab; }
+.bf-ring.live { transition: none; }
+.bf-show .bf-ring:not(.live) { transition-duration: .7s; }
 
 /* ---------- skills: each skill drawn as a DIP chip ---------- */
 .skills { padding: clamp(64px, 12vh, 140px) var(--gutter); border-top: 1px solid var(--rule); }

@@ -242,12 +242,14 @@
     if (REDUCED) return;
     const ring = $(".bf-ring", show), panels = $$(".bf-panel", show), n = panels.length;
     const cap = $(".bf-cap", show), [capT, capS] = [$("b", cap), $("span", cap)];
-    let k = 0, timer = 0, held = false, visible = false;
+    // pos is the ring's angle in panels (fractional while a finger or trackpad is turning it).
+    let pos = 0, timer = 0, held = false, visible = false, live = false;
+    const mod = (i) => ((i % n) + n) % n;
     const show_ = () => {
-      ring.style.setProperty("--rot", `${(-k * 360) / n}deg`);
-      const front = ((k % n) + n) % n;
+      ring.style.setProperty("--rot", `${(-pos * 360) / n}deg`);
+      const front = mod(Math.round(pos));
       panels.forEach((p, i) => {
-        const d = Math.min((i - front + n) % n, (front - i + n) % n);
+        const d = Math.min(mod(i - front), mod(front - i));
         p.classList.toggle("far", d === 1);
         p.classList.toggle("back", d > 1);
         p.setAttribute("aria-hidden", d === 0 ? "false" : "true");
@@ -255,40 +257,72 @@
       capT.textContent = panels[front].dataset.title;
       capS.textContent = panels[front].dataset.cap;
     };
-    const step = (d) => { k += d; show_(); };
-    const tick = () => { clearTimeout(timer); if (visible && !held) timer = setTimeout(() => { step(1); tick(); }, 3600); };
-    $(".bf-prev", show).addEventListener("click", () => { step(-1); tick(); });
-    $(".bf-next", show).addEventListener("click", () => { step(1); tick(); });
+    // While a gesture is live the ring follows it 1:1 with no transition; letting go glides to a panel.
+    const follow = (on) => { live = on; ring.classList.toggle("live", on); };
+    const settle = (to) => { follow(false); pos = to; show_(); tick(); };
+    const step = (d) => settle(Math.round(pos) + d);
+    const tick = () => { clearTimeout(timer); if (visible && !held && !live) timer = setTimeout(() => { step(1); }, 3600); };
+    $(".bf-prev", show).addEventListener("click", () => step(-1));
+    $(".bf-next", show).addEventListener("click", () => step(1));
     const stage = $(".bf-stage", show);
-    stage.addEventListener("pointerenter", () => { held = true; clearTimeout(timer); });
-    stage.addEventListener("pointerleave", () => { held = false; tick(); });
+    stage.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { held = true; clearTimeout(timer); } });
+    stage.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") { held = false; tick(); } });
     show.addEventListener("focusin", () => { held = true; clearTimeout(timer); });
     show.addEventListener("focusout", (e) => { if (!show.contains(e.relatedTarget)) { held = false; tick(); } });
-    // Swipe sideways to turn it: a finger or a mouse drag, a trackpad's two-finger swipe, or the arrow keys.
-    // Vertical swipes still scroll the page (touch-action: pan-y). A drag never counts as a click.
-    let sx = null, sy = 0, dragged = false;
-    stage.addEventListener("pointerdown", (e) => { if (e.button === 0) { sx = e.clientX; sy = e.clientY; dragged = false; } });
-    stage.addEventListener("pointermove", (e) => {
-      if (sx == null || dragged) return;
-      const dx = e.clientX - sx, dy = e.clientY - sy;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) { dragged = true; step(dx < 0 ? 1 : -1); tick(); }
+    const panelPx = () => ring.offsetWidth * 0.7; // dragging about this far (most of a screenshot) turns it one panel
+    // Finger or mouse drag: decide sideways vs. vertical after a few pixels; vertical is left to the page
+    // (touch-action: pan-y). Sideways drags turn the ring under the pointer; a quick flick carries on.
+    let sx = null, sy = 0, p0 = 0, mode = "", lastX = 0, lastT = 0, vel = 0, dragged = false;
+    stage.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      sx = e.clientX; sy = e.clientY; p0 = pos; mode = ""; dragged = false; vel = 0; lastX = sx; lastT = e.timeStamp;
     });
-    addEventListener("pointerup", () => { sx = null; });
-    addEventListener("pointercancel", () => { sx = null; });
-    let wAcc = 0, wLast = 0, wFired = false;
+    stage.addEventListener("pointermove", (e) => {
+      if (sx == null) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!mode) {
+        if (Math.hypot(dx, dy) < 8) return;
+        mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (mode === "x") { dragged = true; clearTimeout(timer); follow(true); try { stage.setPointerCapture(e.pointerId); } catch (_) {} }
+      }
+      if (mode !== "x") return;
+      const dt = Math.max(1, e.timeStamp - lastT);
+      vel = 0.8 * ((e.clientX - lastX) / dt) + 0.2 * vel; // px per ms, smoothed
+      lastX = e.clientX; lastT = e.timeStamp;
+      pos = p0 - dx / panelPx(); show_();
+    });
+    const release = (e) => {
+      if (sx == null) return;
+      sx = null;
+      if (mode !== "x") return;
+      if (e.timeStamp - lastT > 80) vel = 0; // held still before letting go: no flick
+      const fling = Math.max(-2, Math.min(2, -(vel * 260) / panelPx())); // where the flick would carry it, in panels (2 at most)
+      let to = Math.round(pos + fling);
+      if (to === Math.round(p0) && Math.abs(pos - p0) > 0.18) to = p0 + Math.sign(pos - p0); // a short deliberate drag still turns it
+      settle(Math.round(to));
+    };
+    stage.addEventListener("pointerup", release);
+    stage.addEventListener("pointercancel", (e) => { if (mode === "x") release(e); else sx = null; });
+    // Trackpad two-finger swipe: same idea. The ring follows the swipe, then settles once it stops.
+    let wEnd = 0;
     stage.addEventListener("wheel", (e) => {
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; // vertical: let the page scroll
       e.preventDefault(); // and keep the browser from treating it as back/forward
-      const now = performance.now();
-      if (now - wLast > 260) { wAcc = 0; wFired = false; } // a new swipe
-      wLast = now; wAcc += e.deltaX;
-      if (!wFired && Math.abs(wAcc) > 50) { wFired = true; step(wAcc > 0 ? 1 : -1); tick(); }
+      if (!live) { p0 = pos; follow(true); clearTimeout(timer); }
+      const px = e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX;
+      pos += px / panelPx(); show_();
+      clearTimeout(wEnd);
+      wEnd = setTimeout(() => {
+        let to = Math.round(pos);
+        if (to === Math.round(p0) && Math.abs(pos - p0) > 0.15) to = Math.round(p0) + Math.sign(pos - p0);
+        settle(to);
+      }, 140);
     }, { passive: false });
     show.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      e.preventDefault(); step(e.key === "ArrowRight" ? 1 : -1); tick();
+      e.preventDefault(); step(e.key === "ArrowRight" ? 1 : -1);
     });
-    stage.addEventListener("click", () => { if (dragged) { dragged = false; return; } step(1); tick(); });
+    stage.addEventListener("click", () => { if (dragged) { dragged = false; return; } step(1); });
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; tick(); }, { threshold: 0.25 }).observe(show);
     show.classList.add("on");
     show_();
