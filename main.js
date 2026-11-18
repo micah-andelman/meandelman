@@ -507,7 +507,7 @@ onScroll();
 })();
 
 // Scrolling by swipes. Every swipe (a trackpad or touch-screen swipe, or a mouse-wheel roll) moves the
-// page one step: half a screen, or exactly to the next chapter of a scroll-driven animation if one is
+// page one step (under a third of a screen on a trackpad or wheel, half a screen on touch), or exactly to the next chapter of a scroll-driven animation if one is
 // that close. How hard you swipe doesn't matter and a trackpad's coasting adds nothing, so the page
 // never runs away; holding a long push (or rolling the wheel on) keeps stepping at an even pace.
 // Chapters register their scroll positions in window.scrollStops, and a step never skips one.
@@ -518,11 +518,11 @@ const scrollStops = () => (window.scrollStops || [])
 const lenis = (() => {
   if (REDUCED || !window.Lenis) return null;
   const head = document.querySelector(".top");
-  const DUR = 0.8, ease = (t) => 1 - Math.pow(1 - t, 3);
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
   let busyUntil = 0, dest = 0;
-  const step = (dir) => {
+  const step = (dir, frac, DUR) => {
     // while a step is still running, the next one starts from where that one is going
-    const pos = performance.now() < busyUntil ? dest : l.animatedScroll, S = scrollStops(), size = Math.round(innerHeight * 0.5);
+    const pos = performance.now() < busyUntil ? dest : l.animatedScroll, S = scrollStops(), size = Math.round(innerHeight * frac);
     const stop = dir > 0 ? S.find((s) => s > pos + 3) : S.reverse().find((s) => s < pos - 3);
     let to = pos + dir * size;
     if (stop != null && Math.abs(stop - pos) <= size * 1.35) to = stop; // land on a nearby chapter exactly
@@ -540,26 +540,28 @@ const lenis = (() => {
 
   // wheel and trackpad: one gesture is a run of events with no pause over 220 ms. A new swipe that
   // starts while the last one is still coasting shows up as the deltas rising again after they fell.
-  let wLast = 0, wDir = 0, wFired = false, wAt = 0, wMin = Infinity, wAcc = 0, wPrev = 0, wPeak = 0, wFalling = false;
+  let wLast = 0, wDir = 0, wFired = false, wAt = 0, wMin = Infinity, wAcc = 0, wPrev = 0, wPeak = 0, wFalling = false, wN = 0, wSteady = 0;
   const wheel = (t, ev) => {
     if (ev.ctrlKey) return true; // pinch zoom
     const raw = t.deltaY, a = Math.abs(raw), dir = Math.sign(raw), now = performance.now();
     if (!dir || Math.abs(t.deltaX) > a) return true;
     if (ownScroller(ev, true)) return false;
     if (ev.cancelable) ev.preventDefault();
-    // A pause starts a new swipe, unless it comes right after a step (the page was busy for a moment)
-    // or the deltas are still fading (a coast across a busy moment).
-    const coasting = wFired && (now - wAt < 450 || (now - wAt < 1500 && wPrev && a <= wPrev * 1.05));
-    const fresh = dir !== wDir || (now - wLast > 220 && !coasting) || (wFired && wFalling && now - wAt > 180 && a >= 12 && a > wMin * 1.8 + 6);
+    // A pause starts a new swipe, unless it comes right after a step (the page was busy for a moment).
+    // Same goes for a pause in the middle of a swipe that was still speeding up: a new swipe starts small.
+    const coasting = wFired && (now - wAt < 550 || (!wFalling && a >= wPrev && now - wAt < 1200));
+    const fresh = dir !== wDir || (now - wLast > 220 && !coasting) || (wFired && wFalling && now - wAt > 120 && a >= 8 && a > wMin * 1.5 + 4);
     wLast = now;
     if (fresh) { wDir = dir; wFired = false; wAcc = 0; wPrev = 0; wPeak = 0; wFalling = false; }
+    wN++;
+    wSteady = wPrev && Math.abs(a - wPrev) <= 0.35 * Math.max(a, wPrev) + 2 ? wSteady + 1 : 0;
     wPeak = Math.max(wPeak, a);
-    if (a < wPeak * 0.8) wFalling = true; // fading from its peak: a coast, not a push
+    if (a < wPeak * 0.88) wFalling = true; // fading from its peak: a coast, not a push
     if (wFalling) wMin = Math.min(wMin, a);
     wPrev = a;
-    const fire = () => { wFired = true; wAt = now; wMin = Infinity; wPeak = a; wFalling = false; step(dir); };
+    const fire = () => { wFired = true; wAt = now; wMin = Infinity; wPeak = a; wFalling = false; wN = 0; step(dir, 0.3, 0.5); };
     if (!wFired) { wAcc += a; if (wAcc >= 12) fire(); }
-    else if (now > busyUntil && !wFalling && a >= 40) fire(); // a long push that isn't fading (a rolled wheel) keeps going
+    else if (now > busyUntil - 80 && !wFalling && wN >= 8 && wSteady >= 6 && a >= 4) fire(); // a steady push (a slow drag, a rolled wheel) keeps going
     return false;
   };
 
@@ -574,7 +576,7 @@ const lenis = (() => {
     }
     if (tAxis === "native") return false;
     if (ev.cancelable) ev.preventDefault();
-    if (tAxis === "y" && !tFired && Math.abs(tAcc) >= 24) { tFired = true; step(Math.sign(tAcc)); }
+    if (tAxis === "y" && !tFired && Math.abs(tAcc) >= 24) { tFired = true; step(Math.sign(tAcc), 0.5, 0.8); }
     return false;
   };
 
