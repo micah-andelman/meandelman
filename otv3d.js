@@ -61,16 +61,37 @@ const lazy = (sec, start, fail) => {
   io.observe(sec);
 };
 
-const makeRenderer = (K, canvas) => {
+// A short pause between heavy setup steps, so building a scene is several shorter tasks instead of
+// one long freeze (scrolling and taps get handled in between).
+const breathe = () => new Promise((r) => setTimeout(r, 0));
+
+// Shaders compile in the background: the first render starts an async compile and frames are skipped
+// until it's done (then the latest requested frame is drawn). Compiling on the first real frame froze
+// slow phones for a second or two. canvas.__ready resolves once the scene can draw.
+const compileFirst = (renderer, canvas) => {
+  const draw = renderer.render.bind(renderer);
+  let ready = !renderer.compileAsync, last = null, resolve;
+  canvas.__ready = ready ? Promise.resolve() : new Promise((r) => { resolve = r; });
+  renderer.render = (scene, cam) => {
+    if (ready) return draw(scene, cam);
+    if (!last) renderer.compileAsync(scene, cam).catch(() => {}).then(() => { ready = true; if (last) draw(last[0], last[1]); resolve(); });
+    last = [scene, cam];
+  };
+};
+
+const makeRenderer = async (K, canvas) => {
   const { THREE } = K;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  await breathe();
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); // full-screen scenes: 1.5x keeps frames steady
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new K.RoomEnvironment(), 0.04).texture;
+  scene.environment = pmrem.fromScene(new K.RoomEnvironment(), 0.04).texture; // renders internally, so before compileFirst
+  compileFirst(renderer, canvas);
+  await breathe();
   scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3a32, 0.7));
   const key = new THREE.DirectionalLight(0xfff4e6, 1.5);
   key.position.set(0.5, 1, 0.35);
@@ -595,9 +616,11 @@ async function tour(sec, opts = {}) {
   const tagsEl = sec.querySelector(".o3-tags");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
-  const { renderer, scene } = makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas);
   const cam = new THREE.PerspectiveCamera(30, 1, 0.005, 5);
+  await breathe();
   const R = buildRobot(K, { pool: true });
+  await breathe();
   scene.add(R.root);
   R.sync();
   const { UNO, BB, TOP, wheels, nets, ledMat } = R;
@@ -774,6 +797,7 @@ if (runSec && map2d) {
   else {
     const routes = ["#route-a", "#route-b"].map((id) => {
       const p = map2d.querySelector(id);
+      if (window.routePoints) { const r = window.routePoints(p); return { len: r.len, pts: r.pts }; } // plain math, from main.js
       const len = p.getTotalLength();
       const pts = [];
       for (let d = 0; d <= len; d += 1) { const q = p.getPointAtLength(d); pts.push([q.x, q.y]); }
@@ -802,7 +826,7 @@ async function course(sec, routes) {
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const hud = sec.querySelector(".o3r-hud");
   const replayBtn = sec.querySelector(".o3r-replay");
-  const { renderer, scene } = makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas);
   const cam = new THREE.PerspectiveCamera(36, 1, 0.01, 30);
 
   const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
@@ -993,7 +1017,9 @@ async function course(sec, routes) {
   routes.forEach((R) => { R.trail = makeTrail(R); });
 
   // ---- the robot
+  await breathe();
   const RB = buildRobot(K, { pool: false });
+  await breathe();
   const carrier = new Group(); scene.add(carrier); // sits on the floor at the axle midpoint, faces +z
   RB.root.position.set(0, -GROUND, -AXLE_Z);
   carrier.add(RB.root);
@@ -1464,7 +1490,7 @@ async function capScene(sec, opts = {}) {
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const flashEl = sec.querySelector(".o3c-flash");
-  const { renderer, scene } = makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas);
   const cam = new THREE.PerspectiveCamera(32, 1, 0.01, 10);
   const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
 
@@ -1834,7 +1860,7 @@ async function plutoScene(sec, opts = {}) {
   const canvas = sec.querySelector("canvas");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
-  const { renderer, scene } = makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // a light scene: full density on high-DPI screens
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 60);
   const FONT = "Barlow, system-ui, sans-serif", MONO = "ui-monospace, Consolas, monospace";
@@ -2167,7 +2193,7 @@ async function buildfestScene(sec, opts = {}) {
   const { Group, Mesh, MeshStandardMaterial: Std, MeshBasicMaterial: Basic } = THREE;
   const stage = sec.querySelector(".o3-stage");
   const canvas = sec.querySelector("canvas");
-  const { renderer, scene } = makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas);
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 30);
   const loader = new THREE.TextureLoader();
   const SHOTS = ["card-overview", "card-explore", "card-funder", "card-links", "card-phones"];
@@ -2305,7 +2331,7 @@ if (cardEls.length && GL && !REDUCED) {
       try {
         await kit();
         const make = SCENES[sec.dataset.scene];
-        if (make) { await make(sec); sec.closest(".card")?.classList.add("card-3d-on"); }
+        if (make) { await make(sec); await sec.querySelector("canvas")?.__ready; sec.closest(".card")?.classList.add("card-3d-on"); }
       } catch (e) { console.warn("cards3d", e); sec.closest(".card")?.classList.add("card-3d-off"); }
       busy = false; buildNext();
     });

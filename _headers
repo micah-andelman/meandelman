@@ -18,6 +18,10 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Images get a new file name (-v2, -v7...) whenever they change, so browsers can keep them a month.
+/img/*
+  Cache-Control: public, max-age=2592000
+
 # The robot model's name doesn't change when it's updated, so a day rather than a year.
 /models/*
   Cache-Control: public, max-age=86400

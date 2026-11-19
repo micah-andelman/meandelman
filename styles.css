@@ -1805,3 +1805,6 @@ html.thermal .pb-heat { opacity: .9; }
   .ph-grid figure { scroll-snap-align: start; }
 }
 @media print { .ph-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } .ph-grid img { box-shadow: none; } }
+
+/* <picture> wrappers (WebP with a JPEG fallback) lay out exactly as the bare <img> did */
+picture { display: contents; }

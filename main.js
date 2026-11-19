@@ -213,6 +213,44 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   });
 })();
 
+// Points every 1 map unit along a route path (absolute M/L/H/V/Q/C commands), worked out with plain
+// math and cached on the path. Calling getPointAtLength for every unit froze slow phones for a
+// second or more; otv3d.js uses this too for the 3D course.
+window.routePoints = (path) => {
+  if (path.__pts) return path.__pts;
+  const tok = path.getAttribute("d").match(/[MLHVQC]|-?\d*\.?\d+/g) || [];
+  const poly = [];
+  let i = 0, cmd = "", x = 0, y = 0;
+  const num = () => +tok[i++];
+  while (i < tok.length) {
+    if (/[MLHVQC]/.test(tok[i])) cmd = tok[i++];
+    if (cmd === "M" || cmd === "L") { x = num(); y = num(); poly.push([x, y]); }
+    else if (cmd === "H") { x = num(); poly.push([x, y]); }
+    else if (cmd === "V") { y = num(); poly.push([x, y]); }
+    else if (cmd === "Q") {
+      const x1 = num(), y1 = num(), x2 = num(), y2 = num();
+      for (let k = 1; k <= 48; k++) { const t = k / 48, u = 1 - t; poly.push([u * u * x + 2 * u * t * x1 + t * t * x2, u * u * y + 2 * u * t * y1 + t * t * y2]); }
+      x = x2; y = y2;
+    } else if (cmd === "C") {
+      const x1 = num(), y1 = num(), x2 = num(), y2 = num(), x3 = num(), y3 = num();
+      for (let k = 1; k <= 64; k++) {
+        const t = k / 64, u = 1 - t;
+        poly.push([u * u * u * x + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3, u * u * u * y + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3]);
+      }
+      x = x3; y = y3;
+    } else i++;
+  }
+  // walk the polyline and drop a point at every whole unit of length
+  const pts = poly.length ? [poly[0].slice()] : [[0, 0]];
+  let acc = 0, need = 1;
+  for (let k = 1; k < poly.length; k++) {
+    const [ax, ay] = poly[k - 1], [bx, by] = poly[k], seg = Math.hypot(bx - ax, by - ay);
+    while (seg > 0 && acc + seg >= need) { const f = (need - acc) / seg; pts.push([ax + (bx - ax) * f, ay + (by - ay) * f]); need++; }
+    acc += seg;
+  }
+  return (path.__pts = { len: acc, pts });
+};
+
 // Arena: replay the mission route, alternating which square the robot starts in.
 (() => {
   const fig = document.getElementById("otv-route");
@@ -227,13 +265,18 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   const SAMPLE_MS = 2200;
   let which = 0, raf = 0;
 
+  const ptAt = (route, d) => {
+    const { pts } = window.routePoints(route), n = pts.length - 1;
+    const q = Math.max(0, Math.min(n, d)), i = Math.min(Math.max(0, n - 1), Math.floor(q)), f = q - i, a = pts[i], b = pts[Math.min(n, i + 1)];
+    return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f };
+  };
   const place = (route, d, heading) => {
-    const pt = route.getPointAtLength(d);
+    const pt = ptAt(route, d);
     bot.setAttribute("transform", `translate(${pt.x} ${pt.y}) rotate(${heading})`);
     return pt;
   };
   const angleAt = (route, d) => {
-    const a = route.getPointAtLength(Math.max(0, d - 1)), b = route.getPointAtLength(d + 1);
+    const a = ptAt(route, Math.max(0, d - 1)), b = ptAt(route, d + 1);
     return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
   };
   const diff = (a, b) => ((b - a + 540) % 360) - 180;
