@@ -49,3 +49,7 @@ Links between pages use the `.html` names so this works; on Cloudflare they redi
 ```
 
 This copies the site into `dist/`, adds content hashes to the CSS and JS links so browsers never run a stale copy, and deploys with Wrangler.
+
+## How it was built
+
+I designed the site: the circuit-board concept, what each page shows and how it should behave. The code was written with [Claude Code](https://claude.com/claude-code), and I steered and tested it. I'm an electrical engineering student, and AI writes most of my code.
