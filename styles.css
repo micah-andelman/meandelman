@@ -1639,7 +1639,8 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .bf-frame { border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--rule), 0 24px 50px rgb(0 0 0 / .28); }
 .bf-bar { display: flex; gap: 6px; padding: 8px 10px; background: color-mix(in srgb, var(--ink) 8%, #f1f2f0); }
 .bf-bar i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 22%, #fff); }
-.bf-frame img { display: block; width: 100%; height: auto; max-height: calc(var(--w) * .62); object-fit: cover; object-position: top; }
+/* every screenshot in the same 16:10 window, so the ring reads as one set */
+.bf-frame img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; }
 .bf-controls { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
 .bf-controls button { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; cursor: pointer; font-size: 18px; color: var(--ink); background: var(--board); box-shadow: inset 0 0 0 1px var(--rule); }
 .bf-controls button:hover, .bf-controls button:focus-visible { box-shadow: inset 0 0 0 2px var(--copper); }
