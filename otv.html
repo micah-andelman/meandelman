@@ -112,7 +112,7 @@
         <div class="o3-tags" aria-hidden="true"></div>
         <p class="o3-src">From the team's Onshape CAD. Arduino, breadboard and wiring added from photos.</p>
         <ol class="o3-steps">
-          <li><span class="o3-n">01 / 06</span><h4>The robot</h4><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and 12.8 cm tall. It has to stay under 3 kg and fit under the limbo.</p></li>
+          <li><span class="o3-n">01 / 06</span><h4>The robot</h4><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and about 16 cm tall to the top of the ArUco marker. It has to stay under 3 kg and fit under the limbo.</p></li>
           <li><span class="o3-n">02 / 06</span><h4>Drive</h4><p>Two JGY370 worm-gear motors, 6 V and 30 RPM, each turning an 8 cm wheel directly, with a caster at the back. Running the sides at different speeds steers it and lets it turn in place.</p></li>
           <li><span class="o3-n">03 / 06</span><h4>Brains</h4><p>An Arduino UNO R4 WiFi. The overhead vision system tracks the ArUco marker on top and sends position and heading over Wi-Fi. It has to stop within 150 mm of the pool.</p></li>
           <li><span class="o3-n">04 / 06</span><h4>Arm</h4><p>A printed arm between two SG90 servos. One motion swings it down over the pool, so the sensors at the tip face the water and the intake tube dips in.</p></li>
@@ -193,9 +193,9 @@
         <template data-k="color">Reads the water's color through filtered channels to check for pollution. It uses six pins, more than any other part.</template>
         <template data-k="mcu">The same C++ runs on the real robot and in ENES100's browser simulator, chosen by a build flag. GitHub Actions compiles both versions on every push.</template>
         <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
-        <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
+        <template data-k="arm">Two SG90 servos, powered by their own step-down converter, move together one degree at a time, which keeps their current spikes small.</template>
         <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
-        <template data-k="power">A Tenergy 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V.</template>
+        <template data-k="power">A Tenergy 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V. A step-down converter takes the pack down separately for the two servos.</template>
         <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
 // heading error, clamped to MIN_TURN_PWM..MAX_PWM.
 // Positive error = counter-clockwise = left wheel back, right forward.
