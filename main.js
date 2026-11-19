@@ -136,17 +136,18 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
       if (b.dataset.pins) p.pins += " " + b.dataset.pins;
       return;
     }
-    parts.set(k, { k, x, y, title, sub, pins: b.dataset.pins || "", mcu: b.classList.contains("mcu") });
+    parts.set(k, { k, x, y, title, sub, pins: b.dataset.pins || "", mcu: b.classList.contains("mcu"), pw: b.classList.contains("power") });
   });
 
-  const col = (x) => (x < 300 ? 0 : x < 700 ? 1 : 2);
-  const list = [...parts.values()].sort((a, b) => names ? col(a.x) - col(b.x) || a.y - b.y : a.x - b.x);
+  // Sensors, controller and power, outputs. Power parts list in the middle wherever they are drawn.
+  const col = (p) => (p.pw ? 1 : p.x < 300 ? 0 : p.x < 700 ? 1 : 2);
+  const list = [...parts.values()].sort((a, b) => names ? col(a) - col(b) || a.y - b.y : a.x - b.x);
 
   const root = document.createElement("div");
   root.className = "parts" + (names ? "" : " seq");
   let group = -1, ol;
   list.forEach((p) => {
-    const g = names ? col(p.x) : 0;
+    const g = names ? col(p) : 0;
     if (g !== group) {
       group = g;
       if (names) {

@@ -44,7 +44,7 @@
   };
 
   // Hub: inputs above, controller across the middle, outputs below.
-  const hub = (svg, { inputs, center, outputs, hubH, rowH, outH, power }) => {
+  const hub = (svg, { inputs, center, outputs, hubH, rowH, outH, power, rail }) => {
     const blocks = byKey(svg), traces = tracesByKey(svg);
     const take = (k) => blocks[k].shift();
     const takeTr = (k) => traces[k].shift();
@@ -70,8 +70,11 @@
       t.dataset.stage = 1;
     });
     if (power) {
-      // Battery under the outputs, feeding both motor drivers up the right edge.
-      const bat = place(take(power), BX, y + 10, BW, rowH);
+      // The 5 V converter (if any) under the outputs, then the battery under it, feeding both motor
+      // drivers up the right edge. The converter's rail runs up just inside that bus to the arm and
+      // pump, so the two never cross.
+      const bk = rail ? place(take(rail), BX, y + 10, BW, rowH) : null;
+      const bat = place(take(power), BX, bk ? bk.y + bk.h + GAP : y + 10, BW, rowH);
       const [d1, d2] = outBoxes.filter((o) => o.k === "drive").map((o) => o.box);
       const R = BX + BW, bus = W - 10;
       const [p1, p2, p3] = traces[power];
@@ -80,6 +83,14 @@
       p1.dataset.stage = p2.dataset.stage = 1;
       // VIN: up the left edge, outside the output traces, into the controller.
       if (p3) { p3.setAttribute("d", `M${BX},${bat.y + bat.h / 2} H26 V${hubBottom}`); p3.dataset.stage = 1; }
+      if (bk) {
+        const [r1, r2, r3] = traces[rail];
+        const arm = outBoxes.find((o) => o.k === "arm").box, pump = outBoxes.find((o) => o.k === "pump").box, rb = bus - 12;
+        r1.setAttribute("d", `M${BX + 40},${bat.y} V${bk.y + bk.h}`);
+        r2.setAttribute("d", `M${R},${bk.y + bk.h / 2} H${rb} V${arm.y + arm.h / 2} H${R + 16}`);
+        r3.setAttribute("d", `M${rb},${pump.y + pump.h / 2} H${R + 20}`);
+        r1.dataset.stage = r2.dataset.stage = r3.dataset.stage = 1;
+      }
       y = bat.y + bat.h + 12;
     }
     finish(svg, y + 14);
@@ -88,7 +99,7 @@
   const otv = document.querySelector("#otv [data-diagram] svg");
   if (otv) hub(otv, {
     inputs: ["vision", "front", "depth", "color"], center: "mcu",
-    outputs: ["drive", "drive", "arm", "pump"], power: "power",
+    outputs: ["drive", "drive", "arm", "pump"], power: "power", rail: "buck",
     hubH: 96, rowH: 56, outH: 56,
   });
 

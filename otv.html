@@ -125,13 +125,13 @@
     </section>
 
     <figure class="diagram" id="otv-parts" data-diagram data-schem data-groups="Sensors|Controller and power|Outputs">
-      <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
+      <svg viewBox="0 0 960 460" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right, and the battery feeding the motor drivers and a 5 V converter for the arm and pump">
         <defs>
           <pattern id="grid-a" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" /></pattern>
           <pattern id="pf" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2.6" /></pattern>
         </defs>
-        <rect class="grid" width="960" height="440" fill="url(#grid-a)" />
-        <g class="fid" aria-hidden="true"><circle class="fc" cx="20" cy="20" r="7" /><circle cx="20" cy="20" r="3.5" /><circle class="fc" cx="940" cy="20" r="7" /><circle cx="940" cy="20" r="3.5" /><circle class="fc" cx="20" cy="420" r="7" /><circle cx="20" cy="420" r="3.5" /></g>
+        <rect class="grid" width="960" height="460" fill="url(#grid-a)" />
+        <g class="fid" aria-hidden="true"><circle class="fc" cx="20" cy="20" r="7" /><circle cx="20" cy="20" r="3.5" /><circle class="fc" cx="940" cy="20" r="7" /><circle cx="940" cy="20" r="3.5" /><circle class="fc" cx="20" cy="440" r="7" /><circle cx="20" cy="440" r="3.5" /></g>
 
 
         <!-- traces (drawn under blocks) -->
@@ -143,9 +143,12 @@
         <path class="tr" data-k="drive"   d="M580,190 H640 V158 H720" />
         <path class="tr" data-k="arm"     d="M580,230 H640 V248 H720" />
         <path class="tr" data-k="pump"    d="M580,270 H660 V338 H720" />
-        <path class="tr power" data-k="power" d="M580,398 H690 V68 H720" />
+        <path class="tr power" data-k="power" d="M580,418 H690 V68 H720" />
         <path class="tr power" data-k="power" d="M690,158 H720" />
-        <path class="tr power" data-k="power" d="M480,370 V320" />
+        <path class="tr power" data-k="power" d="M480,390 V320" />
+        <path class="tr power" data-k="buck"  d="M580,436 H720" />
+        <path class="tr power" data-k="buck"  d="M920,418 H950 V248 H936" />
+        <path class="tr power" data-k="buck"  d="M950,338 H940" />
 
         <!-- pin labels at the MCU -->
         <g class="pins" aria-hidden="true">
@@ -158,6 +161,7 @@
           <text x="588" y="225">D11 A2</text>
           <text x="588" y="265">D10</text>
           <text x="488" y="350">VIN</text>
+          <text x="944" y="298" text-anchor="end">5 V</text>
         </g>
 
         <!-- blocks -->
@@ -183,7 +187,9 @@
           <rect x="720" y="310" width="200" height="56" /><text x="736" y="334">Pump</text><text class="sub" x="736" y="354">MOSFET switched</text><text class="ref" x="910" y="327" text-anchor="end" aria-hidden="true">Q1</text></g>
 
         <g class="blk power" data-k="power" data-pins="VIN" tabindex="0" role="button" aria-label="Battery">
-          <rect x="380" y="370" width="200" height="56" /><text x="396" y="394">9.6 V pack</text><text class="sub" x="396" y="414">Main power</text><text class="ref" x="570" y="387" text-anchor="end" aria-hidden="true">BT1</text></g>
+          <rect x="380" y="390" width="200" height="56" /><text x="396" y="414">9.6 V pack</text><text class="sub" x="396" y="434">Main power</text><text class="ref" x="570" y="407" text-anchor="end" aria-hidden="true">BT1</text></g>
+        <g class="blk power" data-k="buck" tabindex="0" role="button" aria-label="Step-down converter">
+          <rect x="720" y="390" width="200" height="56" /><text x="736" y="414">5 V converter</text><text class="sub" x="736" y="434">LM2596 step-down</text><text class="ref" x="910" y="407" text-anchor="end" aria-hidden="true">U7</text></g>
       </svg>
       <figcaption>
         <p class="cap" data-default="Select a part to see what it does, how it is wired and the code that runs it.">Select a part to see what it does, how it is wired and the code that runs it.</p>
@@ -193,9 +199,10 @@
         <template data-k="color">Reads the water's color through filtered channels to check for pollution. It uses six pins, more than any other part.</template>
         <template data-k="mcu">The same C++ runs on the real robot and in ENES100's browser simulator, chosen by a build flag. GitHub Actions compiles both versions on every push.</template>
         <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
-        <template data-k="arm">Two SG90 servos, powered by their own step-down converter, move together one degree at a time, which keeps their current spikes small.</template>
-        <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
-        <template data-k="power">A Tenergy 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V. A step-down converter takes the pack down separately for the two servos.</template>
+        <template data-k="arm">Two SG90 servos share the converter's 5 V rail with the pump, so they move together one degree at a time to keep their current spikes small.</template>
+        <template data-k="pump">A 5 V peristaltic pump on the converter's rail. An IRLZ44N MOSFET on D10, with a flyback diode across the pump, switches it on and off to pull the water sample.</template>
+        <template data-k="power">A Tenergy 9.6 V NiMH pack runs through a 7.5 A fuse and the kill switch. It powers the two motor drivers directly and an LM2596 step-down converter, and it feeds the Arduino's VIN pin, where the board's own regulator brings it down to 5 V.</template>
+        <template data-k="buck">An LM2596 step-down converter, set to 5.03 V, makes the 5 V rail for the two servos and the pump. Its readout shows the voltage.</template>
         <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
 // heading error, clamped to MIN_TURN_PWM..MAX_PWM.
 // Positive error = counter-clockwise = left wheel back, right forward.

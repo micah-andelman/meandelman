@@ -483,6 +483,8 @@ function buildRobot(K, { pool = true } = {}) {
   wire("arm", [[BX - 0.009, TOP + 0.05, BZ - 0.0055], [BX - 0.006, TOP + 0.068, BZ + 0.004], [-0.07, TOP + 0.05, 0.03], [-0.04, -0.03, 0.05], [-0.034, -0.026, 0.06]]);
   wire("arm", [[-0.07, TOP + 0.05, 0.03], [-0.02, TOP + 0.045, 0.04], [0.01, -0.012, 0.042], [0.025, -0.026, 0.055]]);
 
+  wire("pump", [[BX - 0.009, TOP + 0.05, BZ - 0.0055], [BX - 0.004, TOP + 0.064, BZ - 0.016], [-0.07, TOP + 0.06, -0.04], [-0.05, TOP + 0.055, -0.041]]); // 5 V to the pump
+
   // The peristaltic pump, standing on the deck's back corner on the Arduino side under the marker, in a
   // printed green cradle screwed to the deck: white pump head at the bottom with its two hose barbs,
   // silver motor on top, motor axis vertical. (The deck's back corners are cut at an angle.)
@@ -621,7 +623,7 @@ async function tour(sec, opts = {}) {
     { pos: [0.3, 0.02, -0.17], tgt: [0.05, -0.08, 0.02],
       tags: [[[0.108, -0.06, 0.08], "8 cm wheel, direct drive", "r"], [[0.083, -0.068, 0.008], "JGY370 worm gear, 6 V, 30 RPM", "r"], [[0, -0.107, -0.047], "Rear caster", "l"]] },
     { pos: [0.02, 0.24, -0.15], tgt: [0, -0.05, 0.012],
-      tags: [[[UNO.x, UNO.y, UNO.z], "Arduino UNO R4 WiFi", "r"], [[-0.045, -0.02, -0.041], "Peristaltic pump", "l"], [[0.0, 0.01, -0.045], "Sample container", "r"], [[-0.0952, -0.02, -0.02], "Step-down converter, for the servos", "l"]] },
+      tags: [[[UNO.x, UNO.y, UNO.z], "Arduino UNO R4 WiFi", "r"], [[-0.045, -0.02, -0.041], "Peristaltic pump", "l"], [[0.0, 0.01, -0.045], "Sample container", "r"], [[-0.0952, -0.02, -0.02], "Step-down converter, 5 V for servos and pump", "l"]] },
     { pos: [-0.3, 0.05, 0.17], tgt: [0, -0.03, 0.09],
       tags: [[[-0.027, -0.026, 0.065], "2 × SG90 servo", "l"], [[0, -0.01, 0.11], "Sampling arm", "r"], [[0, -0.061, 0.135], "Color sensor, under the arm", "r"]] },
     { pos: [0.15, 0.1, 0.36], tgt: [0, -0.07, 0.15],
@@ -1095,10 +1097,10 @@ async function course(sec, routes) {
     pool: [[[-0.027, -0.026, 0.065], "2 × SG90 on D11 and A2, 1° steps"],
       [[0, -0.024, 0.161], "HC-SR04 on D7 D8: median of pings = depth"],
       [[0, -0.061, 0.135], "Color sensor: a strong non-black color = polluted"],
-      [[-0.014, -0.1, 0.146], "Pump: a MOSFET on D10 switches the 9.6 V pack"]],
+      [[-0.014, -0.1, 0.146], "Pump: 5 V, switched by a MOSFET on D10"]],
     back: [[[0, -0.01, 0.11], "Arm up first, so it clears the rim"],
       [[0, -0.045, -0.04], "Backs straight out, then turns for the top wall"]],
-    under: [[[0, -0.064, 0.02], "Tenergy 9.6 V NiMH pack: powers both drivers and the Arduino's VIN"],
+    under: [[[0, -0.064, 0.02], "Tenergy 9.6 V NiMH pack: both drivers, the 5 V converter and the Arduino's VIN"],
       [[0.046, -0.06, 0.062], "DRV8871 driver per motor, on D3 D5 and D6 D9"],
       [[-0.083, -0.08, 0.04], "JGY370 worm-gear motor, one per wheel"],
       [[0, -0.118, -0.046], "Rear caster on a spacer"],

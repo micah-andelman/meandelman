@@ -118,7 +118,7 @@
       under(k);
       r.after(svgEl("rect", { class: "court", x: x - 5, y: y - 5, width: w + 10, height: h + 10, rx: 3, "aria-hidden": "true" })); // after the body, so :scope > rect still finds the body
     });
-    const name = svgEl("text", { class: "silk-name", x: VW - 42, y: VH - 13, "text-anchor": "end", "aria-hidden": "true" }, otvSvg);
+    const name = svgEl("text", { class: "silk-name", x: 52, y: VH - 13, "aria-hidden": "true" }, otvSvg); // bottom left: the 5 V converter fills the bottom-right corner
     name.textContent = "ENES100 OTV";
   }
 
@@ -772,6 +772,7 @@
       drive: { v: "DRV8871 to motor", d: (cx, cy) => `M${cx + 12},${cy} m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0`, t: "M" },
       arm: { v: "SG90 servos", d: (cx, cy) => `M${cx + 12},${cy} m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 M${cx + 24},${cy} h6 M${cx + 30},${cy - 9} v18 h5 v-18 Z`, t: "M" },
       pump: { v: "IRLZ44N, pump", d: (cx, cy) => `M${cx - 16},${cy} h8 M${cx - 8},${cy - 10} v20 M${cx - 4},${cy - 12} v6 M${cx - 4},${cy - 3} v6 M${cx - 4},${cy + 6} v6 M${cx - 4},${cy - 9} h10 v-8 M${cx - 4},${cy + 9} h10 v8 M${cx - 4},${cy} h10 v9 M${cx + 1},${cy} l-4,-3 v6 Z` },
+      buck: { v: "LM2596, 5.03 V", d: (cx, cy) => `M${cx - 13},${cy - 10} h26 v20 h-26 Z M${cx - 19},${cy - 4} h6 M${cx + 13},${cy - 4} h6 M${cx},${cy + 10} v5 M${cx - 5},${cy + 15} h10 M${cx - 3},${cy + 18} h6` },
       power: { v: "9.6 V NiMH", d: (cx, cy) => `M${cx - 12},${cy} h6 M${cx - 6},${cy - 13} v26 M${cx},${cy - 7} v14 M${cx + 6},${cy - 13} v26 M${cx + 12},${cy - 7} v14 M${cx + 12},${cy} h6 M${cx - 10},${cy - 18} h6 M${cx - 7},${cy - 21} v6` },
     };
     $$(".blk", otvFig).forEach((b) => {
