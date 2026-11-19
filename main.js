@@ -223,7 +223,7 @@ document.querySelectorAll("[data-diagram]").forEach((fig) => {
   const glow = fig.querySelector(".glow");
   const bot = fig.querySelector(".bot");
   const SPEED = 0.14; // px per ms: 1,100 px route in about 8 s
-  const SAMPLE_AT = 150; // route length where the robot reaches the pool
+  const SAMPLE_AT = 100; // route length where the robot reaches the pool (it starts in the middle of the other square)
   const SAMPLE_MS = 2200;
   let which = 0, raf = 0;
 

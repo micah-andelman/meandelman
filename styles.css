@@ -162,7 +162,7 @@ a:hover { color: var(--mask); }
 .p-body > p { grid-column: 1; margin: 0 0 14px; max-width: var(--measure); color: var(--ink-2); }
 .p-body > p.lede { color: var(--ink); font-size: clamp(19px, 1.6vw, 22px); line-height: 1.5; }
 .specs { grid-column: 2; grid-row: 1 / span 3; margin: 0; display: flex; flex-wrap: wrap; gap: 20px 36px; align-content: start; }
-.specs dt { font-family: var(--display); font-weight: 600; font-size: clamp(40px, 4.4vw, 64px); line-height: 1; color: var(--mask); }
+.specs dt { font-family: var(--display); font-weight: 600; font-size: clamp(40px, 4.4vw, 64px); line-height: 1; color: var(--ink); }
 .specs dd { margin: 4px 0 0; font-size: 15px; color: var(--ink-2); max-width: 16ch; line-height: 1.35; }
 
 /* ---------- block diagrams ---------- */
@@ -339,7 +339,7 @@ a:hover { color: var(--mask); }
   .project.minor :is(h1, h2) { font-size: clamp(44px, 12.5vw, 80px); }
   .p-head { gap: 20px; }
   .meta div { grid-template-columns: 84px 1fr; }
-  .specs { grid-column: 1; grid-row: auto; margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .specs { grid-column: 1; grid-row: auto; margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .specs:has(> div:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .specs dt { font-size: clamp(32px, 10vw, 44px); }
   .specs dd { font-size: 14px; }
@@ -555,7 +555,7 @@ html.thermal .heatkey { display: flex; }
 /* code viewer */
 .code-btn, .parts button.code-btn { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 8px; width: max-content; margin: 12px 0 2px; padding: 7px 14px 7px 12px; border: 1.5px solid var(--copper); border-radius: 7px; background: color-mix(in srgb, var(--copper) 12%, transparent); color: var(--copper-ink); font-size: 15px; font-weight: 600; line-height: 1.2; white-space: nowrap; transition: background .15s, color .15s, box-shadow .15s; }
 .code-btn::before { content: "</>"; font: 700 13px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: -.04em; }
-.code-btn:hover, .parts button.code-btn:hover { background: var(--copper); color: var(--paper); box-shadow: 0 0 14px color-mix(in srgb, var(--copper) 45%, transparent); }
+.code-btn:hover, .parts button.code-btn:hover { background: var(--copper); color: var(--paper); box-shadow: none; }
 .code-btn:focus-visible, .parts button.code-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .codeview { width: min(820px, calc(100vw - 32px)); max-height: min(80vh, 760px); padding: 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
 .codeview::backdrop { background: rgba(8, 12, 10, .55); }
@@ -667,7 +667,7 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
 .hero { position: relative; isolation: isolate; }
 .hero::before {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(ellipse 70% 55% at 22% 30%, color-mix(in srgb, var(--mask) 9%, transparent), transparent 70%);
+  background: none;
 }
 .hero::after {
   /* solder-mask grain, kept very faint */
@@ -777,7 +777,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 /* ---------- 5. Stats on 7-segment displays ---------- */
 .specs dt.lcd { display: inline-block; padding: 9px 12px 7px; border-radius: 6px; background: #0b100e; box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), inset 0 0 0 1px rgb(255 255 255 / .06), 0 1px 0 var(--rule); line-height: 0; }
 .seg7 { height: clamp(34px, 3.4vw, 46px); width: auto; aspect-ratio: var(--w) / 58; overflow: visible; }
-.seg7 .on { fill: #6ff0b4; filter: drop-shadow(0 0 3px rgb(111 240 180 / .55)); }
+.seg7 .on { fill: #6ff0b4; }
 .seg7 .off { fill: rgb(111 240 180 / .07); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .specs dt.lcd { background: #c4cfbd; box-shadow: inset 0 2px 4px rgb(0 0 0 / .18), inset 0 0 0 1px rgb(0 0 0 / .08); }
   :root:not([data-theme="dark"]) .seg7 .on { fill: #18231c; filter: none; }
@@ -792,7 +792,6 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 /* ---------- 6. Experience as a parts list ---------- */
 .experience thead th { padding: 0 24px 8px 0; border-top: 0; font-size: 13.5px; font-weight: 600; color: var(--ink-3); letter-spacing: .02em; }
 .experience thead th.when { text-align: right; padding-right: 0; }
-.experience td.ref, .experience th.ref { width: 3.2em; padding-right: 14px; color: var(--copper-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .experience th[scope="row"] { width: 26%; }
 
 /* ---------- 6. Contact as a pin header ---------- */
@@ -1035,6 +1034,7 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
   .project > .p-head, .project > .p-body { display: contents; }
   .project > * { grid-column: 1 / -1; }
   .project :is(h1, h2) { grid-column: 1; grid-row: 1; }
+  .project .p-title { grid-column: 1; grid-row: 1; }
   .project .meta { grid-column: 2; grid-row: 1 / span 2; }
   .project .p-body > p.lede { grid-column: 1; grid-row: 2; margin-top: 6px; }
   .project .p-body > p:not(.lede) { grid-column: 1; grid-row: 3; }
@@ -1281,7 +1281,7 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 
 /* Pluto's parts, as a list: what comes in, Pluto itself, its tools. */
 .pluto-parts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 28px; margin-top: clamp(32px, 6vh, 56px); padding-top: 22px; border-top: 1px solid var(--rule); }
-.pluto-parts h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
+.pluto-parts h3 { margin: 0 0 10px; font-size: 18px; font-weight: 700; color: var(--ink); }
 .pluto-parts dl { margin: 0; display: grid; gap: 14px; }
 .pp-tools dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
 .pluto-parts dt { font-weight: 600; font-size: 16px; color: var(--ink); }
@@ -1374,8 +1374,8 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .card h3 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(36px, 3.4vw, 54px); line-height: .9; letter-spacing: -.01em; padding-right: 36px; }
 .card-meta { margin: 10px 0 0; font-size: 14px; color: var(--ink-3); }
 .card-lede { margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
-.card-specs { margin: 18px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.card-specs dt { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1; color: var(--mask); }
+.card-specs { margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px 40px; }
+.card-specs dt { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1; color: var(--ink); }
 .card-specs dd { margin: 4px 0 0; font-size: 13px; line-height: 1.3; color: var(--ink-3); }
 .card-more { margin: 16px 0 0; padding-top: 14px; border-top: 1px dashed var(--rule); font-size: 14px; line-height: 1.45; color: var(--ink-3); }
 .card-go { margin-top: auto; padding-top: 18px; font-weight: 600; color: var(--copper-ink); }
@@ -1577,17 +1577,17 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 @media screen and (min-width: 761px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media screen and (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
 
-/* the award: a copper chip with a small medal */
-.award, .card-award { display: inline-flex; align-items: center; gap: 8px; font-family: var(--text); font-weight: 700; letter-spacing: .02em; color: var(--copper-ink);
-  background: color-mix(in srgb, var(--copper) 12%, var(--paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--copper) 55%, transparent); border-radius: 999px; }
-.award i, .card-award i { flex: none; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe7a3, #d9a441 60%, #a8741f); box-shadow: 0 0 0 2px color-mix(in srgb, #d9a441 35%, transparent); }
-.project :is(h1, h2) .award { display: flex; width: max-content; max-width: 100%; margin-top: 18px; padding: 6px 14px; font-size: clamp(14px, 1.3vw, 17px); line-height: 1.2; white-space: normal; }
-.card-award { align-self: flex-start; margin: 0 0 12px; padding: 4px 11px; font-size: 13px; }
+/* the award: a plain note with a copper rule, like a line in the margin of a drawing */
+.award, .card-award { margin: 0; padding: 1px 0 1px 12px; border-left: 3px solid var(--copper); font-family: var(--text); font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
+.award b, .card-award b { font-weight: 700; color: var(--ink); }
+.p-title { min-width: 0; }
+.p-head .award { margin-top: 22px; font-size: clamp(15px, 1.3vw, 17px); line-height: 1.45; }
+.card-award { align-self: flex-start; margin: 0 0 14px; font-size: 14px; line-height: 1.4; }
 .card-win > a { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--copper) 45%, var(--rule)); }
 
 /* the project page: what I built, and the rest */
 .bf-parts { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); margin: clamp(32px, 6vh, 56px) 0 0; padding-top: 22px; border-top: 1px solid var(--rule); }
-.bf-parts h3 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
+.bf-parts h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; color: var(--ink); }
 .bf-mine dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; }
 .bf-mine dt { font-weight: 600; font-size: 17px; color: var(--ink); }
 .bf-mine dd { margin: 4px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
@@ -1778,28 +1778,19 @@ html.thermal .pb-heat { opacity: .9; }
 /* the exploding hero's layers fly toward the camera and could widen the page on small phones */
 .hero-scene { overflow-x: clip; }
 
-/* ---------- At a glance: the 30-second version under each project title ---------- */
-.glance { margin: clamp(28px, 4vh, 44px) 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
-.glance div { padding: 16px 24px 18px; }
-.glance div:first-child { padding-left: 0; }
-.glance div + div { border-left: 1px solid var(--rule); }
-.glance dt { margin-bottom: 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--copper-ink); }
-.glance dd { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); }
+/* ---------- "Skip the 3D tour" under each project title ---------- */
 .glance-skip { margin: 10px 0 0; font-size: 14px; }
 .glance-skip a { color: var(--ink-3); }
 .glance-skip a:hover { color: var(--copper-ink); }
 #otv-parts, #cap-flow, #pluto-parts { scroll-margin-top: 76px; }
 @media screen and (max-width: 760px) {
-  .glance { grid-template-columns: 1fr; }
-  .glance div { padding: 14px 0; }
-  .glance div + div { border-left: 0; border-top: 1px solid var(--rule); }
   .glance-skip a { display: inline-block; padding: 8px 0; }
 }
-@media print { .glance-skip { display: none; } .glance dd { font-size: 10pt; } .glance div { padding: 6px 12px 6px 0; } }
+@media print { .glance-skip { display: none; } }
 
 /* ---------- OTV photos ---------- */
 .otv-photos { margin-top: clamp(40px, 7vh, 72px); }
-.project .otv-photos h2 { margin: 0 0 8px; font-family: var(--text); font-size: 13px; line-height: 1.4; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--copper-ink); }
+.project .otv-photos h2 { margin: 0 0 8px; font-family: var(--text); font-size: 18px; line-height: 1.4; font-weight: 700; color: var(--ink); }
 .otv-photos > p { margin: 0 0 20px; max-width: var(--measure); color: var(--ink-2); }
 .ph-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 24px); }
 .ph-grid figure { margin: 0; }

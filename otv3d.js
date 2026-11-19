@@ -812,7 +812,7 @@ async function course(sec, routes) {
 
   // ---- prepare each route: heading per unit of travel (turning at a finite rate, facing forward while
   // backing up), wheel angles, phase boundaries and the pool position.
-  const SAMPLE_AT = 150;
+  const SAMPLE_AT = 100; // route length to the pool: each route starts in the middle of the other square
   const diff = (a, b) => ((b - a + 540) % 360) - 180;
   routes.forEach((R) => {
     const n = R.pts.length;

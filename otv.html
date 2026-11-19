@@ -78,13 +78,9 @@
         <div><dt>When</dt><dd>Fall 2026</dd></div>
         <div><dt>Role</dt><dd>Electrical and software lead on an eight-person team</dd></div>
         <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
+        <div><dt>Status</dt><dd>Rewiring the robot before the final arena run</dd></div>
       </dl>
     </div>
-    <dl class="glance" aria-label="At a glance">
-      <div><dt>What it is</dt><dd>An autonomous robot that finds a pool, tests and samples the water, then drives past the obstacles and under a limbo bar to the goal.</dd></div>
-      <div><dt>My part</dt><dd>I am the only electrical engineer on an eight-person team, so I wired the robot and wrote most of its 1,620 lines of firmware.</dd></div>
-      <div><dt>Where it stands</dt><dd>The code passed 40 of 40 randomized simulator runs. I am rewiring the robot before the final arena run.</dd></div>
-    </dl>
     <p class="glance-skip"><a href="#otv-parts">Skip the 3D tour</a></p>
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
@@ -92,7 +88,6 @@
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>
-        <div><dt>7</dt><dd>bench tests, one per subsystem</dd></div>
       </dl>
     </div>
 
@@ -407,8 +402,8 @@ const int  MAX_PWM      = 153;</code></template>
             <text x="624" y="140" text-anchor="end">56 cm</text>
           </g>
 
-          <path class="route ghost" id="route-a" d="M100,310 V160 V180 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
-          <path class="route ghost" id="route-b" d="M100,90 V240 V220 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
+          <path class="route ghost" id="route-a" d="M100,260 V160 V180 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
+          <path class="route ghost" id="route-b" d="M100,140 V240 V220 L160,200 V41 Q160,25 200,25 H510 C560,25 560,100 600,100 H760" />
           <path class="route glow" />
           <path class="route trail" />
 
