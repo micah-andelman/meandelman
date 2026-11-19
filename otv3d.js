@@ -2296,7 +2296,7 @@ if (cardEls.length && GL && !REDUCED) {
   const near = new IntersectionObserver((es) => es.forEach((e) => {
     if (!e.isIntersecting) return;
     near.unobserve(e.target); queue.push(e.target); buildNext();
-  }), { rootMargin: "100% 0px" });
+  }), { rootMargin: "50% 0px" });
   const start = () => cardEls.forEach((sec) => near.observe(sec));
   if (document.readyState === "complete") start(); else addEventListener("load", start, { once: true });
 }

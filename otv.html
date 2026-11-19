@@ -113,12 +113,12 @@
         <div class="o3-tags" aria-hidden="true"></div>
         <p class="o3-src">From the team's Onshape CAD. Arduino, breadboard and wiring added from photos.</p>
         <ol class="o3-steps">
-          <li><span class="o3-n">01 / 06</span><h4>The robot</h4><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and about 16 cm tall to the top of the ArUco marker. It has to stay under 3 kg and fit under the limbo.</p></li>
-          <li><span class="o3-n">02 / 06</span><h4>Drive</h4><p>Two JGY370 worm-gear motors, 6 V and 30 RPM, each turning an 8 cm wheel directly, with a caster at the back. Running the sides at different speeds steers it and lets it turn in place.</p></li>
-          <li><span class="o3-n">03 / 06</span><h4>Brains</h4><p>An Arduino UNO R4 WiFi. The overhead vision system tracks the ArUco marker on top and sends position and heading over Wi-Fi. It has to stop within 150 mm of the pool.</p></li>
-          <li><span class="o3-n">04 / 06</span><h4>Arm</h4><p>A printed arm between two SG90 servos. One motion swings it down over the pool, so the sensors at the tip face the water and the intake tube dips in.</p></li>
-          <li><span class="o3-n">05 / 06</span><h4>Depth</h4><p>The HC-SR04 at the tip times a ping off the water to measure how deep it is. The reading has to be right within 4 mm.</p></li>
-          <li><span class="o3-n">06 / 06</span><h4>Sample</h4><p>A peristaltic pump, switched by a MOSFET on D10, pulls at least 20 mL up the tube. The sample has to stay on board until the end of the run.</p></li>
+          <li><span class="o3-n">01 / 06</span><h3>The robot</h3><p>A plywood deck on two drive wheels and a caster, 21.7 cm wide, 24.1 cm long with the arm down and about 16 cm tall to the top of the ArUco marker. It has to stay under 3 kg and fit under the limbo.</p></li>
+          <li><span class="o3-n">02 / 06</span><h3>Drive</h3><p>Two JGY370 worm-gear motors, 6 V and 30 RPM, each turning an 8 cm wheel directly, with a caster at the back. Running the sides at different speeds steers it and lets it turn in place.</p></li>
+          <li><span class="o3-n">03 / 06</span><h3>Brains</h3><p>An Arduino UNO R4 WiFi. The overhead vision system tracks the ArUco marker on top and sends position and heading over Wi-Fi. It has to stop within 150 mm of the pool.</p></li>
+          <li><span class="o3-n">04 / 06</span><h3>Arm</h3><p>A printed arm between two SG90 servos. One motion swings it down over the pool, so the sensors at the tip face the water and the intake tube dips in.</p></li>
+          <li><span class="o3-n">05 / 06</span><h3>Depth</h3><p>The HC-SR04 at the tip times a ping off the water to measure how deep it is. The reading has to be right within 4 mm.</p></li>
+          <li><span class="o3-n">06 / 06</span><h3>Sample</h3><p>A peristaltic pump, switched by a MOSFET on D10, pulls at least 20 mL up the tube. The sample has to stay on board until the end of the run.</p></li>
         </ol>
         <div class="o3-bar" aria-hidden="true"><span>Robot</span><span>Drive</span><span>Brains</span><span>Arm</span><span>Depth</span><span>Sample</span></div>
         <p class="o3-load" aria-hidden="true">Loading the CAD&hellip;</p>
@@ -358,14 +358,14 @@ const int  MAX_PWM      = 153;</code></template>
         <div class="o3-tags" aria-hidden="true"></div>
         <p class="o3r-hud" aria-hidden="true"></p>
         <ol class="o3-steps">
-          <li><span class="o3-n">01 / 08</span><h4>Start</h4><p>It starts in a random square, A or B, facing a random way. An overhead camera finds the ArUco marker on top and sends position and heading over Wi-Fi. If that signal drops out, the robot stops and waits for it.</p></li>
-          <li><span class="o3-n">02 / 08</span><h4>To the pool</h4><p>It turns in place to face the pool, with wheel speed proportional to how far off its heading is, then drives at it. It has to stop within 150 mm of the edge.</p></li>
-          <li><span class="o3-n">03 / 08</span><h4>Sample</h4><p>The arm comes down one degree at a time. The HC-SR04 pings the water several times and keeps the median for the depth. The color sensor calls the water polluted if any channel sees a strong non-black color. The pump pulls at least 20 mL up the hose.</p></li>
-          <li><span class="o3-n">04 / 08</span><h4>Back off</h4><p>Arm up. It backs away from the pool and turns toward the top wall.</p></li>
-          <li><span class="o3-n">05 / 08</span><h4>To the wall</h4><p>Up to the top wall, then along it, 12.5 cm off. The front HC-SR04 watches ahead the whole way.</p></li>
-          <li><span class="o3-n">06 / 08</span><h4>Obstacles</h4><p>Along the wall past both obstacle rows. Underneath: a worm-gear motor for each wheel in a printed mount, the rear caster and the front HC-SR04, which only calls an obstacle after several close pings in a row.</p></li>
-          <li><span class="o3-n">07 / 08</span><h4>Limbo</h4><p>Down into the 56 cm limbo lane and under the bar, which clears the floor by 18.4 cm.</p></li>
-          <li><span class="o3-n">08 / 08</span><h4>Goal</h4><p>In the goal zone. In 40 randomized simulator runs it never went more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p></li>
+          <li><span class="o3-n">01 / 08</span><h3>Start</h3><p>It starts in a random square, A or B, facing a random way. An overhead camera finds the ArUco marker on top and sends position and heading over Wi-Fi. If that signal drops out, the robot stops and waits for it.</p></li>
+          <li><span class="o3-n">02 / 08</span><h3>To the pool</h3><p>It turns in place to face the pool, with wheel speed proportional to how far off its heading is, then drives at it. It has to stop within 150 mm of the edge.</p></li>
+          <li><span class="o3-n">03 / 08</span><h3>Sample</h3><p>The arm comes down one degree at a time. The HC-SR04 pings the water several times and keeps the median for the depth. The color sensor calls the water polluted if any channel sees a strong non-black color. The pump pulls at least 20 mL up the hose.</p></li>
+          <li><span class="o3-n">04 / 08</span><h3>Back off</h3><p>Arm up. It backs away from the pool and turns toward the top wall.</p></li>
+          <li><span class="o3-n">05 / 08</span><h3>To the wall</h3><p>Up to the top wall, then along it, 12.5 cm off. The front HC-SR04 watches ahead the whole way.</p></li>
+          <li><span class="o3-n">06 / 08</span><h3>Obstacles</h3><p>Along the wall past both obstacle rows. Underneath: a worm-gear motor for each wheel in a printed mount, the rear caster and the front HC-SR04, which only calls an obstacle after several close pings in a row.</p></li>
+          <li><span class="o3-n">07 / 08</span><h3>Limbo</h3><p>Down into the 56 cm limbo lane and under the bar, which clears the floor by 18.4 cm.</p></li>
+          <li><span class="o3-n">08 / 08</span><h3>Goal</h3><p>In the goal zone. In 40 randomized simulator runs it never went more than 1 mm past a wall and cleared the obstacles by 1.6 to 2 cm.</p></li>
         </ol>
         <div class="o3-bar" aria-hidden="true"><span>Start</span><span>Pool</span><span>Sample</span><span>Back off</span><span>Wall</span><span>Obstacles</span><span>Limbo</span><span>Goal</span></div>
         <button type="button" class="o3r-replay">Replay, other start</button>

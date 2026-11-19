@@ -1166,7 +1166,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 .o3 canvas, .o3-tags, .o3-bar, .o3-load, .o3-src { display: none; }
 .o3-steps { list-style: none; margin: 0; padding: 0 var(--gutter); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
 .o3-n { font-size: 13px; font-weight: 600; color: var(--copper-ink); letter-spacing: .04em; }
-.o3-steps h4 { margin: 2px 0 4px; font-family: var(--display); font-size: 28px; line-height: 1; font-weight: 700; }
+.o3-steps h3 { margin: 2px 0 4px; font-family: var(--display); font-size: 28px; line-height: 1; font-weight: 700; }
 .o3-steps p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--ink-2); }
 
 .o3-live, .o3-still { --o3h: 100svh; }
@@ -1188,7 +1188,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 .o3-live .o3-steps li { padding: 16px 18px 18px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--rule) 70%, transparent); }
 .o3-live .o3-bar { padding: 7px 12px; border-radius: 8px; background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .o3-live .o3-src { padding: 4px 8px; border-radius: 6px; background: color-mix(in srgb, var(--paper) 70%, transparent); }
-.o3-live .o3-steps h4 { font-size: clamp(30px, 3.4vw, 44px); }
+.o3-live .o3-steps h3 { font-size: clamp(30px, 3.4vw, 44px); }
 .o3-live .o3-steps p { color: var(--ink-2); }
 .o3-live .o3-bar { display: flex; gap: 14px; position: absolute; right: var(--gutter); bottom: clamp(28px, 7vh, 72px); font-size: 13px; color: var(--ink-3); }
 .o3-bar span { transition: color .2s; }
@@ -1201,7 +1201,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
   .o3-live .o3-bar { display: none; }
   .o3-live .o3-steps { bottom: 20px; width: calc(100% - 2 * var(--gutter)); }
   .o3-live .o3-steps li { padding: 14px 16px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); box-shadow: 0 0 0 1px var(--rule); }
-  .o3-live .o3-steps h4 { font-size: 28px; }
+  .o3-live .o3-steps h3 { font-size: 28px; }
   .o3-live .o3-steps p { font-size: 15px; }
   .o3-tag { font-size: 12.5px; }
   :is(.o3-live, .o3-still) .o3-src { left: var(--gutter); right: auto; text-align: left; font-size: 12px; }
@@ -1280,7 +1280,7 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 
 /* Pluto's parts, as a list: what comes in, Pluto itself, its tools. */
 .pluto-parts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 28px; margin-top: clamp(32px, 6vh, 56px); padding-top: 22px; border-top: 1px solid var(--rule); }
-.pluto-parts h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
+.pluto-parts h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
 .pluto-parts dl { margin: 0; display: grid; gap: 14px; }
 .pp-tools dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
 .pluto-parts dt { font-weight: 600; font-size: 16px; color: var(--ink); }
@@ -1584,7 +1584,7 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 
 /* the project page: what I built, and the rest */
 .bf-parts { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); margin: clamp(32px, 6vh, 56px) 0 0; padding-top: 22px; border-top: 1px solid var(--rule); }
-.bf-parts h4 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
+.bf-parts h3 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--copper-ink); }
 .bf-mine dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; }
 .bf-mine dt { font-weight: 600; font-size: 17px; color: var(--ink); }
 .bf-mine dd { margin: 4px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
