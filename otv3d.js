@@ -656,7 +656,7 @@ async function tour(sec, opts = {}) {
   let W = 0, H = 0;
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight;
-    shots.forEach((s_) => s_.els.forEach((e) => { e.w = 0; }));
+    shots.forEach((s_) => s_.els.forEach((e) => { e.w = 0; e.h = 0; }));
     renderer.setSize(W, H, false);
     cam.aspect = W / H;
     // Wide screens: nudge the robot right and up, clear of the chapter card in the bottom-left.
@@ -736,15 +736,17 @@ async function tour(sec, opts = {}) {
       else if (side === "l" && x - reach - 6 - tw < 8) side = "r";
       e.t.classList.toggle("l", side === "l"); e.t.classList.toggle("r", side === "r");
       const dx = side === "r" ? reach : -reach;
-      // Labels at the same stop never overlap: step down past any label already placed.
+      // Labels at the same stop never overlap: step down past any label already placed, using each
+      // label's measured height plus a small gap (a fixed 22 px let neighbours touch).
+      const th = e.h ||= e.t.offsetHeight || 22, gap = 4;
       let ty = y - 34;
       const lx = side === "r" ? x + dx + 6 : x + dx - 6 - tw;
       for (let n = 0; n < 6; n++) {
-        const hit = placed.find((p) => lx < p.x + p.w + 8 && lx + tw + 8 > p.x && ty - 10 < p.y + 22 && ty + 12 > p.y);
+        const hit = placed.find((p) => lx < p.x + p.w + 8 && lx + tw + 8 > p.x && ty - 10 < p.y + p.h + gap && ty - 10 + th + gap > p.y);
         if (!hit) break;
-        ty = hit.y + 22 + 10 + 2;
+        ty = hit.y + hit.h + gap + 10;
       }
-      placed.push({ x: lx, y: ty - 10, w: tw });
+      placed.push({ x: lx, y: ty - 10, w: tw, h: th });
       e.dot.setAttribute("cx", x.toFixed(1)); e.dot.setAttribute("cy", y.toFixed(1));
       e.path.setAttribute("d", `M${x.toFixed(1)},${y.toFixed(1)} L${(x + dx * 0.5).toFixed(1)},${ty.toFixed(1)} H${(x + dx).toFixed(1)}`);
       e.t.style.transform = `translate(${(x + dx + (side === "r" ? 6 : -6)).toFixed(1)}px, ${(ty - 10).toFixed(1)}px)`;

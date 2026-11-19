@@ -813,7 +813,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 .titleblock div { padding: 5px 10px 6px; border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); }
 .titleblock .tb-title { grid-column: 1 / -1; border-top: 0; border-left: 0; }
 .titleblock div:nth-child(2) { border-left: 0; }
-.titleblock dt { color: var(--ink-3); font-size: 11.5px; }
+.titleblock dt { color: var(--ink-3); font-size: 12px; }
 .titleblock dd { margin: 1px 0 0; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .titleblock .tb-title dd { color: var(--ink); font-weight: 600; }
 
@@ -1528,6 +1528,8 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .oc-go { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; max-width: 980px; }
 .oc-go a { display: block; padding: 16px 18px; border-radius: 12px; color: inherit; text-decoration: none; background: var(--board); box-shadow: inset 0 0 0 1px var(--rule); transition: box-shadow .2s, transform .2s; }
 .oc-go a:hover, .oc-go a:focus-visible { box-shadow: inset 0 0 0 2px var(--copper); transform: translateY(-2px); }
+/* five links: home gets its own row, so the four projects sit evenly under it (no lone tile) */
+.oc-go a:first-child { grid-column: 1 / -1; }
 .oc-go small { display: block; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--copper-ink); }
 .oc-go b { display: block; margin-top: 4px; font-family: var(--display); font-size: clamp(24px, 2.4vw, 32px); line-height: 1; }
 .oc-tip { margin: 24px 0 0; font-size: 14px; color: var(--ink-3); }
@@ -1742,7 +1744,8 @@ html.thermal .pb-heat { opacity: .9; }
   /* bigger tap areas in the top bar without making the bar taller */
   .top nav > a, .pmenu-btn { padding: 10px 0; margin: -10px 0; }
   .top > .mark { padding: 6px 0; margin: -6px 0; }
-  .tools button.egg { width: 28px; height: 36px; margin: -6px -6px; }
+  .tools button.egg { width: 40px; height: 40px; margin: -8px -12px; }
+  button.power { padding: 9px 0; margin: -5px 0; }
 }
 @media screen and (max-width: 400px) {
   /* narrow phones: the bar was about 385px wide, which zoomed the whole page out below that */
