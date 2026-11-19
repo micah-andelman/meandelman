@@ -2,12 +2,13 @@
 
 # Security, every response. The site has no logins or forms; this is defence in depth.
 # - script-src: the small inline theme/intro scripts need 'unsafe-inline'; the model's meshopt
-#   decoder runs WebAssembly, which needs 'wasm-unsafe-eval'. Nothing is loaded from other sites.
+#   decoder runs WebAssembly, which needs 'wasm-unsafe-eval'. The only thing loaded from another site is
+#   Cloudflare Web Analytics (its beacon script, which reports to cloudflareinsights.com).
 # - img/connect blob: and data: are for the hero board (an SVG painted into a canvas) and three.js
 #   textures. frame-ancestors 'none' stops other sites from framing the page.
 /*
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob: https://cloudflareinsights.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 
