@@ -2252,9 +2252,18 @@ async function buildfestScene(sec, opts = {}) {
 // renders only while it's on screen. Without WebGL, or with reduced motion, the cards keep their 2D drawings.
 const cardEls = [...document.querySelectorAll(".card3d")];
 if (cardEls.length && GL && !REDUCED) {
-  // Full frame rate while on screen, nothing off screen. One frame is drawn right away, in the idle
-  // slot the card is built in, so shaders compile then instead of when the card scrolls into view.
-  const cardLoop = loopWhileVisible;
+  // Two cards sit side by side, each its own WebGL context. Drawing both at full rate while the page
+  // moves competed with the scroll for the GPU and made it stutter, so while scrolling each card draws
+  // every other frame. Their clocks run on time, so the animation keeps its speed, just fewer steps.
+  let lastScroll = -1e9;
+  addEventListener("scroll", () => { lastScroll = performance.now(); }, { passive: true });
+  const scrolling = () => performance.now() - lastScroll < 160;
+  // Full frame rate while on screen and still, half while scrolling, nothing off screen. One frame is
+  // drawn right away, in the idle slot the card is built in, so shaders compile then.
+  const cardLoop = (sec, frame) => {
+    let n = 0;
+    loopWhileVisible(sec, (t) => { if (!scrolling() || (n++ & 1) === 0) frame(t); });
+  };
   // a looping 0..1 progress: play forward, hold, then the scene's own way back to the start
   const clockOf = (play, hold, back = 0, backTo = 0) => {
     const T = play + hold + back + 0.6;
@@ -2275,7 +2284,13 @@ if (cardEls.length && GL && !REDUCED) {
     buildfest: (sec) => buildfestScene(sec, { loop: cardLoop }),
     pluto: (sec) => plutoScene(sec, { card: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
   };
-  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
+  // Building a card (parsing the model, the environment map, compiling shaders) takes a frame or more,
+  // so wait for the page to stop moving: requestIdleCallback's timeout could otherwise fire mid-scroll.
+  const idle = (fn) => {
+    const go = () => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
+    const wait = () => (scrolling() ? setTimeout(wait, 200) : go());
+    wait();
+  };
   // Each card is built when it comes within a screen of the viewport, one per idle slot, so the page
   // doesn't build all four scenes (and three.js) up front.
   const queue = [];

@@ -85,8 +85,9 @@ a:hover { color: var(--mask); }
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px);
   padding: 14px var(--gutter);
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(8px);
+  /* no backdrop blur: it re-blurred everything under the header on every scroll frame, the 3D cards
+     included, and at this opacity it barely showed */
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
   border-bottom: 1px solid transparent;
   transition: border-color .2s;
 }
@@ -1625,8 +1626,7 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .bf-photo { margin: 0; }
 .bf-photo img { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--rule), 0 18px 40px rgb(0 0 0 / .18); }
 .bf-photo img { aspect-ratio: 5 / 4; object-fit: cover; }
-.bf-photo figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
-@media screen and (max-width: 760px) { .bf-photos { grid-template-columns: 1fr; } }
+.bf-photo figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }@media screen and (max-width: 760px) { .bf-photos { grid-template-columns: 1fr; } }
 
 .bf-show { margin-top: clamp(40px, 8vh, 80px); }
 .project .bf-show h2.bf-show-h { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(36px, 4vw, 56px); line-height: 1; letter-spacing: 0; }
