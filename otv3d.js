@@ -147,6 +147,9 @@ function buildRobot(K, { pool = true } = {}) {
     uRoot: { value: new THREE.Matrix4() }, uRootInv: { value: new THREE.Matrix4() },
   };
   const bendable = (mat, water, cutBelow) => {
+    // three.js shares one compiled program between materials whose onBeforeCompile reads the same, so
+    // each variant gets its own key (otherwise the new tube would inherit the CAD tube's cut).
+    mat.customProgramCacheKey = () => `bend:${water ? 1 : 0}:${cutBelow ?? "-"}`;
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, bend);
       sh.vertexShader = "uniform float uAng; uniform vec2 uPiv; uniform float uZ0, uZ1; uniform mat4 uRoot, uRootInv; varying vec3 vL;\n" +
@@ -165,8 +168,9 @@ function buildRobot(K, { pool = true } = {}) {
     return mat;
   };
   // The CAD puts the pump in the middle of the deck; on the real robot that spot holds a marker dowel and
-  // the pump hangs off the back (see below). Its body and the start of the tube are cut away here.
-  const TUBE_CUT = 0.032;
+  // the pump sits at the back (see below). Everything of the CAD's tube before it reaches the top of the
+  // arm is cut away here, and a new tube runs from the pump straight to that point.
+  const TUBE_CUT = 0.085;
   bendable(paint.m8, true, TUBE_CUT);
 
   // The arm's HC-SR04: its beam goes straight down and stops at the water; a pulse travels down, flashes
@@ -506,8 +510,8 @@ function buildRobot(K, { pool = true } = {}) {
   const jarWater = new Mesh(new THREE.CylinderGeometry(JR - 0.0015, JR - 0.0015, 1, 32), new Std({ color: "#3b8fd6", roughness: 0.15, transparent: true, opacity: 0.75 }));
   jarWater.position.y = 0.002; jarWater.scale.y = 0.0001; jarWater.visible = false; jar.add(jarWater);
   const ring = new Mesh(new THREE.CylinderGeometry(JR + 0.0018, JR + 0.0018, 0.005, 32), new Std({ color: "#2f9a4a", roughness: 0.55, side: THREE.DoubleSide })); ring.position.y = 0.0025; jar.add(ring);
-  // New tubing: from the pump up under the marker, over the gap between the Arduino and the breadboard
-  // and down into the CAD's tube where it was cut; and a short run from the pump into the jar's lid. The
+  // New tubing: from the pump up under the marker and onto the arm, joining the CAD's tube where it
+  // was cut; and a short run from the pump into the jar's lid. The
   // join point and the tube's radius are read off the CAD mesh so the two meet cleanly.
   const j0 = new Vector3(), j1 = new Vector3(); let tubeR = 0.0024;
   {
@@ -524,10 +528,12 @@ function buildRobot(K, { pool = true } = {}) {
   }
   const tubeMat = bendable(std("#eef2f2", { roughness: 0.3 }), true);
   const dir = j1.clone().sub(j0).normalize();
+  // from the pump's upper barb up under the marker, forward between the servos and onto the arm, where
+  // it meets the CAD's tube. It uses the arm's bend, so the join holds as the arm swings.
   const feed = new THREE.CatmullRomCurve3([
-    new Vector3(PUMP.x + 0.0235, PUMP.y + 0.014, PUMP.z + 0.004), new Vector3(-0.021, TOP + 0.03, -0.024),
-    new Vector3(-0.017, TOP + 0.06, -0.004), new Vector3(-0.015, TOP + 0.05, 0.012), new Vector3(-0.012, TOP + 0.025, 0.024),
-    j0.clone().addScaledVector(dir, -0.006), j0.clone().addScaledVector(dir, 0.001)], false, "centripetal");
+    new Vector3(PUMP.x + 0.0235, PUMP.y + 0.014, PUMP.z + 0.004), new Vector3(-0.02, TOP + 0.045, -0.03),
+    new Vector3(-0.017, TOP + 0.06, 0.0), new Vector3(-0.014, TOP + 0.058, 0.045),
+    j0.clone().addScaledVector(dir, -0.012), j0.clone().addScaledVector(dir, 0.001)], false, "centripetal");
   root.add(new Mesh(new THREE.TubeGeometry(feed, 60, tubeR, 10), tubeMat));
   const jarTubeMat = std("#eef2f2", { roughness: 0.3 });
   const toJar = new THREE.CatmullRomCurve3([
