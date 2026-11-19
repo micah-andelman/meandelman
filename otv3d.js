@@ -108,7 +108,7 @@ function buildRobot(K, { pool = true } = {}) {
     m4: std("#b4b9bd", { metalness: 0.85, roughness: 0.35 }), m14: std("#b4b9bd", { metalness: 0.85, roughness: 0.35 }),
     m16: std("#5d4b70"), m18: std("#5d4b70"),
     m1: std("#3f6fd0", { roughness: 0.4 }), m10: std("#3f6fd0", { roughness: 0.4 }),
-    m9: std("#3b4046"), m7: std("#3b4046"),
+    m9: std("#4a4150"), m7: std("#d8392c", { roughness: 0.5 }), // purple-gray arm, red printed sensor mount at its tip
     m5: std("#eeeeea"), m19: std("#eeeeea"),
     m2: std("#c8ccd0", { metalness: 0.6, roughness: 0.35 }),
     m6: std("#2b3136", { roughness: 0.5, side: THREE.DoubleSide }),
@@ -326,6 +326,59 @@ function buildRobot(K, { pool = true } = {}) {
   wire("pump", [B(-0.008, -0.004), [0.006, -0.025, 0.006], [-0.002, -0.0205, 0.012], [-0.008, -0.0208, 0.017]]);
   wire("vision", [U(-0.028, -0.012), [-0.09, -0.035, -0.01]]);
 
+  // ---- from the bench photos (November 2026), not in the CAD
+  // The ArUco marker: about 15 cm square, on four wooden dowels in printed green feet, over the back of
+  // the deck toward the breadboard side, so the overhead camera sees it clear of the arm.
+  const MK = new Vector3(0.045, TOP + 0.078, -0.035), MS = 0.15;
+  const mkCv = document.createElement("canvas"); mkCv.width = mkCv.height = 600;
+  {
+    const g = mkCv.getContext("2d");
+    g.fillStyle = "#f4f4f0"; g.fillRect(0, 0, 600, 600);
+    g.fillStyle = "#151617"; g.fillRect(14, 14, 572, 572);
+    // a 4 x 4 ArUco-style pattern inside the black border, laid out like the one in the photos
+    const cell = 572 / 6, bits = ["0010", "0000", "1011", "1100"];
+    g.fillStyle = "#f4f4f0";
+    bits.forEach((row, r) => [...row].forEach((b, c) => { if (b === "1") g.fillRect(14 + (c + 1) * cell, 14 + (r + 1) * cell, cell + 0.5, cell + 0.5); }));
+    g.fillRect(14 + 3 * cell, 14 + 1 * cell, cell + 0.5, cell + 0.5);
+  }
+  const mkTex = new THREE.CanvasTexture(mkCv); mkTex.colorSpace = THREE.SRGBColorSpace; mkTex.anisotropy = 8;
+  const mkMat = [std("#e8e6df"), std("#e8e6df"), new Std({ map: mkTex, roughness: 0.75, transparent: true }), std("#e8e6df"), std("#e8e6df"), std("#e8e6df")];
+  const marker = new Group(); root.add(marker);
+  const plate = new Mesh(new THREE.BoxGeometry(MS, 0.003, MS), mkMat); plate.position.copy(MK); marker.add(plate);
+  const dowelMat = std("#d9bf8f", { roughness: 0.8 }), footMat = std("#2f9a4a", { roughness: 0.55 });
+  [[0.0, -0.06], [0.08, -0.06], [0.0, 0.022], [0.08, 0.022]].forEach(([x, z]) => {
+    const d = new Mesh(new THREE.CylinderGeometry(0.003, 0.003, MK.y - TOP, 12), dowelMat); d.position.set(x, (MK.y + TOP) / 2, z); marker.add(d);
+    const f = new Mesh(new THREE.BoxGeometry(0.012, 0.01, 0.012), footMat); f.position.set(x, TOP + 0.005, z); marker.add(f);
+  });
+  const markerMats = [...new Set([...mkMat, dowelMat, footMat])];
+  markerMats.forEach((m) => { m.transparent = true; });
+  // Step-down converter with its three-digit voltage readout, standing at the back corner by the Arduino.
+  const buck = new Group(); buck.position.set(-0.058, TOP + 0.022, -0.07); buck.rotation.x = 0.35; root.add(buck);
+  const bkCv = document.createElement("canvas"); bkCv.width = 440; bkCv.height = 260;
+  {
+    const g = bkCv.getContext("2d");
+    g.fillStyle = "#1f56a8"; g.fillRect(0, 0, 440, 260);
+    g.fillStyle = "#0e0f10"; g.fillRect(150, 70, 150, 90);
+    g.fillStyle = "#ff3b2f"; g.font = "700 64px 'Courier New', monospace"; g.textBaseline = "middle"; g.fillText("8.8.", 158, 118);
+    g.fillStyle = "#e8eef8"; g.font = "600 18px Arial, sans-serif"; g.fillText("IN+", 20, 236); g.fillText("OUT+", 360, 236);
+  }
+  const bkTex = new THREE.CanvasTexture(bkCv); bkTex.colorSpace = THREE.SRGBColorSpace;
+  const bkBlue = std("#1f56a8", { roughness: 0.45 });
+  box(0.066, 0.039, 0.0016, [bkBlue, bkBlue, bkBlue, bkBlue, bkBlue, new Std({ map: bkTex, roughness: 0.45 })], 0, 0, 0, buck); // its face is -z, toward the back
+  box(0.024, 0.014, 0.006, std("#141516", { roughness: 0.35 }), 0.003, 0.002, -0.0035, buck); // display
+  box(0.021, 0.008, 0.0004, new Std({ color: "#ff3b2f", emissive: "#ff2a1f", emissiveIntensity: 0.9 }), 0.003, 0.002, -0.0067, buck);
+  [-0.026, 0.026].forEach((x) => box(0.01, 0.009, 0.008, std("#2d6fd6", { roughness: 0.5 }), x, -0.012, -0.0048, buck)); // terminal blocks
+  const coil = new Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.007, 16), std("#2a2c2e")); coil.rotation.x = Math.PI / 2; coil.position.set(-0.018, 0.01, -0.0043); buck.add(coil);
+  box(0.0095, 0.004, 0.005, std("#2f73d8"), 0.022, 0.01, -0.0033, buck);
+  // Silver three-arm hubs on the outside of each wheel.
+  const hubMat = std("#b9bec2", { metalness: 0.85, roughness: 0.3 });
+  wheels.forEach((w, i) => {
+    const sx = i ? 1 : -1;
+    const hub = new Group(); hub.position.set(sx * 0.0072, 0, 0); w.add(hub);
+    const disc = new Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.003, 20), hubMat); disc.rotation.z = Math.PI / 2; hub.add(disc);
+    [0, 1, 2].forEach((k) => { const arm_ = new Mesh(new THREE.BoxGeometry(0.0025, 0.013, 0.004), hubMat); arm_.rotation.x = k * Math.PI * 2 / 3; arm_.translateY(0.0065); hub.add(arm_); });
+  });
+
   // soft contact shadow
   const sh = document.createElement("canvas"); sh.width = sh.height = 128;
   { const x = sh.getContext("2d"); const g = x.createRadialGradient(64, 64, 4, 64, 64, 64); g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
@@ -333,7 +386,9 @@ function buildRobot(K, { pool = true } = {}) {
   shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, -0.1212, pool ? 0.08 : 0.01); root.add(shadow);
 
   return {
-    root, arm, wheels, nets, ledMat, ping, bend, UNO, BB, TOP, fus, pack, drivers,
+    root, arm, wheels, nets, ledMat, ping, bend, UNO, BB, TOP, fus, pack, drivers, marker, MK,
+    // the marker plate hides the deck from above, so the tour fades it out for those views
+    setMarker(o) { markerMats.forEach((m) => { m.opacity = o; m.depthWrite = o > 0.5; }); marker.visible = o > 0.02; },
     // `a` runs from raised (negative) to 0 = the CAD's pose over the pool. The sensors stay above the
     // water there (the color sensor is on the bottom of the arm); the intake hose reaches down into it.
     setArm(a) { arm.rotation.x = a; bend.uAng.value = a; },
@@ -471,6 +526,7 @@ async function tour(sec, opts = {}) {
     wheels.forEach((w) => { w.rotation.x = s * 5.5; });
     R.setArm(REDUCED ? 0 : -0.95 * (1 - sm(2.35, 2.9, s)));
     R.setFlow(sm(4.6, 5.0, s)); // raised until the Arm stop, then swings down over the pool
+    R.setMarker(1 - 0.92 * clamp(1 - Math.abs(s - 2) * 1.4)); // see-through for the look down at the deck
     const sec_ = time / 1000;
     const ping = REDUCED ? 0 : clamp(1 - Math.abs(s - 4) * 1.6);
     R.ping(ping > 0.05, time);
@@ -609,21 +665,43 @@ async function course(sec, routes) {
   const floorTex = new THREE.CanvasTexture(floorCv); floorTex.colorSpace = THREE.SRGBColorSpace; floorTex.anisotropy = 8;
   const PX = 512; // canvas px per metre
   const drawFloor = () => {
+    // The real arena, from the photos: a gray printed floor in panels, the two white mission squares
+    // joined by a blue line, ArUco markers in the corners and the university's line printed by the start.
     const g = floorCv.getContext("2d");
-    const board = css("--board"), rule = css("--rule"), ink3 = css("--ink-3"), mask = css("--mask"), copper = css("--copper");
-    g.fillStyle = board; g.fillRect(0, 0, 2048, 1024);
-    g.strokeStyle = rule; g.lineWidth = 2;
-    for (let m = 0.5; m < 4; m += 0.5) { g.beginPath(); g.moveTo(m * PX, 0); g.lineTo(m * PX, 1024); g.stroke(); }
-    for (let m = 0.5; m < 2; m += 0.5) { g.beginPath(); g.moveTo(0, m * PX); g.lineTo(2048, m * PX); g.stroke(); }
-    // start squares, the goal zone and the mission sites
-    g.setLineDash([14, 10]); g.strokeStyle = ink3; g.lineWidth = 3;
-    g.strokeRect(4, 4, PX - 4, PX - 6); g.strokeRect(4, PX + 2, PX - 4, PX - 6);
-    g.setLineDash([]);
-    g.globalAlpha = 0.14; g.fillStyle = mask; g.fillRect(3.5 * PX, 0, 0.5 * PX, 1024); g.globalAlpha = 1;
-    g.strokeStyle = mask; g.lineWidth = 3; g.setLineDash([10, 8]); g.beginPath(); g.moveTo(3.5 * PX, 0); g.lineTo(3.5 * PX, 1024); g.stroke(); g.setLineDash([]);
-    routes.forEach((R) => { g.strokeStyle = copper; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(R.pool[0] * PX, R.pool[1] * PX, 0.17 * PX, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1; });
-    g.fillStyle = ink3; g.font = "600 44px Barlow, system-ui, sans-serif"; g.textBaseline = "top";
-    g.fillText("A", 22, 18); g.fillText("B", 22, PX + 18);
+    g.fillStyle = "#3e4144"; g.fillRect(0, 0, 2048, 1024);
+    // faint print texture and panel seams
+    for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(255,255,255,${0.012 + (i % 5) * 0.004})`; g.fillRect((i * 733) % 2048, (i * 389) % 1024, 2, 2); }
+    g.strokeStyle = "rgba(0,0,0,.28)"; g.lineWidth = 2;
+    [1, 2, 3].forEach((m) => { g.beginPath(); g.moveTo(m * PX, 0); g.lineTo(m * PX, 1024); g.stroke(); });
+    g.beginPath(); g.moveTo(0, PX); g.lineTo(2048, PX); g.stroke();
+    // blue line between the two squares, and the start-zone line with its tick marks
+    const sq = 0.4 * PX, c = routes.map((R) => [R.pool[0] * PX, R.pool[1] * PX]);
+    g.strokeStyle = "#4f7fd6"; g.lineWidth = 7;
+    if (c.length > 1) { g.beginPath(); g.moveTo(c[0][0], c[0][1]); g.lineTo(c[1][0], c[1][1]); g.stroke(); }
+    g.beginPath(); g.moveTo(1.15 * PX, 0.25 * PX); g.lineTo(1.15 * PX, 1.75 * PX); g.stroke();
+    g.fillStyle = "#1d1f21"; [0.45, 0.85, 1.15, 1.55].forEach((z) => g.fillRect(1.15 * PX - 4, z * PX - 14, 8, 28));
+    // the mission squares, each with the pool's spot
+    c.forEach(([x, z]) => {
+      g.strokeStyle = "#f2f2ee"; g.lineWidth = 9; g.strokeRect(x - sq / 2, z - sq / 2, sq, sq);
+      g.fillStyle = "#2a2c2e"; g.beginPath(); g.arc(x, z, 0.07 * PX, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = "#e9e9e4"; g.lineWidth = 6; g.stroke();
+    });
+    // ArUco markers in the corners
+    const aruco = (x, z) => {
+      const s_ = 0.11 * PX; g.fillStyle = "#f4f4f0"; g.fillRect(x, z, s_, s_); g.fillStyle = "#121314"; g.fillRect(x + 6, z + 6, s_ - 12, s_ - 12);
+      g.fillStyle = "#f4f4f0"; const k = (s_ - 12) / 6; [[1, 1], [3, 1], [2, 2], [4, 3], [1, 4], [3, 4]].forEach(([a, b]) => g.fillRect(x + 6 + a * k, z + 6 + b * k, k, k));
+    };
+    aruco(10, 10); aruco(10, 1024 - 10 - 0.11 * PX); aruco(2048 - 10 - 0.11 * PX, 10); aruco(2048 - 10 - 0.11 * PX, 1024 - 10 - 0.11 * PX);
+    // the line printed by the start, reading along the arena
+    g.save(); g.translate(0.16 * PX, 0.2 * PX); // along the left border by the start, reading away from it
+    g.fillStyle = "#f2f2ee"; g.font = "600 30px Barlow, system-ui, sans-serif"; g.textBaseline = "alphabetic";
+    g.fillText("The", 0, 0); g.fillStyle = "#c8282e"; g.beginPath(); g.arc(74, -10, 11, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#f2f2ee"; g.fillText("world goes", 92, 0); g.font = "700 30px Barlow, system-ui, sans-serif"; g.fillText("to Maryland.", 0, 36);
+    g.restore();
+    // labels for the story: the two squares and the goal zone (not printed on the real floor)
+    g.fillStyle = "rgba(242,242,238,.55)"; g.font = "600 40px Barlow, system-ui, sans-serif"; g.textBaseline = "top"; g.textAlign = "left";
+    c.forEach(([x, z], i) => g.fillText(z < PX ? "A" : "B", x - sq / 2 + 10, z - sq / 2 + 10));
+    g.strokeStyle = "rgba(242,242,238,.45)"; g.lineWidth = 3; g.setLineDash([14, 10]); g.beginPath(); g.moveTo(3.5 * PX, 0); g.lineTo(3.5 * PX, 1024); g.stroke(); g.setLineDash([]);
     g.textAlign = "center"; g.fillText("Goal", 3.75 * PX, 1024 - 70);
     floorTex.needsUpdate = true;
   };
@@ -634,15 +712,17 @@ async function course(sec, routes) {
   const arena = new Group(); scene.add(arena);
   const floor = new Mesh(new THREE.PlaneGeometry(4, 2), new Std({ map: floorTex, roughness: 0.95 }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(2, 0, 1); arena.add(floor);
-  const wallMat = new Std({ color: "#9aa3a0", roughness: 0.8 });
-  const woodMat = new Std({ color: "#c9a875", roughness: 0.8 });
-  const darkMat = new Std({ color: "#3b4046", roughness: 0.6 });
+  const wallMat = new Std({ color: "#a87c4f", roughness: 0.85 }); // the wooden border
+  const foamMat = new Std({ color: "#ecebe6", roughness: 0.9 });  // white foam obstacle blocks
+  const woodMat = new Std({ color: "#6e4a32", roughness: 0.8 });  // the limbo's dark wood
+  const darkMat = new Std({ color: "#2e3134", roughness: 0.6 });
   const block = (x0, z0, x1, z1, h, mat) => { const m = new Mesh(new THREE.BoxGeometry(x1 - x0, h, z1 - z0), mat); m.position.set((x0 + x1) / 2, h / 2, (z0 + z1) / 2); arena.add(m); return m; };
   const WT = 0.02, WH = 0.1;
   block(-WT, -WT, 4 + WT, 0, WH, wallMat); block(-WT, 2, 4 + WT, 2 + WT, WH, wallMat);
   block(-WT, 0, 0, 2, WH, wallMat); block(4, 0, 4 + WT, 2, WH, wallMat);
   // obstacle rows and the limbo, from the 2D map
-  block(280 * U, 50 * U, 320 * U, 350 * U, 0.16, woodMat); block(440 * U, 50 * U, 480 * U, 350 * U, 0.16, woodMat);
+  // each row is drawn as three foam blocks with hairline gaps; the route and the sonar use the whole row
+  [[280, 320], [440, 480]].forEach(([x0, x1]) => [0, 1, 2].forEach((k) => block(x0 * U, (50 + k * 100) * U + 0.002, x1 * U, (150 + k * 100) * U - 0.002, 0.16, foamMat)));
   block(652 * U, 0, 668 * U, 44 * U, 0.08, woodMat); block(652 * U, 156 * U, 668 * U, 2, 0.08, woodMat);
   const LB = 0.184 + 0.0125; // rod centre: 18.4 cm clearance under a 2.5 cm rod (Arena Details)
   block(649 * U, 40 * U, 671 * U, 48 * U, LB + 0.02, darkMat); block(649 * U, 152 * U, 671 * U, 160 * U, LB + 0.02, darkMat);
@@ -671,6 +751,17 @@ async function course(sec, routes) {
   [-0.3, 2.3].forEach((z) => { const post = new Mesh(new THREE.BoxGeometry(GT, GH, GT), alu); post.position.set(2, GH / 2, z); arena.add(post);
     const foot = new Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.3), alu); foot.position.set(2, 0.01, z); arena.add(foot); });
   const beam = new Mesh(new THREE.BoxGeometry(GT, GT, 2.6 + GT), alu); beam.position.set(2, GH, 1); arena.add(beam);
+  // the top frame and its braces, as in the photos. Phones look straight down through it, so it is
+  // left out there (see resize).
+  const gTop = new Group(); arena.add(gTop);
+  [-0.25, 0.25].forEach((dx) => { const r = new Mesh(new THREE.BoxGeometry(GT * 0.7, GT * 0.7, 2.6), alu); r.position.set(2 + dx, GH, 1); gTop.add(r); });
+  [-0.3, 2.3].forEach((z) => { const t = new Mesh(new THREE.BoxGeometry(0.5 + GT, GT * 0.7, GT * 0.7), alu); t.position.set(2, GH, z); gTop.add(t); });
+  [[-0.3, 1], [2.3, -1]].forEach(([z, sz]) => [-1, 1].forEach((sx) => {
+    const br = new Mesh(new THREE.BoxGeometry(GT * 0.6, 0.42, GT * 0.6), alu);
+    br.position.set(2 + sx * 0.12, GH - 0.15, z); br.rotation.z = sx * 0.95; gTop.add(br);
+    const kb = new Mesh(new THREE.BoxGeometry(GT * 0.6, 0.36, GT * 0.6), alu);
+    kb.position.set(2, GH - 0.13, z + sz * 0.11); kb.rotation.x = -sz * 0.95; gTop.add(kb);
+  }));
   const ohc = new Group(); ohc.position.set(2, GH - 0.07, 1); arena.add(ohc);
   ohc.add(new Mesh(new THREE.BoxGeometry(0.09, 0.05, 0.07), darkMat));
   const ohl = new Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 20), std("#11161a", { roughness: 0.2 })); ohl.position.y = -0.035; ohc.add(ohl);
@@ -822,7 +913,7 @@ async function course(sec, routes) {
   // ---- tags along the way: why it moves the way it does, and what's powering it. Anchors are in the
   // robot's own (CAD) frame.
   const TAGS = {
-    chase: [[[0, -0.045, -0.01], "ArUco marker: the overhead camera sends x, y and heading over Wi-Fi"],
+    chase: [[[0.045, 0.03, -0.035], "ArUco marker: the overhead camera sends x, y and heading over Wi-Fi"],
       [[0.11, -0.08, 0.066], "Turns in place: one wheel back, one forward"],
       [[0.083, -0.07, 0.02], "2 × DRV8871 on D3 D5 and D6 D9, PWM capped at 60%"]],
     pool: [[[-0.027, -0.026, 0.065], "2 × SG90 on D11 and A2, 1° steps"],
@@ -869,6 +960,7 @@ async function course(sec, routes) {
   let W = 0, H = 0, wideW = 1, tagTop = 0, tagBot = 1e9, tagBandFor = -1, tagBandAt = 0;
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight; tagBandFor = -1;
+    gTop.visible = W >= H;
     tagEls.forEach((e) => { e.w = 0; e.hgt = 0; });
     renderer.setSize(W, H, false);
     cam.aspect = W / H;
@@ -1077,7 +1169,7 @@ async function course(sec, routes) {
     link.visible = packet.visible = arena.visible;
 
     // how it knows where it is: the overhead camera reads the ArUco marker and sends x, y and heading
-    la.copy(ohc.position).setY(ohc.position.y - 0.05); lb.copy(carrier.position).setY(0.13);
+    la.copy(ohc.position).setY(ohc.position.y - 0.05); RB.marker.children[0].getWorldPosition(lb);
     setLine(link, la, lb);
     linkMat.opacity = ph <= 1 ? 0.75 : 0.22;
     packet.position.copy(la).lerp(lb, (time / 600) % 1);
