@@ -2276,15 +2276,27 @@ if (cardEls.length && GL && !REDUCED) {
     pluto: (sec) => plutoScene(sec, { card: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
   };
   const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
-  const start = () => idle(async () => {
-    try { await kit(); } catch (e) { console.warn("cards3d", e); return; }
-    for (const sec of cardEls) {
-      await new Promise((r) => idle(r)); // one scene per idle slot
-      const make = SCENES[sec.dataset.scene];
-      if (!make) continue;
-      try { await make(sec); sec.closest(".card")?.classList.add("card-3d-on"); }
-      catch (e) { console.warn("cards3d", e); }
-    }
-  });
+  // Each card is built when it comes within a screen of the viewport, one per idle slot, so the page
+  // doesn't build all four scenes (and three.js) up front.
+  const queue = [];
+  let busy = false;
+  const buildNext = () => {
+    if (busy || !queue.length) return;
+    busy = true;
+    idle(async () => {
+      const sec = queue.shift();
+      try {
+        await kit();
+        const make = SCENES[sec.dataset.scene];
+        if (make) { await make(sec); sec.closest(".card")?.classList.add("card-3d-on"); }
+      } catch (e) { console.warn("cards3d", e); }
+      busy = false; buildNext();
+    });
+  };
+  const near = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return;
+    near.unobserve(e.target); queue.push(e.target); buildNext();
+  }), { rootMargin: "100% 0px" });
+  const start = () => cardEls.forEach((sec) => near.observe(sec));
   if (document.readyState === "complete") start(); else addEventListener("load", start, { once: true });
 }
