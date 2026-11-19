@@ -44,9 +44,11 @@ const kit = () => kitP ||= (async () => {
   const [THREE, { GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
     import(V + "three.module.min.js"), import(V + "GLTFLoader.js"), import(V + "meshopt_decoder.module.js"), import(V + "RoomEnvironment.js"),
   ]);
-  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync("models/otv.glb");
-  return { THREE, RoomEnvironment, gltf };
+  return { THREE, RoomEnvironment, GLTFLoader, MeshoptDecoder };
 })();
+// The robot model is only fetched by the scenes that draw the robot, so Brimcam and Pluto skip its 420 KB.
+let otvP;
+const kitOTV = () => otvP ||= kit().then(async (K) => ({ ...K, gltf: await new K.GLTFLoader().setMeshoptDecoder(K.MeshoptDecoder).loadAsync("models/otv.glb") }));
 
 const lazy = (sec, start, fail) => {
   // Built a screen and a half early, in an idle moment, so the work doesn't land mid-scroll.
@@ -352,7 +354,7 @@ if (tourSec) {
 }
 
 async function tour(sec, opts = {}) {
-  const K = await kit();
+  const K = await kitOTV();
   const { THREE } = K;
   const { Vector3, Mesh, MeshStandardMaterial: Std } = THREE;
   const stage = sec.querySelector(".o3-stage");
@@ -555,7 +557,7 @@ if (runSec && map2d) {
 }
 
 async function course(sec, routes) {
-  const K = await kit();
+  const K = await kitOTV();
   const { THREE } = K;
   const { Vector3, Group, Mesh, MeshStandardMaterial: Std } = THREE;
   const stage = sec.querySelector(".o3-stage");

@@ -79,6 +79,12 @@
         <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
       </dl>
     </div>
+    <dl class="glance" aria-label="At a glance">
+      <div><dt>What it is</dt><dd>An autonomous robot that finds a pool, tests and samples the water, then drives past the obstacles and under a limbo bar to the goal.</dd></div>
+      <div><dt>My part</dt><dd>I am the only electrical engineer on an eight-person team, so I wired the robot and wrote most of its 1,620 lines of firmware.</dd></div>
+      <div><dt>Where it stands</dt><dd>The code passed 40 of 40 randomized simulator runs. I am rewiring the robot before the final arena run.</dd></div>
+    </dl>
+    <p class="glance-skip"><a href="#otv-parts">Skip the 3D tour</a></p>
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
       <p>I am the only electrical engineer on the team, so I wire the robot and write most of its code. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first, and a single build flag switches the same code between the simulator and the real robot.</p>
@@ -88,6 +94,16 @@
         <div><dt>7</dt><dd>bench tests, one per subsystem</dd></div>
       </dl>
     </div>
+
+    <section class="otv-photos" aria-labelledby="otv-ph-t">
+      <h3 id="otv-ph-t">On the bench</h3>
+      <p>These photos show the working prototype. Its wiring kept slipping or falling out, so I rewired it to make it reliable and presentable, and before the final run I am rewiring it again so it looks cleaner and runs more smoothly.</p>
+      <div class="ph-grid">
+        <figure><img src="img/otv/side-v1.jpg" width="1400" height="1120" loading="lazy" decoding="async" alt="The OTV prototype on a lab bench, seen from the side: an ArUco marker on dowels above the deck, the sampling arm with its sensor mount reaching over a black container, and a drive wheel"><figcaption>The arm with its sensor mount, the ArUco marker the overhead camera tracks, and one of the drive wheels.</figcaption></figure>
+        <figure><img src="img/otv/top-v1.jpg" width="1400" height="1120" loading="lazy" decoding="async" alt="The OTV prototype from above, showing the ArUco marker, two SG90 servos, the arm and the wiring on the deck"><figcaption>From above, with the two SG90 servos that move the arm.</figcaption></figure>
+        <figure><img src="img/otv/arena-v1.jpg" width="1400" height="974" loading="lazy" decoding="async" alt="The ENES100 arena: a gray floor with white target squares, blue lines and white obstacle blocks at the far end, inside a wooden border"><figcaption>The 4 &times; 2 m ENES100 arena, with the obstacles at the far end.</figcaption></figure>
+      </div>
+    </section>
 
     <section class="o3" id="otv-3d" aria-labelledby="o3-t">
       <h3 class="sr" id="o3-t">The OTV in 3D</h3>
@@ -108,7 +124,7 @@
       </div>
     </section>
 
-    <figure class="diagram" data-diagram data-schem data-groups="Sensors|Controller and power|Outputs">
+    <figure class="diagram" id="otv-parts" data-diagram data-schem data-groups="Sensors|Controller and power|Outputs">
       <svg viewBox="0 0 960 440" role="group" aria-label="Block diagram of the OTV: sensors on the left, the Arduino in the middle, motors, arm and pump on the right">
         <defs>
           <pattern id="grid-a" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" /></pattern>

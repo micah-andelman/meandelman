@@ -79,6 +79,12 @@
         <div class="status"><dt>Status</dt><dd><i class="led" aria-hidden="true"></i>Checking</dd></div>
       </dl>
     </div>
+    <dl class="glance" aria-label="At a glance">
+      <div><dt>What it is</dt><dd>A personal agent I text on Telegram that handles my calendar, email, Canvas, grades and campus buses.</dd></div>
+      <div><dt>My part</dt><dd>I built it on my own and wrote its 36 tool modules, with 24 offline test suites that run on every push.</dd></div>
+      <div><dt>In use</dt><dd>It messages me every morning and evening and sends a longer review on Sundays.</dd></div>
+    </dl>
+    <p class="glance-skip"><a href="#pluto-parts">Skip the 3D tour</a></p>
     <div class="p-body">
       <p class="lede">A personal agent I text on Telegram. It is Claude Code running headless on a server, with tools I wrote for my calendar, email, Canvas, grades and the campus buses. It messages me every morning and evening, and sends a longer review on Sundays.</p>
       <p>Most of my time went into the tools. Each one does one job and says so when it is not sure of something, so a guessed exam date or a room it could not find is pointed out in the answer instead of being filled in. It only suggests a bus when the bus beats walking by at least five minutes.</p>
@@ -125,7 +131,7 @@
       </div>
     </section>
 
-    <div class="pluto-parts" aria-label="What Pluto is made of">
+    <div class="pluto-parts" id="pluto-parts" aria-label="What Pluto is made of">
       <div class="pp-col">
         <h4>Coming in</h4>
         <dl>

@@ -78,6 +78,12 @@
         <div><dt>Built with</dt><dd>Seeed XIAO ESP32S3 Sense, <a href="https://github.com/benmross/herald" target="_blank" rel="noopener">Herald</a>, Gemini API</dd></div>
       </dl>
     </div>
+    <dl class="glance" aria-label="At a glance">
+      <div><dt>What it is</dt><dd>A camera in the brim of a baseball cap that logs the calories and macros in my dining-hall meals.</dd></div>
+      <div><dt>My part</dt><dd>I built it on my own, both the hardware in the cap and the software behind it.</dd></div>
+      <div><dt>How it works</dt><dd>It photographs the tray, a Telegram bot names each item and estimates the portion with the Gemini API, and the numbers come from UMD Dining's nutrition facts.</dd></div>
+    </dl>
+    <p class="glance-skip"><a href="#cap-flow">Skip the 3D tour</a></p>
     <div class="p-body">
       <p class="lede">A camera in the brim of a baseball cap that estimates the calories and macros in my dining-hall meals. It photographs the tray, a Telegram bot names each item and estimates the portion, and the numbers come from UMD Dining's published nutrition facts.</p>
       <p>It started as camera glasses, but the battery was too big to hide in a frame, so I moved it to a cap and took on the software too. The hardware only has to take a good photo of the tray, and everything else, from naming the food to adding up the macros, happens on the Telegram side.</p>
@@ -192,7 +198,7 @@
         <li><b>Recording LED.</b> Under the brim tip.</li>
       </ol>
     </div>
-    <figure class="diagram flow" data-diagram>
+    <figure class="diagram flow" id="cap-flow" data-diagram>
       <svg viewBox="0 0 960 150" role="group" aria-label="Flow: the brim camera photographs the tray, Herald receives it on Telegram, the Gemini API names each item and its portion, and the macros come from UMD Dining's nutrition facts">
         <path class="tr" data-k="herald" d="M200,75 H270" />
         <path class="tr" data-k="gemini" d="M450,75 H520" />

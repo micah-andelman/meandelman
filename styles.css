@@ -1773,3 +1773,33 @@ html.thermal .pb-heat { opacity: .9; }
 }
 /* the exploding hero's layers fly toward the camera and could widen the page on small phones */
 .hero-scene { overflow-x: clip; }
+
+/* ---------- At a glance: the 30-second version under each project title ---------- */
+.glance { margin: clamp(28px, 4vh, 44px) 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.glance div { padding: 16px 24px 18px; }
+.glance div:first-child { padding-left: 0; }
+.glance div + div { border-left: 1px solid var(--rule); }
+.glance dt { margin-bottom: 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--copper-ink); }
+.glance dd { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.glance-skip { margin: 10px 0 0; font-size: 14px; }
+.glance-skip a { color: var(--ink-3); }
+.glance-skip a:hover { color: var(--copper-ink); }
+#otv-parts, #cap-flow, #pluto-parts { scroll-margin-top: 76px; }
+@media screen and (max-width: 760px) {
+  .glance { grid-template-columns: 1fr; }
+  .glance div { padding: 14px 0; }
+  .glance div + div { border-left: 0; border-top: 1px solid var(--rule); }
+  .glance-skip a { display: inline-block; padding: 8px 0; }
+}
+@media print { .glance-skip { display: none; } .glance dd { font-size: 10pt; } .glance div { padding: 6px 12px 6px 0; } }
+
+/* ---------- OTV photos ---------- */
+.otv-photos { margin-top: clamp(40px, 7vh, 72px); }
+.otv-photos h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--copper-ink); }
+.otv-photos > p { margin: 0 0 20px; max-width: var(--measure); color: var(--ink-2); }
+.ph-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 2vw, 24px); }
+.ph-grid figure { margin: 0; }
+.ph-grid img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 4; object-fit: cover; border-radius: 12px; box-shadow: 0 0 0 1px var(--rule), 0 18px 40px rgb(0 0 0 / .18); }
+.ph-grid figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
+@media screen and (max-width: 760px) { .ph-grid { grid-template-columns: 1fr; } }
+@media print { .ph-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } .ph-grid img { box-shadow: none; } }
