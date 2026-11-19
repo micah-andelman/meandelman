@@ -2306,7 +2306,7 @@ if (cardEls.length && GL && !REDUCED) {
         await kit();
         const make = SCENES[sec.dataset.scene];
         if (make) { await make(sec); sec.closest(".card")?.classList.add("card-3d-on"); }
-      } catch (e) { console.warn("cards3d", e); }
+      } catch (e) { console.warn("cards3d", e); sec.closest(".card")?.classList.add("card-3d-off"); }
       busy = false; buildNext();
     });
   };

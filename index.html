@@ -42,6 +42,11 @@
       d.classList.add("scope-pending");
       setTimeout(function () { d.classList.remove("scope-pending"); }, 5000);
     }
+    // The project cards will draw in 3D: keep their 2D placeholder drawings hidden from the first paint,
+    // so a card shows its plain background and then the 3D, never the drawing first.
+    try {
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches && document.createElement("canvas").getContext("webgl2")) d.classList.add("cards3d");
+    } catch (e) {}
   })();
 </script>
 <link rel="stylesheet" href="styles.css">
@@ -315,6 +320,6 @@
 <script src="main.js" defer></script>
 <script src="extras.js" defer></script>
 <script src="visuals.js" defer></script>
-<script type="module" src="otv3d.js"></script>
+<script type="module" src="otv3d.js" onerror="document.documentElement.classList.remove('cards3d')"></script>
 </body>
 </html>

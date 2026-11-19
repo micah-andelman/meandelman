@@ -1503,6 +1503,8 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .card-3d-on .card3d { opacity: 1; }
 .card-art > svg { transition: opacity .8s ease, transform .5s cubic-bezier(.2, .8, .2, 1); }
 .card-3d-on .card-art > svg { opacity: 0; }
+/* with WebGL, the 2D drawing is only a fallback: hidden until the 3D appears, shown again if it fails */
+.cards3d .card:not(.card-3d-off) .card-art > svg { opacity: 0; }
 .card-3d-on .card-art > svg * { animation-play-state: paused !important; }
 .card-art { background: radial-gradient(120% 90% at 50% 35%, color-mix(in srgb, var(--board) 70%, var(--paper)), var(--paper)); }
 @media print { .card3d { display: none; } }
