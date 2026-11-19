@@ -99,10 +99,10 @@
     hubH: 96, rowH: 56, outH: 44,
   });
 
-  // Flow: a vertical chain, one step under the next.
-  const flow = document.querySelector("#brimcam [data-diagram] svg");
-  if (flow) {
-    const order = ["cap", "herald", "gemini", "macros"];
+  // Flows: a vertical chain, one step under the next.
+  [["#brimcam", ["cap", "herald", "gemini", "macros"]], ["#buildfest", ["survey", "pipeline", "dash", "reports"]]].forEach(([id, order]) => {
+    const flow = document.querySelector(`${id} [data-diagram] svg`);
+    if (!flow) return;
     const blocks = byKey(flow), traces = tracesByKey(flow);
     const X = 70, BW = W - 2 * X, BH = 60, STEP = 92;
     order.forEach((k, i) => {
@@ -110,5 +110,5 @@
       if (i > 0) traces[k][0].setAttribute("d", `M${W / 2},${16 + (i - 1) * STEP + BH} V${16 + i * STEP}`);
     });
     finish(flow, 16 + (order.length - 1) * STEP + BH + 16);
-  }
+  });
 })();

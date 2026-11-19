@@ -1735,3 +1735,41 @@ html.thermal .pb-heat { opacity: .9; }
   .bin h3, .chip { font-size: 9pt; }
   .chip { padding: 2px 8px; } .chip::before, .chip::after { display: none; }
 }
+
+/* ---------- Phone audit fixes ---------- */
+@media screen and (max-width: 760px) {
+  /* bigger tap areas in the top bar without making the bar taller */
+  .top nav > a, .pmenu-btn { padding: 10px 0; margin: -10px 0; }
+  .top > .mark { padding: 6px 0; margin: -6px 0; }
+  .tools button.egg { width: 28px; height: 36px; margin: -6px -6px; }
+}
+@media screen and (max-width: 400px) {
+  /* narrow phones: the bar was about 385px wide, which zoomed the whole page out below that */
+  .top, .top nav { gap: 12px; }
+  .mark { font-size: 18px; }
+  .pmenu-btn svg { display: none; }
+}
+@media screen and (max-width: 350px) {
+  .top, .top nav { gap: 8px; }
+  .mark { font-size: 16px; }
+}
+@media (hover: none) { .if-hover { display: none; } }
+@media screen and (max-width: 760px) {
+  /* small links get a finger-sized hit area */
+  .chip-refs a { position: relative; }
+  .chip-refs a::after { content: ""; position: absolute; inset: -9px -3px; }
+  .contact li a { padding-block: 7px; }
+  .ptabs a.home { min-width: 44px; justify-content: center; }
+}
+@media screen and (max-width: 760px) {
+  .specs dt.lcd { max-width: 100%; box-sizing: border-box; }
+  .seg7 { max-width: 100%; }
+  .oc-go a { min-width: 0; }
+  .oc-go b { overflow-wrap: anywhere; }
+}
+@media screen and (max-width: 360px) {
+  .specs dt.lcd { padding-inline: 8px; }
+  .oc-go b { font-size: 21px; }
+}
+/* the exploding hero's layers fly toward the camera and could widen the page on small phones */
+.hero-scene { overflow-x: clip; }

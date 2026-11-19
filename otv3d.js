@@ -864,9 +864,9 @@ async function course(sec, routes) {
     new Vector3(0.06, 0.04, 0.34),   // low out past the front
     new Vector3(0.05, 0.34, 0.62),   // up the other side, looking back at it
   ], false, "centripetal");
-  let W = 0, H = 0, wideW = 1;
+  let W = 0, H = 0, wideW = 1, tagTop = 0, tagBot = 1e9, tagBandFor = -1, tagBandAt = 0;
   const resize = () => {
-    W = canvas.clientWidth; H = canvas.clientHeight;
+    W = canvas.clientWidth; H = canvas.clientHeight; tagBandFor = -1;
     tagEls.forEach((e) => { e.w = 0; e.hgt = 0; });
     renderer.setSize(W, H, false);
     cam.aspect = W / H;
@@ -1101,7 +1101,14 @@ async function course(sec, routes) {
     }
     renderer.render(scene, cam);
 
-    // tags for the current shot, once the camera has settled on it
+    // tags for the current shot, once the camera has settled on it. On phones the readout sits on top and
+    // the chapter card on the bottom, so the tags keep to the band between them.
+    if (ph !== tagBandFor || time - tagBandAt > 400) {
+      tagBandFor = ph; tagBandAt = time;
+      const sr = canvas.getBoundingClientRect(), hb = hud.getBoundingClientRect(), card = steps[ph]?.getBoundingClientRect();
+      tagTop = W < 600 ? Math.max(0, hb.bottom - sr.top) + 46 : 0;
+      tagBot = W < 600 && card && card.height ? card.top - sr.top - 8 : H;
+    }
     const placed = [];
     tagEls.forEach((T_) => {
       const want = T_.shot === shot && time - (T_.since || 0) > 900 && (T_.shot !== "under" || camPos.y < -0.05) ? 1 : 0;
@@ -1117,7 +1124,7 @@ async function course(sec, routes) {
       else if (side === "l" && x - reach - 6 - tw < 8) side = "r";
       T_.t.classList.toggle("l", side === "l"); T_.t.classList.toggle("r", side === "r");
       const dx = side === "r" ? reach : -reach;
-      let ty = y - 26;
+      let ty = Math.min(Math.max(y - 26, tagTop + 10), Math.max(tagTop + 10, tagBot - th + 10));
       const lx = side === "r" ? x + dx + 6 : x + dx - 6 - tw;
       for (let k = 0; k < 8; k++) {
         const hit = placed.find((q) => lx < q.x + q.w + 6 && lx + tw + 6 > q.x && ty - 10 < q.y + q.h && ty - 10 + th > q.y);
@@ -1483,7 +1490,7 @@ async function capScene(sec, opts = {}) {
     const az = 0.7 + spin * Math.PI * 2 + 0.08 * Math.sin(time / 4200) + view * 0.9;
     const el = 0.38 + 0.12 * Math.sin(spin * Math.PI) - view * 0.18;
     const narrow = cam.aspect < 1 ? Math.min(1.9, 1.05 / cam.aspect) : 1;
-    const r = (0.5 + 0.42 * e + 0.45 * view) * narrow * (opts.zoom || 1);
+    const r = (0.5 + 0.42 * e + 0.45 * view) * narrow * (cam.aspect < 1 ? 1 + 0.22 * view : 1) * (opts.zoom || 1); // phones: back off a little more for the shot, cap and tray both in frame
     tgt.set(0.02 * view, 0.03 + 0.015 * e - 0.14 * view, 0.03 + 0.07 * e + 0.12 * view);
     const st = ocam.to(az, el, r, tgt, dt, 0.4);
     ocam.place(cam, cam.position); cam.lookAt(st.tgt);

@@ -744,3 +744,11 @@ const lenis = (() => {
     links[(i + (e.key === "ArrowDown" ? 1 : -1) + links.length) % links.length].focus();
   });
 })();
+
+// Project tabs: on a phone the row scrolls sideways, so start it with this page's tab in view.
+(() => {
+  const row = document.querySelector(".ptabs"), cur = row?.querySelector('[aria-current="page"]');
+  if (!row || !cur || row.scrollWidth <= row.clientWidth) return;
+  const r = row.getBoundingClientRect(), c = cur.getBoundingClientRect();
+  row.scrollLeft = Math.max(0, c.left - r.left - (r.width - c.width) / 2);
+})();
