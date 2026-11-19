@@ -279,12 +279,12 @@ function buildRobot(K, { pool = true } = {}) {
   const cap = new Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.011, 20), std("#1d2026", { roughness: 0.4 }));
   cap.position.set(BB.x + 0.012, BB.y + 0.0098, BB.z + 0.006); bb.add(cap);
 
-  // Under the deck: the 9.6 V NiMH pack (eight AA cells, flat) and one DRV8871 driver per motor, wired to
+  // Under the deck: the Tenergy 9.6 V NiMH pack (eight AA cells, flat) and one DRV8871 driver per motor, wired to
   // the motors and up to the Arduino. Placed in the open space between the motors until there are photos.
   const UNDER = -0.0561; // deck underside
   const cellCv = document.createElement("canvas"); cellCv.width = 512; cellCv.height = 128;
   { const g = cellCv.getContext("2d"); g.fillStyle = "#2a62b8"; g.fillRect(0, 0, 512, 128); g.fillStyle = "rgba(0,0,0,.25)"; for (let i = 1; i < 8; i++) g.fillRect(i * 64 - 1, 0, 2, 128);
-    g.fillStyle = "#e9eef5"; g.font = "600 30px Barlow, Arial, sans-serif"; g.textBaseline = "middle"; g.fillText("9.6V  NiMH", 160, 64); }
+    g.fillStyle = "#e9eef5"; g.textBaseline = "middle"; g.font = "800 34px Barlow, Arial, sans-serif"; g.fillText("TENERGY", 110, 50); g.font = "600 24px Barlow, Arial, sans-serif"; g.fillText("9.6V  NiMH", 300, 52); g.fillText("8 x AA", 140, 92); }
   const cellTex = new THREE.CanvasTexture(cellCv); cellTex.colorSpace = THREE.SRGBColorSpace;
   const packMat = new Std({ map: cellTex, roughness: 0.5 }), packSide = std("#2a62b8", { roughness: 0.5 });
   const pack = new Mesh(new THREE.BoxGeometry(0.116, 0.0145, 0.0505), [packSide, packSide, packSide, packMat, packSide, packSide]);
@@ -327,14 +327,16 @@ function buildRobot(K, { pool = true } = {}) {
   wire("arm", [U(0.02, 0.0245), [-0.032, -0.034, 0.038], [-0.03, -0.031, 0.048]]);
   wire("arm", [B(-0.03, 0.024), [0.026, -0.034, 0.038], [0.024, -0.031, 0.048]]);
   wire("sonar", [U(0.026, 0.0245), [-0.022, -0.03, 0.045], [-0.016, -0.014, 0.066], [-0.013, -0.0085, 0.09], [-0.011, -0.0075, 0.125], [-0.008, -0.0085, 0.152]], true);
-  wire("pump", [B(-0.008, -0.004), [0.0, -0.03, -0.028], [-0.015, -0.03, -0.062], [-0.022, -0.026, -0.078]]);
+  wire("pump", [B(-0.008, -0.004), [0.02, -0.034, -0.03], [0.02, -0.03, -0.08], [-0.05, 0.0, -0.08], [-0.062, 0.0035, -0.058]]);
   wire("vision", [U(-0.028, -0.012), [-0.09, -0.035, -0.01]]);
 
   // ---- from the bench photos (November 2026), not in the CAD
-  // The ArUco marker: about 15 cm square, on three wooden dowels in printed green feet (one between the
-  // Arduino and the breadboard, one on the motor mount by the servos, one at the back corner), over the
-  // back of the deck toward the breadboard side, so the overhead camera sees it clear of the arm.
-  const MK = new Vector3(0.045, TOP + 0.078, -0.03), MS = 0.15;
+  // The ArUco marker: a printed sheet on a stiff board, about 14.5 cm square, resting on three wooden
+  // dowels in printed green feet. Two dowels stand in the gaps between each servo holder and its motor
+  // mount; the third stands in the gap between the Arduino and the breadboard. The marker is not
+  // centered on them: it overhangs the back of the robot, over the pump and the sample jar.
+  const MS = 0.145, MK_H = 0.086; // side, and height of its underside above the deck
+  const MK = new Vector3(-0.018, TOP + MK_H + 0.0015, -0.0125);
   const mkCv = document.createElement("canvas"); mkCv.width = mkCv.height = 600;
   {
     const g = mkCv.getContext("2d");
@@ -347,50 +349,109 @@ function buildRobot(K, { pool = true } = {}) {
     g.fillRect(14 + 3 * cell, 14 + 1 * cell, cell + 0.5, cell + 0.5);
   }
   const mkTex = new THREE.CanvasTexture(mkCv); mkTex.colorSpace = THREE.SRGBColorSpace; mkTex.anisotropy = 8;
-  const mkMat = [std("#e8e6df"), std("#e8e6df"), new Std({ map: mkTex, roughness: 0.75, transparent: true }), std("#e8e6df"), std("#e8e6df"), std("#e8e6df")];
+  const mkMat = [std("#e8e6df"), std("#e8e6df"), new Std({ map: mkTex, roughness: 0.75 }), std("#e8e6df"), std("#e8e6df"), std("#e8e6df")];
   const marker = new Group(); root.add(marker);
   const plate = new Mesh(new THREE.BoxGeometry(MS, 0.003, MS), mkMat); plate.position.copy(MK); marker.add(plate);
   const dowelMat = std("#d9bf8f", { roughness: 0.8 }), footMat = std("#2f9a4a", { roughness: 0.55 });
-  [[-0.009, 0.012], [0.075, 0.04], [0.06, -0.06]].forEach(([x, z]) => {
-    const d = new Mesh(new THREE.CylinderGeometry(0.003, 0.003, MK.y - TOP, 12), dowelMat); d.position.set(x, (MK.y + TOP) / 2, z); marker.add(d);
-    const f = new Mesh(new THREE.BoxGeometry(0.012, 0.01, 0.012), footMat); f.position.set(x, TOP + 0.005, z); marker.add(f);
+  const LEGS = [[0.0505, 0.056], [-0.052, 0.056], [-0.0085, 0.0]]; // servo/motor gaps, then Arduino/breadboard gap
+  LEGS.forEach(([x, z]) => {
+    const d = new Mesh(new THREE.CylinderGeometry(0.003, 0.003, MK_H, 12), dowelMat); d.position.set(x, TOP + MK_H / 2, z); marker.add(d);
+    const f = new Mesh(new THREE.CylinderGeometry(0.0055, 0.0065, 0.012, 16), footMat); f.position.set(x, TOP + 0.006, z); marker.add(f);
+    const cap_ = new Mesh(new THREE.CylinderGeometry(0.0065, 0.0055, 0.008, 16), footMat); cap_.position.set(x, TOP + MK_H - 0.004, z); marker.add(cap_);
   });
   const markerMats = [...new Set([...mkMat, dowelMat, footMat])];
   markerMats.forEach((m) => { m.transparent = true; });
-  // Step-down converter (an LM2596-type board with a three-digit voltage readout), propped behind the
-  // Arduino and tipped back so the readout faces up and out.
-  const buck = new Group(); buck.position.set(-0.062, TOP + 0.008, -0.052); buck.rotation.x = 0.9; root.add(buck);
-  const bkCv = document.createElement("canvas"); bkCv.width = 440; bkCv.height = 260;
+
+  // Step-down converter: an LM2596 buck module with a three-digit voltmeter, about 6 x 3.4 cm, standing
+  // upright on the Arduino side's edge of the deck under the marker, components facing out. Output
+  // terminal at the top, input at the bottom.
+  const BW_ = 0.034, BH_ = 0.06;
+  const buck = new Group(); buck.position.set(-0.0925, TOP - 0.006 + BH_ / 2, -0.02); buck.rotation.y = -Math.PI / 2; root.add(buck);
+  // in buck space: u = +x runs toward the robot's front, v = +y up, the components face +z (outward)
+  const bkCv = document.createElement("canvas"); bkCv.width = 340; bkCv.height = 600; // 10 px per mm
   {
-    const g = bkCv.getContext("2d");
-    g.fillStyle = "#1f56a8"; g.fillRect(0, 0, 440, 260);
-    g.fillStyle = "#0e0f10"; g.fillRect(150, 70, 150, 90);
-    g.fillStyle = "#ff3b2f"; g.font = "700 64px 'Courier New', monospace"; g.textBaseline = "middle"; g.fillText("8.8.", 158, 118);
-    g.fillStyle = "#e8eef8"; g.font = "600 18px Arial, sans-serif"; g.fillText("IN+", 20, 236); g.fillText("OUT+", 360, 236);
+    const g = bkCv.getContext("2d"), mm = 10;
+    g.fillStyle = "#1f56a8"; g.fillRect(0, 0, 340, 600);
+    g.strokeStyle = "rgba(255,255,255,.75)"; g.lineWidth = 2; g.strokeRect(6, 6, 328, 588);
+    // mounting holes
+    g.fillStyle = "#d8c27a"; [[30, 30], [310, 30], [30, 570], [310, 570]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 22, 0, 7); g.fill(); });
+    g.fillStyle = "#0f1012"; [[30, 30], [310, 30], [30, 570], [310, 570]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 14, 0, 7); g.fill(); });
+    // traces and pads
+    g.strokeStyle = "rgba(120,170,240,.55)"; g.lineWidth = 5;
+    [[[60, 120], [60, 260], [140, 300]], [[200, 420], [200, 360], [120, 340]], [[260, 180], [300, 220], [300, 420]]].forEach((pts) => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach((p_) => g.lineTo(...p_)); g.stroke(); });
+    g.fillStyle = "#c9a85a"; for (let i = 0; i < 22; i++) g.fillRect(((i * 47) % 280) + 30, ((i * 89) % 480) + 60, 6, 6);
+    // silkscreen
+    g.fillStyle = "#eef3fb"; g.font = "700 20px Arial, sans-serif"; g.textBaseline = "middle"; g.textAlign = "center";
+    g.fillText("OUT+", 70, 18 + 0); g.fillText("OUT-", 190, 18);
+    g.fillText("IN+", 90, 584); g.fillText("IN-", 190, 584);
+    g.save(); g.translate(318, 300); g.rotate(-Math.PI / 2); g.font = "600 16px Arial, sans-serif"; g.fillText("DC-DC  LM2596", 0, 0); g.restore();
+    g.font = "600 14px Arial, sans-serif"; g.fillText("IN  OUT", 250, 470);
+    void mm;
   }
-  const bkTex = new THREE.CanvasTexture(bkCv); bkTex.colorSpace = THREE.SRGBColorSpace;
+  const bkTex = new THREE.CanvasTexture(bkCv); bkTex.colorSpace = THREE.SRGBColorSpace; bkTex.anisotropy = 8;
   const bkBlue = std("#1f56a8", { roughness: 0.45 });
-  box(0.072, 0.042, 0.0016, [bkBlue, bkBlue, bkBlue, bkBlue, bkBlue, new Std({ map: bkTex, roughness: 0.45 })], 0, 0, 0, buck); // its face is -z, toward the back
-  box(0.024, 0.014, 0.006, std("#141516", { roughness: 0.35 }), 0.003, 0.002, -0.0035, buck); // display
-  box(0.021, 0.008, 0.0004, new Std({ color: "#ff3b2f", emissive: "#ff2a1f", emissiveIntensity: 0.9 }), 0.003, 0.002, -0.0067, buck);
-  [-0.026, 0.026].forEach((x) => box(0.01, 0.009, 0.008, std("#2d6fd6", { roughness: 0.5 }), x, -0.012, -0.0048, buck)); // terminal blocks
-  const coil = new Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.007, 16), std("#2a2c2e")); coil.rotation.x = Math.PI / 2; coil.position.set(-0.018, 0.01, -0.0043); buck.add(coil);
-  box(0.0095, 0.004, 0.005, std("#2f73d8"), 0.022, 0.01, -0.0033, buck);
-  // The peristaltic pump, hanging off the back edge on a printed clip: white pump head at the bottom,
-  // silver motor on top, motor axis vertical.
-  const PUMP = new Vector3(-0.025, TOP, -0.084);
+  box(BW_, BH_, 0.0016, [bkBlue, bkBlue, bkBlue, bkBlue, new Std({ map: bkTex, roughness: 0.45 }), bkBlue], 0, 0, 0, buck);
+  const onB = (w, h, d, mat, u, v) => box(w, h, d, mat, u, v, 0.0008 + d / 2, buck); // a part sitting on the face
+  // screw terminals (blue, two screws each, screw heads facing out)
+  const termMat = std("#2a6fe0", { roughness: 0.5 }), screwMat = std("#c9ccce", { metalness: 0.9, roughness: 0.3 });
+  [[-0.0055, 0.0245], [-0.0035, -0.0245]].forEach(([u, v]) => {
+    onB(0.0102, 0.0078, 0.009, termMat, u, v);
+    [-0.0025, 0.0025].forEach((du) => {
+      const sc = new Mesh(new THREE.CylinderGeometry(0.0017, 0.0017, 0.0008, 14), screwMat); sc.rotation.x = Math.PI / 2; sc.position.set(u + du, v, 0.0101); buck.add(sc);
+      box(0.0026, 0.0004, 0.0003, std("#55585b"), u + du, v, 0.0106, buck); // slot
+    });
+  });
+  // electrolytic caps: dark sleeve, silver vented top
+  const sleeve = std("#1a1c22", { roughness: 0.4 }), capTop = std("#c4c8cb", { metalness: 0.8, roughness: 0.35 });
+  [[-0.0108, 0.0135], [-0.0112, -0.0165]].forEach(([u, v]) => {
+    const c = new Mesh(new THREE.CylinderGeometry(0.0039, 0.0039, 0.0095, 20), sleeve); c.rotation.x = Math.PI / 2; c.position.set(u, v, 0.0008 + 0.00475); buck.add(c);
+    const t = new Mesh(new THREE.CylinderGeometry(0.0036, 0.0036, 0.0004, 20), capTop); t.rotation.x = Math.PI / 2; t.position.set(u, v, 0.0105); buck.add(t);
+  });
+  // shielded inductor ("470"), the LM2596 in its TO-263 package, a Schottky diode
+  const indCv = document.createElement("canvas"); indCv.width = indCv.height = 64;
+  { const g = indCv.getContext("2d"); g.fillStyle = "#2b2d30"; g.fillRect(0, 0, 64, 64); g.fillStyle = "#d8d8d4"; g.font = "700 18px Arial"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("470", 32, 32); }
+  const indTex = new THREE.CanvasTexture(indCv); indTex.colorSpace = THREE.SRGBColorSpace;
+  const indDark = std("#2b2d30", { roughness: 0.6 });
+  box(0.0115, 0.0115, 0.0065, [indDark, indDark, indDark, indDark, new Std({ map: indTex, roughness: 0.6 }), indDark], -0.0035, 0.002, 0.0008 + 0.00325, buck);
+  onB(0.0101, 0.0088, 0.0044, std("#141516", { roughness: 0.4 }), -0.0005, -0.0115);
+  onB(0.0101, 0.0026, 0.0012, screwMat, -0.0005, -0.0065); // its tab
+  onB(0.0052, 0.0028, 0.0021, std("#1b1c1e"), 0.0095, -0.0145);
+  // multi-turn trimmer: blue body with a brass adjusting screw
+  onB(0.0049, 0.0097, 0.0095, std("#2f73d8", { roughness: 0.4 }), -0.0128, -0.002);
+  const brass = new Mesh(new THREE.CylinderGeometry(0.0011, 0.0011, 0.0016, 10), std("#c9a24a", { metalness: 0.9, roughness: 0.35 })); brass.position.set(-0.0128, 0.0035, 0.0068); buck.add(brass);
+  // the voltmeter: a black three-digit display (its digits run along the board) with red segments
+  const dispCv = document.createElement("canvas"); dispCv.width = 120; dispCv.height = 240;
+  {
+    const g = dispCv.getContext("2d");
+    g.fillStyle = "#0d0e0f"; g.fillRect(0, 0, 120, 240);
+    g.save(); g.translate(60, 120); g.rotate(-Math.PI / 2); g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "700 74px 'Courier New', monospace";
+    g.fillStyle = "rgba(255,60,40,.12)"; g.fillText("8.8.8.", 0, 4); // the unlit segments
+    g.fillStyle = "#ff3b2f"; g.fillText(" 1 0.", 0, 4); // the reading in the top photo
+    g.restore();
+  }
+  const dispTex = new THREE.CanvasTexture(dispCv); dispTex.colorSpace = THREE.SRGBColorSpace;
+  const dispBody = std("#141516", { roughness: 0.35 });
+  box(0.0112, 0.0225, 0.0062, [dispBody, dispBody, dispBody, dispBody, new Std({ map: dispTex, emissiveMap: dispTex, emissive: "#ffffff", emissiveIntensity: 0.55, roughness: 0.3 }), dispBody], 0.0098, 0.006, 0.0008 + 0.0031, buck);
+  // two tiny push buttons, a power LED and a few SMD parts
+  [[0.0125, -0.021], [0.0072, -0.021]].forEach(([u, v]) => { onB(0.0035, 0.0035, 0.0015, std("#d9d9d4"), u, v); onB(0.0018, 0.0018, 0.0012, std("#1b1c1e"), u, v).position.z += 0.0012; });
+  onB(0.0016, 0.0008, 0.0006, new Std({ color: "#ff5040", emissive: "#ff2a1f", emissiveIntensity: 1 }), 0.0125, 0.0215);
+  [[0.004, 0.0195], [0.004, -0.004], [0.0125, -0.007], [-0.0065, 0.0145]].forEach(([u, v]) => onB(0.002, 0.0012, 0.0006, std("#2a2420"), u, v));
+
+  // The peristaltic pump, standing on the back corner of the deck on the Arduino side under the marker:
+  // white pump head at the bottom with its two hose barbs, silver motor on top, motor axis vertical.
+  const PUMP = new Vector3(-0.064, TOP, -0.054);
   const pumpG = new Group(); pumpG.position.copy(PUMP); root.add(pumpG);
   const white = std("#ecebe6", { roughness: 0.55 });
-  const head = new Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.021, 28), white); head.position.y = -0.021; pumpG.add(head);
-  const lobes = new Mesh(new THREE.CylinderGeometry(0.0185, 0.0185, 0.004, 6), white); lobes.position.y = -0.012; pumpG.add(lobes);
-  const motorM = new Mesh(new THREE.CylinderGeometry(0.0122, 0.0122, 0.03, 24), std("#c4c8cb", { metalness: 0.85, roughness: 0.3 })); motorM.position.y = 0.005; pumpG.add(motorM);
-  const capM = new Mesh(new THREE.CylinderGeometry(0.0112, 0.0112, 0.002, 24), white); capM.position.y = 0.021; pumpG.add(capM);
-  const lead = new Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.009, 10), std("#c8d23a", { roughness: 0.5 })); lead.rotation.z = 1.2; lead.position.set(0.004, 0.024, 0); pumpG.add(lead);
-  [-0.024, -0.016].forEach((y) => { const n = new Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.009, 10), white); n.rotation.z = Math.PI / 2; n.position.set(0.019, y, 0.006); pumpG.add(n); });
-  box(0.02, 0.012, 0.012, std("#2f9a4a", { roughness: 0.55 }), 0, -0.004, 0.016, pumpG); // clip to the deck
-  // The sample container: a clear jar with a black screw lid at the back by the breadboard. It fills as
-  // the pump runs (setFlow).
-  const JAR = new Vector3(0.015, TOP, -0.049), JR = 0.026, JH = 0.054;
+  const head = new Mesh(new THREE.CylinderGeometry(0.0165, 0.0165, 0.02, 28), white); head.position.y = 0.01; pumpG.add(head);
+  const lobes = new Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.004, 6), white); lobes.position.y = 0.019; pumpG.add(lobes);
+  const motorM = new Mesh(new THREE.CylinderGeometry(0.0122, 0.0122, 0.03, 24), std("#c4c8cb", { metalness: 0.85, roughness: 0.3 })); motorM.position.y = 0.036; pumpG.add(motorM);
+  const capM = new Mesh(new THREE.CylinderGeometry(0.0112, 0.0112, 0.002, 24), white); capM.position.y = 0.052; pumpG.add(capM);
+  const lead = new Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.009, 10), std("#c8d23a", { roughness: 0.5 })); lead.rotation.z = 1.2; lead.position.set(0.004, 0.055, 0); pumpG.add(lead);
+  [0.006, 0.014].forEach((y) => { const n = new Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.009, 10), white); n.rotation.z = Math.PI / 2; n.position.set(0.019, y, 0.004); pumpG.add(n); });
+  // The sample container: a clear jar with a black screw lid, on the deck between the pump and the
+  // breadboard, also under the marker. It fills as the pump runs (setFlow).
+  const JAR = new Vector3(-0.012, TOP, -0.049), JR = 0.024, JH = 0.052;
   const jar = new Group(); jar.position.copy(JAR); root.add(jar);
   const glass = new Mesh(new THREE.CylinderGeometry(JR, JR, JH, 32, 1, true), new Std({ color: "#dfe9ee", roughness: 0.1, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
   glass.position.y = JH / 2; jar.add(glass);
@@ -398,8 +459,9 @@ function buildRobot(K, { pool = true } = {}) {
   const lid = new Mesh(new THREE.CylinderGeometry(JR + 0.0015, JR + 0.0015, 0.013, 32), std("#141516", { roughness: 0.45 })); lid.position.y = JH + 0.0065; jar.add(lid);
   const jarWater = new Mesh(new THREE.CylinderGeometry(JR - 0.0015, JR - 0.0015, 1, 32), new Std({ color: "#3b8fd6", roughness: 0.15, transparent: true, opacity: 0.75 }));
   jarWater.position.y = 0.002; jarWater.scale.y = 0.0001; jarWater.visible = false; jar.add(jarWater);
-  // New tubing: pump to the CAD's tube where it was cut, and pump to the jar lid. The join point and the
-  // tube's radius are read off the CAD mesh so the two meet cleanly.
+  // New tubing: from the pump up under the marker, over the gap between the Arduino and the breadboard
+  // and down into the CAD's tube where it was cut; and a short run from the pump into the jar's lid. The
+  // join point and the tube's radius are read off the CAD mesh so the two meet cleanly.
   const j0 = new Vector3(), j1 = new Vector3(); let tubeR = 0.0024;
   {
     const m8 = M("m8"); m8.updateMatrixWorld(true);
@@ -416,15 +478,14 @@ function buildRobot(K, { pool = true } = {}) {
   const tubeMat = bendable(std("#eef2f2", { roughness: 0.3 }), true);
   const dir = j1.clone().sub(j0).normalize();
   const feed = new THREE.CatmullRomCurve3([
-    // up over the back edge, along the deck past the jar and beside the middle dowel, into the CAD's tube
-    new Vector3(PUMP.x + 0.022, PUMP.y - 0.016, PUMP.z + 0.006), new Vector3(-0.002, TOP + 0.004, -0.07),
-    new Vector3(-0.019, TOP + 0.004, -0.035), new Vector3(-0.016, TOP + 0.004, 0.012),
-    j0.clone().addScaledVector(dir, -0.008), j0.clone().addScaledVector(dir, 0.001)], false, "centripetal");
+    new Vector3(PUMP.x + 0.0235, PUMP.y + 0.014, PUMP.z + 0.004), new Vector3(-0.04, TOP + 0.03, -0.03),
+    new Vector3(-0.032, TOP + 0.075, -0.012), new Vector3(-0.016, TOP + 0.06, 0.012), new Vector3(-0.012, TOP + 0.025, 0.026),
+    j0.clone().addScaledVector(dir, -0.006), j0.clone().addScaledVector(dir, 0.001)], false, "centripetal");
   root.add(new Mesh(new THREE.TubeGeometry(feed, 60, tubeR, 10), tubeMat));
   const jarTubeMat = std("#eef2f2", { roughness: 0.3 });
   const toJar = new THREE.CatmullRomCurve3([
-    new Vector3(PUMP.x + 0.022, PUMP.y - 0.024, PUMP.z + 0.006), new Vector3(PUMP.x + 0.036, PUMP.y - 0.008, PUMP.z + 0.004),
-    new Vector3(JAR.x - 0.014, JAR.y + JH + 0.02, JAR.z - 0.012), new Vector3(JAR.x - 0.006, JAR.y + JH + 0.013, JAR.z - 0.006)], false, "centripetal");
+    new Vector3(PUMP.x + 0.0235, PUMP.y + 0.006, PUMP.z + 0.004), new Vector3(-0.038, TOP + 0.04, -0.062),
+    new Vector3(-0.036, TOP + 0.075, -0.058), new Vector3(-0.022, TOP + 0.072, -0.052), new Vector3(-0.016, TOP + 0.066, -0.05)], false, "centripetal");
   root.add(new Mesh(new THREE.TubeGeometry(toJar, 40, tubeR, 10), jarTubeMat));
 
   // Silver three-arm hubs on the outside of each wheel.
@@ -507,13 +568,13 @@ async function tour(sec, opts = {}) {
     { pos: [0.3, 0.02, -0.17], tgt: [0.05, -0.08, 0.02],
       tags: [[[0.108, -0.06, 0.08], "8 cm wheel, direct drive", "r"], [[0.083, -0.068, 0.008], "JGY370 worm gear, 6 V, 30 RPM", "r"], [[0, -0.107, -0.047], "Rear caster", "l"]] },
     { pos: [0.02, 0.24, -0.15], tgt: [0, -0.05, 0.012],
-      tags: [[[UNO.x, UNO.y, UNO.z], "Arduino UNO R4 WiFi", "r"], [[-0.025, -0.045, -0.084], "Peristaltic pump", "l"], [[0.015, 0.012, -0.049], "Sample container", "r"], [[-0.062, -0.042, -0.052], "Step-down converter", "l"]] },
+      tags: [[[UNO.x, UNO.y, UNO.z], "Arduino UNO R4 WiFi", "r"], [[-0.064, -0.02, -0.054], "Peristaltic pump", "l"], [[-0.012, 0.01, -0.049], "Sample container", "r"], [[-0.0925, -0.02, -0.02], "Step-down converter", "l"]] },
     { pos: [-0.3, 0.05, 0.17], tgt: [0, -0.03, 0.09],
       tags: [[[-0.027, -0.026, 0.065], "2 × SG90 servo", "l"], [[0, -0.01, 0.11], "Sampling arm", "r"], [[0, -0.061, 0.135], "Color sensor, under the arm", "r"]] },
     { pos: [0.15, 0.1, 0.36], tgt: [0, -0.07, 0.15],
       tags: [[[0, -0.024, 0.161], "HC-SR04", "r"], [[0.04, POOL.y, 0.19], "20, 30 or 40 mm deep", "r"]] },
     { pos: [-0.12, 0.2, 0.31], tgt: [0, -0.045, 0.095],
-      tags: [[[-0.009, 0.004, 0.1], "Sample line", "l"], [[-0.014, -0.098, 0.146], "Intake hose", "r"], [[-0.025, -0.045, -0.084], "Pump, on D10", "r"]] },
+      tags: [[[-0.009, 0.004, 0.1], "Sample line", "l"], [[-0.014, -0.098, 0.146], "Intake hose", "r"], [[-0.064, -0.02, -0.054], "Pump, on D10", "r"]] },
   ];
   const N = shots.length;
   shots.forEach((s) => {
@@ -975,7 +1036,7 @@ async function course(sec, routes) {
   // ---- tags along the way: why it moves the way it does, and what's powering it. Anchors are in the
   // robot's own (CAD) frame.
   const TAGS = {
-    chase: [[[0.045, 0.03, -0.035], "ArUco marker: the overhead camera sends x, y and heading over Wi-Fi"],
+    chase: [[[-0.018, 0.038, -0.0125], "ArUco marker: the overhead camera sends x, y and heading over Wi-Fi"],
       [[0.11, -0.08, 0.066], "Turns in place: one wheel back, one forward"],
       [[0.083, -0.07, 0.02], "2 × DRV8871 on D3 D5 and D6 D9, PWM capped at 60%"]],
     pool: [[[-0.027, -0.026, 0.065], "2 × SG90 on D11 and A2, 1° steps"],
@@ -984,7 +1045,7 @@ async function course(sec, routes) {
       [[-0.014, -0.1, 0.146], "Pump: a MOSFET on D10 switches the 9.6 V pack"]],
     back: [[[0, -0.01, 0.11], "Arm up first, so it clears the rim"],
       [[0, -0.045, -0.04], "Backs straight out, then turns for the top wall"]],
-    under: [[[0, -0.064, 0.02], "9.6 V NiMH pack: powers both drivers and the Arduino's VIN"],
+    under: [[[0, -0.064, 0.02], "Tenergy 9.6 V NiMH pack: powers both drivers and the Arduino's VIN"],
       [[0.046, -0.06, 0.062], "DRV8871 driver per motor, on D3 D5 and D6 D9"],
       [[-0.083, -0.08, 0.04], "JGY370 worm-gear motor, one per wheel"],
       [[0, -0.118, -0.046], "Rear caster on a spacer"],

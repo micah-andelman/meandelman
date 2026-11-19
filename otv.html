@@ -195,7 +195,7 @@
         <template data-k="drive">Two DRV8871 H-bridges drive the motors. PWM is capped at 153 of 255 because the motors are rated for 6 V and the pack is 9.6 V.</template>
         <template data-k="arm">Two SG90 servos move together one degree at a time, which keeps their current spikes from browning out the 5 V rail they share.</template>
         <template data-k="pump">A MOSFET on D10 turns the pump on and off to pull the water sample.</template>
-        <template data-k="power">A 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V.</template>
+        <template data-k="power">A Tenergy 9.6 V NiMH pack powers the motor drivers directly and feeds the Arduino's VIN pin, where its onboard regulator brings it down to 5 V.</template>
         <template data-code="vision"><code data-file="otv/nav.ino" data-start="144">// Turn in place to an absolute heading. PWM is proportional to the
 // heading error, clamped to MIN_TURN_PWM..MAX_PWM.
 // Positive error = counter-clockwise = left wheel back, right forward.
