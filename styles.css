@@ -975,7 +975,7 @@ html .hero > .ly.ly, html .hero > .ly-tag.ly-tag { position: absolute; z-index: 
   .viewsw { display: inline-flex; }
   .scene > .diagram .figbar .steps { display: none; }
   /* exploded hero */
-  html.explode .hero-scene { height: calc(100svh - var(--hh, 52px) + 65vh); perspective: 1100px; }
+  html.explode .hero-scene { height: calc(100svh - var(--hh, 52px) + 30vh); perspective: 1100px; }
   html.explode .hero-scene .hero { top: var(--hh, 52px); }
   .hero { --zs: .55; }
   .ly-tag { font-size: 14px; padding: 4px 9px; }
@@ -1114,7 +1114,7 @@ html.capx-on .capscene > .capdraw { position: sticky; top: calc(var(--hh, 56px) 
 @media (prefers-reduced-motion: reduce) { .capdraw .flash { display: none; } }
 /* The exploded name plate reaches below its scene, so the next section starts lower. */
 html.explode .hero-scene { margin-bottom: 38vh; }
-@media screen and (max-width: 760px) { html.explode .hero-scene { margin-bottom: 18vh; } }
+@media screen and (max-width: 760px) { html.explode .hero-scene { margin-bottom: 4vh; } }
 @media print { html.explode .hero-scene { margin-bottom: 0; } }
 .capdraw .ghost path { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 6; opacity: calc(var(--e, 0) * .7); }
 .capdraw .c-pcmic { stroke: #0e3a24; stroke-width: 1.4; fill: none; }
@@ -1197,7 +1197,7 @@ html.powerup .mtrace .bfill { animation: power-line .9s ease-out; }
 .o3-still .o3-steps { margin-top: 24px; }
 @media screen and (max-width: 760px) {
   .o3-live, .o3-still { --o3h: 100svh; }
-  .o3-live { height: calc(var(--o3h) * 6); }
+  .o3-live { height: calc(var(--o3h) * 4.5); } /* phones: less scrolling per chapter */
   .o3-live .o3-bar { display: none; }
   .o3-live .o3-steps { bottom: 20px; width: calc(100% - 2 * var(--gutter)); }
   .o3-live .o3-steps li { padding: 14px 16px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); box-shadow: 0 0 0 1px var(--rule); }
@@ -1258,7 +1258,7 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 /* Scroll-driven course run: a tall section, the stage pinned while you scroll through it. */
 .o3r.o3-live.o3r-scrub { height: calc(var(--o3h) * 9); }
 .o3r.o3r-scrub .o3r-skip, .o3r.o3r-scrub .o3r-replay { display: none; }
-@media screen and (max-width: 760px) { .o3r.o3-live.o3r-scrub { height: calc(var(--o3h) * 8); } }
+@media screen and (max-width: 760px) { .o3r.o3-live.o3r-scrub { height: calc(var(--o3h) * 5.5); } }
 .brief.ask .msg { max-width: 86%; }
 
 /* Pluto: the morning brief and the question side by side, so they don't push the page down. */
@@ -1271,7 +1271,7 @@ html.o3c-on .capscene, html.o3c-on .capkey { display: none; }
 /* Pluto in 3D (otv3d.js, #pluto-3d): only when it's live; the chats and the 2D diagram stay either way. */
 .o3p { display: none; }
 .o3p.o3-live { display: block; height: calc(var(--o3h) * 7); }
-@media screen and (max-width: 760px) { .o3p.o3-live { height: calc(var(--o3h) * 6); } }
+@media screen and (max-width: 760px) { .o3p.o3-live { height: calc(var(--o3h) * 5); } }
 @media print { .o3p { display: none !important; } }
 
 /* Phones: the pinned 3D stages fill the screen as it is right now (dvh), so there is no empty strip at the
@@ -1801,5 +1801,10 @@ html.thermal .pb-heat { opacity: .9; }
 .ph-grid figure { margin: 0; }
 .ph-grid img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 4; object-fit: cover; border-radius: 12px; box-shadow: 0 0 0 1px var(--rule), 0 18px 40px rgb(0 0 0 / .18); }
 .ph-grid figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-3); }
-@media screen and (max-width: 760px) { .ph-grid { grid-template-columns: 1fr; } }
+@media screen and (max-width: 760px) {
+  /* phones: the photos swipe sideways instead of stacking, with the next one peeking in */
+  .ph-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 84%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) 6px; scroll-padding: 0 var(--gutter); scrollbar-width: none; }
+  .ph-grid::-webkit-scrollbar { display: none; }
+  .ph-grid figure { scroll-snap-align: start; }
+}
 @media print { .ph-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } .ph-grid img { box-shadow: none; } }

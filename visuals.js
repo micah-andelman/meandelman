@@ -405,7 +405,7 @@
     hero.append(tagCu, tagSilk);
     let last = -1;
     const run = () => {
-      const span = innerHeight * 0.75;
+      const span = innerHeight * (WIDE.matches ? 0.75 : 0.36); // phones: about half the scroll, so the projects come sooner
       const e = ease(clamp((scrollY - innerHeight * 0.04) / span));
       if (Math.abs(e - last) < 0.001) return;
       last = e;
