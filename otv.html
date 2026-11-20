@@ -76,7 +76,7 @@
       <dl class="meta">
         <div><dt>Class</dt><dd>ENES100, Introduction to Engineering Design</dd></div>
         <div><dt>When</dt><dd>Fall 2026</dd></div>
-        <div><dt>Role</dt><dd>Electrical and software lead on an eight-person team</dd></div>
+        <div><dt>Role</dt><dd>Electrical subsystem and navigation code, solo, on an eight-person team</dd></div>
         <div><dt>Built with</dt><dd>Arduino UNO R4 WiFi, C++, arduino-cli, GitHub Actions</dd></div>
         <div><dt>Status</dt><dd>Rewiring the robot before the final arena run</dd></div>
       </dl>
@@ -84,7 +84,7 @@
     <p class="glance-skip"><a href="#otv-parts">Skip the 3D tour</a></p>
     <div class="p-body">
       <p class="lede">An autonomous vehicle for ENES100's water-sampling mission. An overhead camera tells it where it is in the arena. At the pool it lowers an arm, measures the water's depth, checks it for pollution and pumps a sample. Then it follows the wall past the obstacles and drives under the limbo to the goal.</p>
-      <p>I am the only electrical engineer on the team, so I wire the robot and build its firmware. My teammates each write a subsystem as its own Arduino sketch, and I merge those into one codebase and fix whatever breaks. I test everything in ENES100's browser simulator first, and a single build flag switches the same code between the simulator and the real robot.</p>
+      <p>I designed the robot's entire electrical subsystem on my own: power, motor drivers, sensors and wiring. I also built all of its navigation code alone, with Claude Code as my only help. My teammates each wrote and calibrated one subsystem as its own Arduino sketch, and I merged those into one codebase and fixed whatever broke. I test everything in ENES100's browser simulator first, and a single build flag switches the same code between the simulator and the real robot.</p>
       <dl class="specs">
         <div><dt>40/40</dt><dd>randomized simulator runs passed</dd></div>
         <div><dt>1,620</dt><dd>lines of firmware</dd></div>
