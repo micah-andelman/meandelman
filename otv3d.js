@@ -79,11 +79,11 @@ const compileFirst = (renderer, canvas) => {
   };
 };
 
-const makeRenderer = async (K, canvas) => {
+const makeRenderer = async (K, canvas, dpr = 1.5) => {
   const { THREE } = K;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
   await breathe();
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); // full-screen scenes: 1.5x keeps frames steady
+  renderer.setPixelRatio(Math.min(devicePixelRatio, dpr)); // full-screen scenes: 1.5x keeps frames steady; home cards ask for less
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -616,7 +616,7 @@ async function tour(sec, opts = {}) {
   const tagsEl = sec.querySelector(".o3-tags");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
-  const { renderer, scene } = await makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5);
   const cam = new THREE.PerspectiveCamera(30, 1, 0.005, 5);
   await breathe();
   const R = buildRobot(K, { pool: true });
@@ -1490,7 +1490,7 @@ async function capScene(sec, opts = {}) {
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const flashEl = sec.querySelector(".o3c-flash");
-  const { renderer, scene } = await makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5);
   const cam = new THREE.PerspectiveCamera(32, 1, 0.01, 10);
   const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
 
@@ -1861,7 +1861,7 @@ async function plutoScene(sec, opts = {}) {
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const { renderer, scene } = await makeRenderer(K, canvas);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // a light scene: full density on high-DPI screens
+  renderer.setPixelRatio(Math.min(devicePixelRatio, opts.card ? 1.25 : 2)); // a light scene: full density on high-DPI screens (less as a home card)
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 60);
   const FONT = "Barlow, system-ui, sans-serif", MONO = "ui-monospace, Consolas, monospace";
   const TEX = 2; // textures drawn at twice their layout size, so text stays sharp up close
@@ -2240,7 +2240,7 @@ async function buildfestScene(sec, opts = {}) {
     W = canvas.clientWidth; H = canvas.clientHeight;
     if (!W || !H) return;
     // a small canvas: render at the screen's full density (up to 3x on phones) so the screenshots stay crisp
-    renderer.setPixelRatio(Math.min(devicePixelRatio, W < 600 ? 3 : 2));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, W < 600 ? 2 : 1.5));
     renderer.setSize(W, H, false);
     cam.aspect = W / H; cam.updateProjectionMatrix();
   };
@@ -2286,11 +2286,16 @@ if (cardEls.length && GL && !REDUCED) {
   let lastScroll = -1e9;
   addEventListener("scroll", () => { lastScroll = performance.now(); }, { passive: true });
   const scrolling = () => performance.now() - lastScroll < 160;
-  // Full frame rate while on screen and still, half while scrolling, nothing off screen. One frame is
-  // drawn right away, in the idle slot the card is built in, so shaders compile then.
+  // About 30 fps while on screen and still, 15 while scrolling, nothing off screen. Two cards share the
+  // GPU (often an integrated one) with the page, and their clocks run on time, so a lower rate only means
+  // fewer steps, not slower motion. One frame is drawn right away, in the idle slot the card is built in,
+  // so shaders compile then.
   const cardLoop = (sec, frame) => {
-    let n = 0;
-    loopWhileVisible(sec, (t) => { if (!scrolling() || (n++ & 1) === 0) frame(t); });
+    let last = -1e9;
+    loopWhileVisible(sec, (t) => {
+      if (t - last < (scrolling() ? 64 : 31)) return;
+      last = t; frame(t);
+    });
   };
   // a looping 0..1 progress: play forward, hold, then the scene's own way back to the start
   const clockOf = (play, hold, back = 0, backTo = 0) => {
@@ -2315,7 +2320,7 @@ if (cardEls.length && GL && !REDUCED) {
   // Building a card (parsing the model, the environment map, compiling shaders) takes a frame or more,
   // so wait for the page to stop moving: requestIdleCallback's timeout could otherwise fire mid-scroll.
   const idle = (fn) => {
-    const go = () => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 600));
+    const go = () => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 300 }) : setTimeout(fn, 100)); // cards already playing leave few idle slots, so don't wait long for one
     const wait = () => (scrolling() ? setTimeout(wait, 200) : go());
     wait();
   };
@@ -2339,7 +2344,7 @@ if (cardEls.length && GL && !REDUCED) {
   const near = new IntersectionObserver((es) => es.forEach((e) => {
     if (!e.isIntersecting) return;
     near.unobserve(e.target); queue.push(e.target); buildNext();
-  }), { rootMargin: "50% 0px" });
+  }), { rootMargin: "100% 0px" });
   const start = () => cardEls.forEach((sec) => near.observe(sec));
   if (document.readyState === "complete") start(); else addEventListener("load", start, { once: true });
 }
