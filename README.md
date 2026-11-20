@@ -25,13 +25,12 @@ It's plain HTML, CSS and JavaScript with no framework or build step, hosted on C
 | `main.js` | Diagrams, phone parts lists, route replay, theme switch, scroll scenes |
 | `visuals.js` | The hero (exploded layers, protoboard sign), component artwork, schematic view, linked animations, card art |
 | `extras.js` | Code viewer, replay status, serial monitor, thermal view, easter eggs |
-| `functions/api/pluto-status.js` | Demo status endpoint (Cloudflare Pages Function) |
 | `404.html` | The "Open circuit" page. Links are absolute, since it's served at whatever address was broken |
 | `_headers` | Cloudflare Pages response headers: security headers (CSP, HSTS, no framing) and long caching for `vendor/` and `fonts/` |
 | `photos.py` | Resizes photos in `photos-in/` and strips their metadata |
 | `deploy.sh` | Builds `dist/` and deploys to Cloudflare Pages |
 | `vendor/` | [Lenis](https://github.com/darkroomengineering/lenis) smooth scrolling (MIT) and [three.js](https://threejs.org) 0.170.0 for the 3D OTV (MIT) |
-| `otv3d.js` | The 3D scenes: the OTV tour, the course run (scroll between stops; the pool, the underside and the limbo play out on their own), the exploded Brimcam cap and Pluto as a 3D sequence diagram (one lane per service, each message an arrow, lane heads that fill in and stick with you as you scroll). Also plays the home page cards on a clock. Loads three.js and the model only when a scene is near (on the home page, in idle time after load) |
+| `otv3d.js` | The 3D scenes: the OTV tour, the course run (scroll between stops; the pool, the underside and the limbo play out on their own), the exploded BrimCam cap and Pluto as a 3D sequence diagram (one lane per service, each message an arrow, lane heads that fill in and stick with you as you scroll). Also plays the home page cards on a clock. Loads three.js and the model only when a scene is near (on the home page, in idle time after load) |
 | `models/otv.glb` | The OTV, converted from the team's Onshape STEP export (meshopt-compressed). The Arduino, breadboard and wiring are drawn in `otv3d.js` from photos |
 
 ## Run it locally
@@ -40,7 +39,7 @@ It's plain HTML, CSS and JavaScript with no framework or build step, hosted on C
 python -m http.server 8765
 ```
 
-Links between pages use the `.html` names so this works; on Cloudflare they redirect to the clean URLs. The Pluto status light needs the Pages Function, and the `_headers` file only applies on Cloudflare, so for either use `npx wrangler pages dev .` instead.
+Links between pages use the `.html` names so this works; on Cloudflare they redirect to the clean URLs. The `_headers` file only applies on Cloudflare, so to test it use `npx wrangler pages dev .` instead.
 
 ## Deploy
 
@@ -52,4 +51,4 @@ This copies the site into `dist/`, adds content hashes to the CSS and JS links s
 
 ## How it was built
 
-I designed the site: the circuit-board concept, what each page shows and how it should behave. The code was written with [Claude Code](https://claude.com/claude-code), and I steered and tested it. I'm an electrical engineering student, and AI writes most of my code.
+I designed the site: the circuit-board concept, what each page shows and how it should behave. Built with [Claude Code](https://claude.com/claude-code).

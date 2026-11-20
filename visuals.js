@@ -355,7 +355,7 @@
 
 // ===================================================================== Round two
 // Exploded hero layers, schematic view, camera's-eye arena, linked animations,
-// cursor lighting, current in the name and the exploded Brimcam cap.
+// cursor lighting, current in the name and the exploded BrimCam cap.
 (() => {
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const FINE = matchMedia("(hover: hover) and (pointer: fine) and (min-width: 761px)");
@@ -1030,7 +1030,7 @@
     });
   }
 
-  // ------------------------------------------------------------ Exploded Brimcam cap
+  // ------------------------------------------------------------ Exploded BrimCam cap
   // The cap pins while you scroll: it comes apart into its parts, holds with every part
   // labeled, goes back together, then the camera looks down at a tray and takes the shot,
   // which runs through the flow diagram below (camera, Herald, Gemini, macros).

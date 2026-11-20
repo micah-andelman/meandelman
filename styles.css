@@ -656,7 +656,7 @@ button.power[aria-checked="true"] .knob .moon { opacity: 1; transform: none; }
 
 /* =====================================================================
    Visual layer (visuals.js): hero board, component art, 7-segment stats,
-   Pluto rack and brief, Brimcam drawing and viewfinder, panel edges,
+   Pluto rack and brief, BrimCam drawing and viewfinder, panel edges,
    parts list, connector and title block.
    ===================================================================== */
 :root { --cut: rgb(0 0 0 / .14); --mask-tex: .05; }
@@ -770,7 +770,7 @@ html.thermal .diagram .blk .deco rect, html.thermal .diagram .blk .deco circle {
 @keyframes typing { 50% { opacity: .35; } }
 .brief .brief-note { margin-top: 2px; font-size: 13.5px; color: var(--ink-3); }
 
-/* ---------- Brimcam: cap drawing ---------- */
+/* ---------- BrimCam: cap drawing ---------- */
 
 @keyframes rec { 50% { opacity: .2; } }
 
@@ -1042,7 +1042,7 @@ html .has-schem .diagram .blk[data-lo] text, html .has-schem .blk[data-lo] text 
   .experience thead { display: none; }
 }
 
-/* ---------- Brimcam: exploded cap ----------
+/* ---------- BrimCam: exploded cap ----------
    The scene pins while you scroll; visuals.js sets --e (how far apart the parts are),
    --lab (labels), --fov (the camera's view) and moves each .cl layer by its data-dx/dy. */
 .brimviz { margin-top: clamp(36px, 6vh, 64px); }
@@ -1232,7 +1232,7 @@ html.o3r-on #otv-route { display: none; }
 }
 @media print { html.o3r-on #otv-route { display: block !important; } .o3r, .o3r-note { display: none !important; } }
 
-/* ---------- Brimcam cap in 3D (otv3d.js, #cap-3d) ----------
+/* ---------- BrimCam cap in 3D (otv3d.js, #cap-3d) ----------
    While it's live the 2D cap drawing and its parts key step aside on screen; print and the
    fallbacks keep the 2D drawing. */
 .o3c { display: none; }
@@ -1417,7 +1417,7 @@ html.explode .hero.exploding::before, html.explode .hero.exploding::after { opac
 .a-wheel { fill: var(--ink-3); }
 .a-aruco { fill: #fff; } .a-aruco-in { fill: #000; }
 .a-arm { stroke: var(--copper); stroke-width: 6; stroke-linecap: round; }
-/* Brimcam: the cap takes a shot, the bot names each item, the macros fill in */
+/* BrimCam: the cap takes a shot, the bot names each item, the macros fill in */
 .b-crown { fill: color-mix(in srgb, var(--mask) 75%, var(--ink)); }
 .b-seam { fill: none; stroke: rgb(0 0 0 / .25); stroke-width: 2; }
 .b-brim { fill: color-mix(in srgb, var(--mask) 60%, var(--ink)); }

@@ -23,7 +23,6 @@
     { id: "intro", name: "Replay the intro", hint: "Double-click my name." },
     { id: "heat", name: "Feel the heat", hint: "There's a thermometer up here somewhere." },
     { id: "serial", name: "Open the serial monitor", hint: "Press the backtick key ( ` )." },
-    { id: "pluto", name: "Check on Pluto", hint: "Ask the serial monitor for its status." },
     { id: "print", name: "Print the datasheet", hint: "Print this page." },
     { id: "open", name: "Break the circuit", hint: "Visit a page that doesn't exist." },
   ];
@@ -99,7 +98,6 @@
     if (id === "intro") replayIntro();
     else if (id === "heat") setHeat(!document.documentElement.classList.contains("thermal"));
     else if (id === "serial") openMonitor(true);
-    else if (id === "pluto") { openMonitor(true); run("status pluto"); }
     else if (id === "print") print();
     else if (id === "open") location.href = "/open-circuit";
   });
@@ -244,16 +242,6 @@
     }
   })();
 
-  // ---------------------------------------------------------------- Pluto status (demo endpoint)
-  const statusRow = $("#pluto .status dd");
-  const fmtET = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
-  const getStatus = () => fetch("/api/pluto-status", { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
-  if (statusRow) {
-    getStatus().then((s) => {
-      statusRow.innerHTML = `<i class="led${s.online ? " on" : ""}" aria-hidden="true"></i>${s.online ? "Online" : "Offline"}, last brief ${fmtET(s.last_brief)} <abbr title="This status comes from a stand-in endpoint with demo data, not the live server.">demo</abbr>`;
-    }).catch(() => { statusRow.innerHTML = '<i class="led" aria-hidden="true"></i>Status unavailable'; });
-  }
-
   // ---------------------------------------------------------------- Serial monitor
   const mon = el("div", "serial");
   mon.hidden = true;
@@ -295,7 +283,6 @@
       "whoami            who built this",
       "projects          list the projects",
       "open <name>       jump to buildfest, otv, pluto, brimcam, route, experience or contact",
-      "status pluto      ask Pluto how it's doing",
       "ping micah        start an email to me",
       "resume            open my résumé",
       "thermal           toggle the thermal view",
@@ -306,25 +293,12 @@
       "clear, exit",
     ].forEach((l) => print_(esc(l))),
     whoami: () => print_("Micah Andelman. Electrical engineering at the University of Maryland, class of 2030."),
-    projects: () => ["BuildFest         1st place: 988-training insights tool for EveryMind", "ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "Brimcam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
+    projects: () => ["BuildFest         1st place: 988-training insights tool for EveryMind", "ENES100 OTV       autonomous water-sampling robot for my ENES100 class", "Pluto             personal agent on Telegram", "BrimCam           camera cap that logs dining-hall meals"].forEach((l) => print_(l)),
     open: (a) => {
       const map = { buildfest: "/buildfest.html#buildfest", otv: "/otv.html#otv", pluto: "/pluto.html#pluto", brimcam: "/brimcam.html#brimcam", glasses: "/brimcam.html#brimcam", route: "/otv.html#otv-route", experience: "/#experience", skills: "/#skills", contact: "/#contact" };
       if (!map[a]) return print_(`open: unknown section "${esc(a || "")}". Try open otv.`, "err");
       print_(`Opening ${a}.`);
       setTimeout(() => go(map[a]), 250);
-    },
-    status: (a) => {
-      if (a !== "pluto") return print_("status: try status pluto", "err");
-      print_("GET /api/pluto-status ...", "dim");
-      find("pluto");
-      getStatus().then((s) => {
-        print_(`online         ${s.online ? "yes" : "no"}`);
-        print_(`last brief     ${fmtET(s.last_brief)}`);
-        print_(`next brief     ${fmtET(s.next_brief)}`);
-        print_(`messages today ${s.messages_today}`);
-        print_(`uptime         ${s.uptime_days} days`);
-        print_("(demo data from a stand-in endpoint)", "dim");
-      }).catch(() => print_("No response. Pluto's demo endpoint only runs on the live site.", "err"));
     },
     ping: (a) => {
       if (a !== "micah") return print_("ping: try ping micah", "err");

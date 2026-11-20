@@ -46,7 +46,7 @@ const kit = () => kitP ||= (async () => {
   ]);
   return { THREE, RoomEnvironment, GLTFLoader, MeshoptDecoder };
 })();
-// The robot model is only fetched by the scenes that draw the robot, so Brimcam and Pluto skip its 420 KB.
+// The robot model is only fetched by the scenes that draw the robot, so BrimCam and Pluto skip its 420 KB.
 let otvP;
 const kitOTV = () => otvP ||= kit().then(async (K) => ({ ...K, gltf: await new K.GLTFLoader().setMeshoptDecoder(K.MeshoptDecoder).loadAsync("models/otv.glb") }));
 
@@ -1463,7 +1463,7 @@ async function course(sec, routes) {
   loopWhileVisible(sec, frame);
 }
 
-// ---------------------------------------------------------------- Brimcam, exploded in 3D
+// ---------------------------------------------------------------- BrimCam, exploded in 3D
 // Drawn from the parts list on the page (there's no CAD for the cap). The small parts grow as they come
 // out, as the caption says. The 2D drawing stays for print, reduced motion and no WebGL.
 const capSec = document.getElementById("cap-3d");
