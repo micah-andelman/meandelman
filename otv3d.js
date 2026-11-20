@@ -79,18 +79,72 @@ const compileFirst = (renderer, canvas) => {
   };
 };
 
-const makeRenderer = async (K, canvas, dpr = 1.5) => {
+// ---- one WebGL context for all the home page cards
+// Four cards with a WebGL context each made the GPU (often an integrated one) juggle four sets of
+// buffers and shader programs. Instead the cards share one hidden renderer: a card renders into a
+// corner of it and copies that corner onto its own canvas, which is a plain 2D canvas. Shaders,
+// textures and the environment map are compiled and uploaded once for all of them.
+let SHARED = null;
+const sharedGL = (K) => {
+  if (SHARED) return SHARED;
   const { THREE } = K;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-  await breathe();
-  renderer.setPixelRatio(Math.min(devicePixelRatio, dpr)); // full-screen scenes: 1.5x keeps frames steady; home cards ask for less
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  const r = new THREE.WebGLRenderer({ canvas: document.createElement("canvas"), antialias: true, alpha: true, powerPreference: "high-performance" });
+  r.setPixelRatio(1); // sizes below are in device pixels
+  r.outputColorSpace = THREE.SRGBColorSpace;
+  r.toneMapping = THREE.ACESFilmicToneMapping;
+  r.toneMappingExposure = 1.05;
+  const env = new THREE.PMREMGenerator(r).fromScene(new K.RoomEnvironment(), 0.04).texture;
+  SHARED = { r, env, w: 0, h: 0 };
+  return SHARED;
+};
+// Stands in for a WebGLRenderer in a card scene: the scenes only set the pixel ratio and size,
+// compile, read capabilities and render.
+const cardRenderer = (S, canvas) => {
+  const ctx = canvas.getContext("2d");
+  let pr = 1, cw = 0, ch = 0, dw = 1, dh = 1;
+  const fit = () => {
+    dw = Math.max(1, Math.round(cw * pr)); dh = Math.max(1, Math.round(ch * pr));
+    if (canvas.width !== dw || canvas.height !== dh) { canvas.width = dw; canvas.height = dh; }
+  };
+  return {
+    capabilities: S.r.capabilities,
+    setPixelRatio(v) { pr = v; if (cw) fit(); },
+    setSize(w, h) { cw = w; ch = h; fit(); },
+    compileAsync: (scene, cam) => S.r.compileAsync(scene, cam),
+    render(scene, cam) {
+      const { r } = S;
+      if (S.w < dw || S.h < dh) { S.w = Math.max(S.w, dw); S.h = Math.max(S.h, dh); r.setSize(S.w, S.h, false); }
+      // GL counts y from the bottom, so this is the top-left dw x dh corner of the shared canvas
+      r.setViewport(0, S.h - dh, dw, dh); r.setScissor(0, S.h - dh, dw, dh); r.setScissorTest(true);
+      r.render(scene, cam);
+      r.setScissorTest(false);
+      ctx.clearRect(0, 0, dw, dh);
+      ctx.drawImage(r.domElement, 0, 0, dw, dh, 0, 0, dw, dh);
+    },
+  };
+};
+
+const makeRenderer = async (K, canvas, dpr = 1.5, shared = false) => {
+  const { THREE } = K;
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new K.RoomEnvironment(), 0.04).texture; // renders internally, so before compileFirst
-  compileFirst(renderer, canvas);
+  let renderer;
+  if (shared) {
+    const S = sharedGL(K);
+    renderer = cardRenderer(S, canvas);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, dpr));
+    scene.environment = S.env;
+    compileFirst(renderer, canvas);
+  } else {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+    await breathe();
+    renderer.setPixelRatio(Math.min(devicePixelRatio, dpr)); // full-screen scenes: 1.5x keeps frames steady
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new K.RoomEnvironment(), 0.04).texture; // renders internally, so before compileFirst
+    compileFirst(renderer, canvas);
+  }
   await breathe();
   scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3a32, 0.7));
   const key = new THREE.DirectionalLight(0xfff4e6, 1.5);
@@ -616,7 +670,7 @@ async function tour(sec, opts = {}) {
   const tagsEl = sec.querySelector(".o3-tags");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
-  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5);
+  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5, !!opts.shared);
   const cam = new THREE.PerspectiveCamera(30, 1, 0.005, 5);
   await breathe();
   const R = buildRobot(K, { pool: true });
@@ -1490,7 +1544,7 @@ async function capScene(sec, opts = {}) {
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
   const flashEl = sec.querySelector(".o3c-flash");
-  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5);
+  const { renderer, scene } = await makeRenderer(K, canvas, opts.card ? 1.25 : 1.5, !!opts.shared);
   const cam = new THREE.PerspectiveCamera(32, 1, 0.01, 10);
   const std = (color, o = {}) => new Std({ color, roughness: 0.6, metalness: 0, ...o });
 
@@ -1860,7 +1914,7 @@ async function plutoScene(sec, opts = {}) {
   const canvas = sec.querySelector("canvas");
   const steps = [...sec.querySelectorAll(".o3-steps li")];
   const bar = [...sec.querySelectorAll(".o3-bar span")];
-  const { renderer, scene } = await makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas, 1.5, !!opts.shared);
   renderer.setPixelRatio(Math.min(devicePixelRatio, opts.card ? 1.25 : 2)); // a light scene: full density on high-DPI screens (less as a home card)
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 60);
   const FONT = "Barlow, system-ui, sans-serif", MONO = "ui-monospace, Consolas, monospace";
@@ -2193,7 +2247,7 @@ async function buildfestScene(sec, opts = {}) {
   const { Group, Mesh, MeshStandardMaterial: Std, MeshBasicMaterial: Basic } = THREE;
   const stage = sec.querySelector(".o3-stage");
   const canvas = sec.querySelector("canvas");
-  const { renderer, scene } = await makeRenderer(K, canvas);
+  const { renderer, scene } = await makeRenderer(K, canvas, 1.5, !!opts.shared);
   const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 30);
   const loader = new THREE.TextureLoader();
   const SHOTS = ["card-overview", "card-explore", "card-funder", "card-links", "card-phones"];
@@ -2310,12 +2364,12 @@ if (cardEls.length && GL && !REDUCED) {
     };
   };
   const SCENES = {
-    otv: (sec) => tour(sec, { card: true, zoom: 1.45, loop: cardLoop, clock: (() => { // forward through the six stops, then back
+    otv: (sec) => tour(sec, { card: true, shared: true, zoom: 1.45, loop: cardLoop, clock: (() => { // forward through the six stops, then back
       const f = clockOf(15, 1.5, 7, 0); return (now) => f(now);
     })() }),
-    brimcam: (sec) => capScene(sec, { card: true, zoom: 1.12, loop: cardLoop, clock: clockOf(11, 1.6, 1.2, 0.8) }),
-    buildfest: (sec) => buildfestScene(sec, { loop: cardLoop }),
-    pluto: (sec) => plutoScene(sec, { card: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
+    brimcam: (sec) => capScene(sec, { card: true, shared: true, zoom: 1.12, loop: cardLoop, clock: clockOf(11, 1.6, 1.2, 0.8) }),
+    buildfest: (sec) => buildfestScene(sec, { shared: true, loop: cardLoop }),
+    pluto: (sec) => plutoScene(sec, { card: true, shared: true, zoom: 1.4, loop: cardLoop, clock: clockOf(14, 2.2, 0, 0) }),
   };
   // Building a card (parsing the model, the environment map, compiling shaders) takes a frame or more,
   // so wait for the page to stop moving: requestIdleCallback's timeout could otherwise fire mid-scroll.
